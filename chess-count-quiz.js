@@ -135,38 +135,6 @@ function getRandomPosNumber(game_weights, white) {
     }
 }
 
-// Get a random move number within the specified range using exponential distribution
-function getRandomMoveNumber(moves, playerToMove) {
-    // Choose a random move number at least 24 moves in and at most 11 moves from end
-    const minMove = 14; // This has to be even so white still moves first
-    const maxMove = moves.length - 11;
-    
-    // Determine if we need even or odd move number based on desired player to move
-    const needsEven = playerToMove === 'w';
-    const startNum = needsEven ? 0 : 1;
-    
-    // Calculate the range of possible moves
-    const possibleMoves = Math.floor((maxMove - minMove) / 2);
-    
-    // Generate a random number from exponential distribution with half-life of 10
-    // The formula for exponential distribution is: -ln(1 - U) / λ
-    // where U is uniform random [0,1) and λ is the rate parameter
-    // For half-life of 10, λ = ln(2)/10
-    const lambda = Math.log(2) / 6;
-    const u = Math.random();
-    const expRandom = -Math.log(1 - u) / lambda;
-
-    // Convert exponential random number to move offset
-    const moveOffset = Math.floor(Math.min(possibleMoves, expRandom));
-    console.log('expRandom:', expRandom);
-    console.log('possibleMoves:', possibleMoves);
-    console.log('moveOffset:', moveOffset);
-    
-    const result = minMove + (moveOffset * 2) + startNum;
-    console.log('Final move number:', result);
-    return result;
-}
-
 // Return a game object with the given index
 function getGame(game_index, ply) {
     const game = new Chess();
@@ -377,14 +345,14 @@ function updateMovesDisplay() {
     const fullHistory = chess_data.game.history();
     const prevPlyIndex = fullHistory.length - chess_data.plyAhead;
     const movesList = fullHistory.slice(prevPlyIndex);
-    const isBlackToMove = chess_data.fen.split(' ')[1] === 'b';
+    const isBlackToMove = chess_data.playerToMove === 'b';
     movesDisplay.innerHTML = createMovesTableHtml(movesList, isBlackToMove);
 }
 
 function loadNewPuzzle() {
     // Try a number of times to get a valid position
     const game_and_ply = getRandomPosNumber(chess_data.game_weights,
-					    white=chess_data.playerToMove == 'w');
+					    white=chess_data.playerToMoveAfter === 'w');
 
     chess_data.game_index = game_and_ply.game;
     chess_data.ply = game_and_ply.ply;
@@ -520,6 +488,8 @@ async function saveSettings() {
     const plyAhead = parseInt(document.getElementById('plyAhead').value);
     chess_data.plyAhead = plyAhead;
     localStorage.setItem('plyAhead', plyAhead);
+
+    setPlayerToMoveAfter();
     
     settings.style.display = "none"; // Close the settings window
     startNewGame();
@@ -566,6 +536,12 @@ async function loadSettings() {
     console.log(selectedToMove);
     document.querySelector(`input[value="${selectedToMove}"]`).checked = true;
     setPlayerToMove(selectedToMove);
+
+    // Plies ahead
+    const savedPlyAhead = localStorage.getItem('plyAhead');
+    chess_data.plyAhead = savedPlyAhead ? parseInt(savedPlyAhead) : 0;
+    document.getElementById('plyAhead').value = chess_data.plyAhead;
+    setPlayerToMoveAfter();
     
     // Load weights and PGN games
     chess_data.games = await getGames();
@@ -590,11 +566,6 @@ async function loadSettings() {
 
     console.log(chess_data.questionTypes);
     createDynamicInputs(chess_data.questionTypes);
-
-    // Plies ahead
-    const savedPlyAhead = localStorage.getItem('plyAhead');
-    chess_data.plyAhead = savedPlyAhead ? parseInt(savedPlyAhead) : 0;
-    document.getElementById('plyAhead').value = chess_data.plyAhead;
 }
 
 // Set the player to move
@@ -609,6 +580,14 @@ function setPlayerToMove(selected) {
     } else {
 	chess_data.playerToMove = 'b';
     }
+}
+
+// Set the player to move after the moves displayed on the screen
+// Requires playerToMove and pliesAhead already set
+function setPlayerToMoveAfter() {
+    chess_data.playerToMoveAfter = (chess_data.plyAhead % 2 === 0
+				    ? chess_data.playerToMove
+				    : (chess_data.playerToMove === 'w' ? 'b' : 'w'))
 }
 
 // Initialize the board based on the player to move
