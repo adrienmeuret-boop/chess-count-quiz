@@ -169,10 +169,10 @@ function getOneCorrectAnswer(fen, questionType) {
     let modFen;
     if (questionType.startsWith('p1')) {
         modFen = switchFenSides(fen, chess_data.playerToMove);
-    } else if (questionType.startsWith('p2')) {
-        p2Color = chess_data.playerToMove == 'w' ? 'b' : 'w';
-        modFen = switchFenSides(fen, p2Color);
-    } else {
+	} else if (questionType.startsWith('p2')) {
+    const p2Color = (chess_data.playerToMove === 'w') ? 'b' : 'w';
+    modFen = switchFenSides(fen, p2Color);
+	} else {
         throw new RangeError('Expected p1 or p2');
     }
 
@@ -431,7 +431,8 @@ function loadNewPuzzle() {
     showMovesButton.style.backgroundColor = "";    
         
     // Add submit form listener
-    document.getElementById('chessCountForm').addEventListener('submit', submitAnswers);
+const form = document.getElementById('chessCountForm');
+form.onsubmit = submitAnswers;
 }
 
 function startNewGame() {
@@ -445,31 +446,35 @@ function startNewGame() {
 // Return the event handler that is called when the user clicks to
 // submits their answers
 function submitAnswers(event) {
-    event.preventDefault(); // Prevent the default form submission behavior
-    
-    let allCorrect = true; // Flag to track if all answers are correct
+    event.preventDefault();
+
+    if (gameEnded) return; // évite de jouer après la fin
+
     chess_data.questionTypes.forEach((id) => {
-	const input = document.getElementById(id);
+        const input = document.getElementById(id);
         const inputValue = parseInt(input.value, 10);
         const isCorrect = inputValue === chess_data.correct[id].count;
-        const feedbackIcon = document.getElementById(id+"FeedbackIcon");
-	
-        feedbackIcon.textContent = isCorrect ? '✓' : '✗'; // Set the icon
-        feedbackIcon.className = isCorrect ? 'correct' : 'incorrect'; // Set the class for styling
-	
-if (!chess_data.is_correct[id] && isCorrect) {
-    chess_data.is_correct[id] = true;
-    incrementScore();
-}
-	
-	allCorrect = allCorrect && isCorrect;
-if (!isCorrect) {
-    penalizeTime();
+
+        const feedbackIcon = document.getElementById(id + "FeedbackIcon");
+        feedbackIcon.textContent = isCorrect ? '✓' : '✗';
+        feedbackIcon.className = isCorrect ? 'correct' : 'incorrect';
+
+        if (!chess_data.is_correct[id] && isCorrect) {
+            chess_data.is_correct[id] = true;
+            incrementScore();
+        }
+
+        if (!isCorrect) {
+            penalizeTime();           // peut déclencher endGame()
+        }
     });
-    
+
+    // Si la partie s'est terminée via penalizeTime(), on ne charge pas de nouveau puzzle
+    if (gameEnded) return;
+
     const all_correct = Object.values(chess_data.is_correct).reduce((acc, cur) => acc && cur, true);
     if (all_correct) {
-	loadNewPuzzle();
+        loadNewPuzzle();
     }
 }
 
