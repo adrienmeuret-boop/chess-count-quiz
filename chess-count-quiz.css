@@ -266,15 +266,45 @@ input[type="number"]::-ms-reveal {
 #board .pm6 .pm.k { left: 66.666%; top: 0%;  width: 33.333%; height: 50%; }
 
 /* --- couleurs par pièce (cadre + hachures) --- */
-/* bas (chaud, force croissante) */
-#board .pm6 .pm.p { --pm-border: rgba(220,170,0,0.95); --pm-fill: rgba(220,170,0,0.35); } /* pion : jaune */
-#board .pm6 .pm.n { --pm-border: rgba(255,140,0,0.95); --pm-fill: rgba(255,140,0,0.35); } /* cavalier : orange */
-#board .pm6 .pm.b { --pm-border: rgba(220,60,60,0.95); --pm-fill: rgba(220,60,60,0.35); }  /* fou : rouge */
+/* bas = chaud / haut = froid, hiérarchie très lisible */
 
-/* haut (froid, force croissante) */
-#board .pm6 .pm.r { --pm-border: rgba(60,120,255,0.95); --pm-fill: rgba(60,120,255,0.35); } /* tour : bleu */
-#board .pm6 .pm.q { --pm-border: rgba(140,80,200,0.95); --pm-fill: rgba(140,80,200,0.35); } /* dame : violet */
-#board .pm6 .pm.k { --pm-border: rgba(60,200,160,0.95); --pm-fill: rgba(60,200,160,0.35); } /* roi : teal */
+/* ===== BAS : CHAUD ===== */
+/* pion : jaune soutenu (lisible sur beige/marron) */
+#board .pm6 .pm.p {
+  --pm-border: rgba(255, 200, 40, 0.95);
+  --pm-fill:   rgba(255, 200, 40, 0.45);
+}
+
+/* cavalier : orange franc */
+#board .pm6 .pm.n {
+  --pm-border: rgba(255, 140, 0, 0.95);
+  --pm-fill:   rgba(255, 140, 0, 0.45);
+}
+
+/* fou : rouge chaud */
+#board .pm6 .pm.b {
+  --pm-border: rgba(210, 50, 50, 0.95);
+  --pm-fill:   rgba(210, 50, 50, 0.45);
+}
+
+/* ===== HAUT : FROID ===== */
+/* tour : bleu pur */
+#board .pm6 .pm.r {
+  --pm-border: rgba(70, 120, 255, 0.95);
+  --pm-fill:   rgba(70, 120, 255, 0.45);
+}
+
+/* dame : bleu-vert (plus “fort” que la tour) */
+#board .pm6 .pm.q {
+  --pm-border: rgba(0, 170, 200, 0.95);
+  --pm-fill:   rgba(0, 170, 200, 0.45);
+}
+
+/* roi : vert turquoise dominant */
+#board .pm6 .pm.k {
+  --pm-border: rgba(0, 200, 140, 0.95);
+  --pm-fill:   rgba(0, 200, 140, 0.45);
+}
 
 /* === Piece markers : squares with frame + hatching === */
 
