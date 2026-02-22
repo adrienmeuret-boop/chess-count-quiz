@@ -156,6 +156,21 @@ input[type="number"]::-ms-reveal {
     margin-bottom: 5px;
 }
 
+/* --- Square highlight (only the square, not pieces) --- */
 .hl-red {
   box-shadow: inset 0 0 0 5px rgba(255, 0, 0, 0.85);
+}
+
+/* --- 6 buttons under board --- */
+#boardHighlightsControls {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  max-width: 400px; /* même largeur que le board */
+}
+
+#boardHighlightsControls button {
+  padding: 8px 10px;
+  cursor: pointer;
 }
