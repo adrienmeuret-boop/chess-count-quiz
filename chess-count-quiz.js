@@ -11,33 +11,42 @@ let timerInterval = null;
 
 // Return the number of possible checking moves
 function countChecks(game) {
-    let checks = 0;
-    const moves = game.moves({ verbose: true }); // Get all moves with details
+    const moves = game.moves({ verbose: true });
 
-    // Temporary game instance to make moves without affecting the original game
-    var checkingMoves = moves.filter(move => {
-	    let tempGame = new Chess(game.fen());
-	    tempGame.move(move);
-	    return tempGame.in_check();
+    const checkingMoves = moves.filter(m => {
+        const tempGame = new Chess(game.fen());
+        tempGame.move(m);
+        return tempGame.in_check();
     });
 
-    return { count: checkingMoves.length, moves: checkingMoves.map(move => move.san) };
+    return {
+        count: checkingMoves.length,
+        moves: checkingMoves.map(m => m.san),
+        squares: checkingMoves.map(m => m.to) // ✅ cases destinations
+    };
 }
 
 // Return the number of possible capturing moves
 function countCaptures(game) {
-    // Get all legal moves for the current player
     const moves = game.moves({ verbose: true });
-    // Filter the moves to only include captures
-    const capturingMoves = moves.filter(move => move.flags.includes('c') || move.flags.includes('e'));
-    // Return the number of capturing moves
-    return { count: capturingMoves.length, moves: capturingMoves.map(move => move.san) };
+    const capturingMoves = moves.filter(m => m.flags.includes('c') || m.flags.includes('e'));
+
+    return {
+        count: capturingMoves.length,
+        moves: capturingMoves.map(m => m.san),
+        squares: capturingMoves.map(m => m.to) // ✅ cases destinations
+    };
 }
 
 // Return the total number of moves
 function countAllLegal(game) {
-    var moves = game.moves({ verbose: true });
-    return { count: moves.length, moves: moves.map(move => move.san) };
+    const moves = game.moves({ verbose: true });
+
+    return {
+        count: moves.length,
+        moves: moves.map(m => m.san),
+        squares: moves.map(m => m.to) // ✅ cases destinations
+    };
 }
 
 // Return a game where it's the specified player to move ('w' or 'b') from the given FEN
@@ -289,6 +298,47 @@ function endGame() {
     // La page reste en place, les réponses sont visibles.
 }
 
+// Board square highlights
+
+function clearBoardHighlights() {
+    const boardEl = document.getElementById('board');
+    if (!boardEl) return;
+    boardEl.querySelectorAll('.hl-red').forEach(el => el.classList.remove('hl-red'));
+}
+
+function highlightSquares(squares) {
+    clearBoardHighlights();
+
+    const boardEl = document.getElementById('board');
+    if (!boardEl || !Array.isArray(squares)) return;
+
+    squares.forEach(sq => {
+        const el = boardEl.querySelector(`.square-${sq}`);
+        if (el) el.classList.add('hl-red');
+    });
+}
+
+function setupHighlightButtons() {
+    const mapping = {
+        hl_p1AllLegal: 'p1AllLegal',
+        hl_p2AllLegal: 'p2AllLegal',
+        hl_p1Checks: 'p1Checks',
+        hl_p2Checks: 'p2Checks',
+        hl_p1Captures: 'p1Captures',
+        hl_p2Captures: 'p2Captures',
+    };
+
+    Object.entries(mapping).forEach(([btnId, qType]) => {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+
+        btn.onclick = () => {
+            const ans = chess_data?.correct?.[qType];
+            if (!ans || !ans.squares) return;
+            highlightSquares(ans.squares);
+        };
+    });
+}
 
 // ------------------------------------------------------------
 // Code to show the moves when the user clicks the "Show Moves button"
@@ -393,6 +443,7 @@ function updateMovesDisplay() {
 }
 
 function loadNewPuzzle() {
+    clearBoardHighlights(); // ✅ reset highlight au changement de puzzle
     // Try a number of times to get a valid position
     const game_and_ply = getRandomPosNumber(chess_data.game_weights,
 					    white=chess_data.playerToMoveAfter === 'w');
@@ -736,6 +787,10 @@ function createDynamicInputsLabel(questionType) {
 
 (async () => {
     await loadSettings();
+
+    // ✅ active les boutons de highlight sous l’échiquier
+    setupHighlightButtons();
+
     startNewGame();
 })();
 
