@@ -238,3 +238,67 @@ input[type="number"]::-ms-reveal {
     transparent 8px
   );
 }
+
+/* --- Piece heatmap markers inside squares (6 zones) --- */
+
+:root{
+  /* semi-transparent stripe color per piece */
+  --p-stripe: rgba(255, 140, 0, 0.45);   /* pawn: orange */
+  --n-stripe: rgba(255, 215, 0, 0.45);   /* knight: gold */
+  --b-stripe: rgba(60, 179, 113, 0.45);  /* bishop: green */
+  --r-stripe: rgba(65, 105, 225, 0.45);  /* rook: blue */
+  --q-stripe: rgba(138, 43, 226, 0.45);  /* queen: purple */
+  --k-stripe: rgba(0, 206, 209, 0.45);   /* king: cyan */
+
+  --stripe-size: 7px;   /* largeur des hachures */
+  --stripe-gap: 7px;
+}
+
+/* chessboard.js squares: usually .square-55d63 */
+#board .square-55d63{
+  position: relative; /* pour placer les marqueurs */
+}
+
+/* container for 6 markers */
+#board .pm6{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5; /* au-dessus du fond, sous les pièces (les pièces ont souvent z-index > 10) */
+}
+
+/* each mini-zone */
+#board .pm6 .pm{
+  position: absolute;
+  opacity: 0;            /* caché par défaut */
+  transition: opacity .08s linear;
+}
+
+/* active = visible */
+#board .pm6 .pm.on{
+  opacity: 1;
+}
+
+/* Hachures diagonales (↗) : fond transparent + bandes */
+#board .pm6 .pm{
+  background-image:
+    repeating-linear-gradient(
+      -45deg,
+      var(--pm-color) 0,
+      var(--pm-color) var(--stripe-size),
+      rgba(0,0,0,0) var(--stripe-size),
+      rgba(0,0,0,0) calc(var(--stripe-size) + var(--stripe-gap))
+    );
+}
+
+/* 6 positions: 3 colonnes x 2 lignes */
+
+/* bas (chaud) */
+#board .pm6 .pm.p { left: 0%;   top: 50%; width: 33.333%; height: 50%; --pm-color: var(--p-stripe); } /* pawn */
+#board .pm6 .pm.n { left: 33.333%; top: 50%; width: 33.333%; height: 50%; --pm-color: var(--n-stripe); } /* knight */
+#board .pm6 .pm.b { left: 66.666%; top: 50%; width: 33.333%; height: 50%; --pm-color: var(--b-stripe); } /* bishop */
+
+/* haut (froid) */
+#board .pm6 .pm.r { left: 0%;   top: 0%;  width: 33.333%; height: 50%; --pm-color: var(--r-stripe); } /* rook */
+#board .pm6 .pm.q { left: 33.333%; top: 0%; width: 33.333%; height: 50%; --pm-color: var(--q-stripe); } /* queen */
+#board .pm6 .pm.k { left: 66.666%; top: 0%; width: 33.333%; height: 50%; --pm-color: var(--k-stripe); } /* king */
