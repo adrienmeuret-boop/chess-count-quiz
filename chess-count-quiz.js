@@ -263,9 +263,8 @@ function revealAnswers() {
             ? correct.moves.join(', ')
             : '';
 shownMovesLabel.innerHTML =
-    `<strong>${correct.count}` +
-    (movesText ? ` (${movesText})` : '') +
-    `</strong>`;
+    `<span style="font-weight:700; font-size:1.4em;">${correct.count}</span>` +
+    (movesText ? ` (${movesText})` : '');
     });
 
     var showMovesButton = document.getElementById("showMovesButton");
