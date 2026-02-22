@@ -303,6 +303,8 @@ function endGame() {
 function clearBoardHighlights() {
     const boardEl = document.getElementById('board');
     if (!boardEl) return;
+
+    // Version robuste: enlève la classe sur toutes les cases, peu importe la structure DOM
     boardEl.querySelectorAll('.hl-red').forEach(el => el.classList.remove('hl-red'));
 }
 
@@ -313,8 +315,16 @@ function highlightSquares(squares) {
     if (!boardEl || !Array.isArray(squares)) return;
 
     squares.forEach(sq => {
-        const el = boardEl.querySelector(`.square-${sq}`);
-        if (el) el.classList.add('hl-red');
+        // Chessboard.js 1.0.0 : les cases ont souvent data-square="e4"
+        const el = boardEl.querySelector(`[data-square="${sq}"]`);
+        if (el) {
+            el.classList.add('hl-red');
+            return;
+        }
+
+        // Fallback : certaines versions ont des classes square-e4
+        const el2 = boardEl.querySelector(`.square-${sq}`);
+        if (el2) el2.classList.add('hl-red');
     });
 }
 
@@ -338,6 +348,12 @@ function setupHighlightButtons() {
             highlightSquares(ans.squares);
         };
     });
+
+    // ✅ Clear button
+    const clearBtn = document.getElementById('hl_clear');
+    if (clearBtn) {
+        clearBtn.onclick = clearBoardHighlights;
+    }
 }
 
 // ------------------------------------------------------------
