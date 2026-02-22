@@ -262,9 +262,9 @@ function revealAnswers() {
         const movesText = Array.isArray(correct.moves)
             ? correct.moves.join(', ')
             : '';
-        shownMovesLabel.textContent =
-            `Correct: ${correct.count}` +
-            (movesText ? ` (${movesText})` : '');
+shownMovesLabel.textContent =
+    `${correct.count}` +
+    (movesText ? ` (${movesText})` : '');
     });
 
     var showMovesButton = document.getElementById("showMovesButton");
@@ -464,7 +464,7 @@ function submitAnswers(event) {
         const isCorrect = inputValue === chess_data.correct[id].count;
 
         const feedbackIcon = document.getElementById(id + "FeedbackIcon");
-feedbackIcon.textContent = isCorrect ? '✓ Correct' : '✗ Incorrect';
+feedbackIcon.textContent = isCorrect ? '✓' : '✗';
 feedbackIcon.className = isCorrect ? 'correct' : 'incorrect';
 
         if (!chess_data.is_correct[id] && isCorrect) {
