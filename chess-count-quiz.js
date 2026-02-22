@@ -299,8 +299,17 @@ function showMoves() {
     revealAnswers();
 }
 
-// Add event listener to the button
-document.getElementById("showMovesButton").addEventListener("click", showMoves);
+// Add event listener to the button (safe even if DOM not ready yet)
+const showMovesBtn = document.getElementById("showMovesButton");
+if (showMovesBtn) {
+    showMovesBtn.addEventListener("click", showMoves);
+} else {
+    // If the button isn't in the DOM yet, wait for the page to finish loading
+    window.addEventListener("DOMContentLoaded", () => {
+        const btn = document.getElementById("showMovesButton");
+        if (btn) btn.addEventListener("click", showMoves);
+    });
+}
 
 
 // ----------------------------------------------------------
@@ -486,8 +495,20 @@ function submitAnswers(event) {
 var settings = document.getElementById("settingsModal");
 
 // When the user clicks the setting button, open the settings dialog
-document.getElementById("settingsButton").onclick = function() {
-    settings.style.display = "block";
+const settingsBtn = document.getElementById("settingsButton");
+if (settingsBtn) {
+    settingsBtn.onclick = function() {
+        settings.style.display = "block";
+    };
+} else {
+    window.addEventListener("DOMContentLoaded", () => {
+        const btn = document.getElementById("settingsButton");
+        if (btn) {
+            btn.onclick = function() {
+                settings.style.display = "block";
+            };
+        }
+    });
 }
 
 // When the user clicks on the "Save Settings" button, close settings
