@@ -155,3 +155,7 @@ input[type="number"]::-ms-reveal {
     font-weight: bold;
     margin-bottom: 5px;
 }
+
+.hl-red {
+  box-shadow: inset 0 0 0 5px rgba(255, 0, 0, 0.85);
+}
