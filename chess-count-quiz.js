@@ -262,31 +262,9 @@ function penalizeTime() {
     }
 }
 
-function qTypeForColorAndKind(color, kind) {
-    const p1Color = chess_data.playerToMove; // 'w' ou 'b'
-    const prefix = (color === p1Color) ? 'p1' : 'p2';
-    return `${prefix}${kind}`;
-}
-
-function getFixedDisplayQuestionTypes() {
-    // Ordre FIXE: White puis Black, et Moves -> Checks -> Captures
-    const kinds = ['AllLegal', 'Checks', 'Captures'];
-    const out = [];
-
-    ['w', 'b'].forEach(color => {
-        kinds.forEach(kind => {
-            const qt = qTypeForColorAndKind(color, kind);
-            if (Array.isArray(chess_data.questionTypes) && chess_data.questionTypes.includes(qt)) {
-                out.push(qt);
-            }
-        });
-    });
-
-    return out;
-}
 
 function qTypeForAbsColorAndKind(color, kind) {
-    // color: 'w' or 'b'
+    // color: 'w' ou 'b' (couleur absolue)
     // kind: 'AllLegal' | 'Checks' | 'Captures'
     const p1Color = chess_data.playerToMove; // côté qui a le trait
     const prefix = (color === p1Color) ? 'p1' : 'p2';
@@ -377,17 +355,17 @@ function highlightSquares(squares) {
 }
 
 function setupHighlightButtons() {
-    const mapBtnTo = {
-        // Boutons affichés "White ..."
-        hl_p1AllLegal: qTypeForColorAndKind('w', 'AllLegal'),
-        hl_p1Checks:   qTypeForColorAndKind('w', 'Checks'),
-        hl_p1Captures: qTypeForColorAndKind('w', 'Captures'),
+ const mapBtnTo = {
+    // Boutons affichés "White ..."
+    hl_p1AllLegal: qTypeForAbsColorAndKind('w', 'AllLegal'),
+    hl_p1Checks:   qTypeForAbsColorAndKind('w', 'Checks'),
+    hl_p1Captures: qTypeForAbsColorAndKind('w', 'Captures'),
 
-        // Boutons affichés "Black ..."
-        hl_p2AllLegal: qTypeForColorAndKind('b', 'AllLegal'),
-        hl_p2Checks:   qTypeForColorAndKind('b', 'Checks'),
-        hl_p2Captures: qTypeForColorAndKind('b', 'Captures'),
-    };
+    // Boutons affichés "Black ..."
+    hl_p2AllLegal: qTypeForAbsColorAndKind('b', 'AllLegal'),
+    hl_p2Checks:   qTypeForAbsColorAndKind('b', 'Checks'),
+    hl_p2Captures: qTypeForAbsColorAndKind('b', 'Captures'),
+};
 
     Object.entries(mapBtnTo).forEach(([btnId, qType]) => {
         const btn = document.getElementById(btnId);
@@ -554,7 +532,7 @@ getFixedDisplayQuestionTypes().forEach((id) => {
         
     // Add submit form listener
 const form = document.getElementById('chessCountForm');
-form.onsubmit = ;
+form.onsubmit = submitAnswers;
 }
 
 function startNewGame() {
@@ -746,6 +724,7 @@ async function loadSettings() {
 
     console.log(chess_data.questionTypes);
 createDynamicInputs(getFixedDisplayQuestionTypes());
+setupHighlightButtons();
 }
 
 // Set the player to move
