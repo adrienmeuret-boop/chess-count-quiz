@@ -385,28 +385,29 @@ function clearPieceMarkers() {
     boardEl.querySelectorAll('.pm6 .pm.on').forEach(el => el.classList.remove('on'));
 }
 
-function markSquarePiece(square, piece) {
+function markSquarePiece(square, piece, side /* 'w' ou 'b' */) {
     const boardEl = document.getElementById('board');
     if (!boardEl) return;
 
-    // trouver l’élément case
     const sqEl =
         boardEl.querySelector(`[data-square="${square}"]`) ||
         boardEl.querySelector(`.square-${square}`);
 
     if (!sqEl) return;
 
-    // sécurité: s’assurer que les marqueurs existent
+    // mini-carrés par pièce (inchangé)
     if (!sqEl.querySelector(':scope > .pm6')) {
         ensurePieceMarkers();
     }
-
     const marker = sqEl.querySelector(`:scope > .pm6 .pm.${piece}`);
     if (marker) marker.classList.add('on');
+
+    // ✅ cadre global par camp
+    if (side === 'w') sqEl.classList.add('hl-side-w');
+    if (side === 'b') sqEl.classList.add('hl-side-b');
 }
 
-function highlightMovesByPiece(moveList) {
-    // moveList: [{to:'e4', piece:'p'}, ...]
+function highlightMovesByPiece(moveList, side /* 'w'|'b' */) {
     clearPieceMarkers();
     ensurePieceMarkers();
 
@@ -414,7 +415,7 @@ function highlightMovesByPiece(moveList) {
 
     moveList.forEach(m => {
         if (!m?.to || !m?.piece) return;
-        markSquarePiece(m.to, m.piece);
+        markSquarePiece(m.to, m.piece, side);
     });
 }
 
@@ -438,7 +439,7 @@ function setupHighlightButtons() {
         btn.onclick = () => {
             const ans = chess_data?.correct?.[qType];
             if (!ans?.targets) return;
-            highlightMovesByPiece(ans.targets);
+            highlightMovesByPiece(ans.targets, info.side);
         };
     });
 
