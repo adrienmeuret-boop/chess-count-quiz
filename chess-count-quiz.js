@@ -262,9 +262,10 @@ function revealAnswers() {
         const movesText = Array.isArray(correct.moves)
             ? correct.moves.join(', ')
             : '';
-shownMovesLabel.textContent =
-    `${correct.count}` +
-    (movesText ? ` (${movesText})` : '');
+shownMovesLabel.innerHTML =
+    `<strong>${correct.count}` +
+    (movesText ? ` (${movesText})` : '') +
+    `</strong>`;
     });
 
     var showMovesButton = document.getElementById("showMovesButton");
