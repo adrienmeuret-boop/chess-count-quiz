@@ -360,15 +360,15 @@ function ensurePieceMarkers() {
     const boardEl = document.getElementById('board');
     if (!boardEl) return;
 
-    // pour chaque case, on injecte une div.pm6 si absente
-    const squares = boardEl.querySelectorAll('[data-square], .square-55d63');
+    // Chessboard.js : les cases ont la classe .square-55d63
+    const squares = boardEl.querySelectorAll('.square-55d63');
+
     squares.forEach(sqEl => {
         if (sqEl.querySelector(':scope > .pm6')) return;
 
         const wrap = document.createElement('div');
         wrap.className = 'pm6';
 
-        // order doesn't matter, CSS positions by class
         ['p','n','b','r','q','k'].forEach(piece => {
             const d = document.createElement('div');
             d.className = `pm ${piece}`;
@@ -419,35 +419,36 @@ function highlightMovesByPiece(moveList) {
 }
 
 function setupHighlightButtons() {
- const mapBtnTo = {
-    // Boutons affichés "White ..."
-    hl_p1AllLegal: qTypeForAbsColorAndKind('w', 'AllLegal'),
-    hl_p1Checks:   qTypeForAbsColorAndKind('w', 'Checks'),
-    hl_p1Captures: qTypeForAbsColorAndKind('w', 'Captures'),
+    const mapBtnTo = {
+        // Boutons affichés "White ..."
+        hl_p1AllLegal: qTypeForAbsColorAndKind('w', 'AllLegal'),
+        hl_p1Checks:   qTypeForAbsColorAndKind('w', 'Checks'),
+        hl_p1Captures: qTypeForAbsColorAndKind('w', 'Captures'),
 
-    // Boutons affichés "Black ..."
-    hl_p2AllLegal: qTypeForAbsColorAndKind('b', 'AllLegal'),
-    hl_p2Checks:   qTypeForAbsColorAndKind('b', 'Checks'),
-    hl_p2Captures: qTypeForAbsColorAndKind('b', 'Captures'),
-};
+        // Boutons affichés "Black ..."
+        hl_p2AllLegal: qTypeForAbsColorAndKind('b', 'AllLegal'),
+        hl_p2Checks:   qTypeForAbsColorAndKind('b', 'Checks'),
+        hl_p2Captures: qTypeForAbsColorAndKind('b', 'Captures'),
+    };
 
     Object.entries(mapBtnTo).forEach(([btnId, qType]) => {
         const btn = document.getElementById(btnId);
         if (!btn) return;
 
         btn.onclick = () => {
-const ans = chess_data?.correct?.[qType];
-if (!ans?.targets) return;
-highlightMovesByPiece(ans.targets);
+            const ans = chess_data?.correct?.[qType];
+            if (!ans?.targets) return;
+            highlightMovesByPiece(ans.targets);
         };
     });
 
-const clearBtn = document.getElementById('hl_clear');
-if (clearBtn) {
-    clearBtn.onclick = () => {
-        clearBoardHighlights(); // si l’ancien surlignage existe encore
-        clearPieceMarkers();    // nouveau système par pièces
-    };
+    const clearBtn = document.getElementById('hl_clear');
+    if (clearBtn) {
+        clearBtn.onclick = () => {
+            clearBoardHighlights(); // si l’ancien surlignage existe encore
+            clearPieceMarkers();    // nouveau système par pièces
+        };
+    }
 }
 
 // ------------------------------------------------------------
