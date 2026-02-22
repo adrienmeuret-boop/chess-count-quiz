@@ -285,6 +285,31 @@ function getFixedDisplayQuestionTypes() {
     return out;
 }
 
+function qTypeForAbsColorAndKind(color, kind) {
+    // color: 'w' or 'b'
+    // kind: 'AllLegal' | 'Checks' | 'Captures'
+    const p1Color = chess_data.playerToMove; // côté qui a le trait
+    const prefix = (color === p1Color) ? 'p1' : 'p2';
+    return `${prefix}${kind}`;
+}
+
+function getFixedDisplayQuestionTypes() {
+    // Ordre FIXE d'affichage : White puis Black, et Moves -> Checks -> Captures
+    const kinds = ['AllLegal', 'Checks', 'Captures'];
+    const out = [];
+
+    ['w', 'b'].forEach(color => {
+        kinds.forEach(kind => {
+            const qt = qTypeForAbsColorAndKind(color, kind);
+            if (Array.isArray(chess_data.questionTypes) && chess_data.questionTypes.includes(qt)) {
+                out.push(qt);
+            }
+        });
+    });
+
+    return out;
+}
+
 function revealAnswers() {
 getFixedDisplayQuestionTypes().forEach((id) => {
         const shownMovesLabel = document.getElementById(id + "ShownMoves");
@@ -529,7 +554,7 @@ getFixedDisplayQuestionTypes().forEach((id) => {
         
     // Add submit form listener
 const form = document.getElementById('chessCountForm');
-form.onsubmit = submitAnswers;
+form.onsubmit = ;
 }
 
 function startNewGame() {
@@ -805,23 +830,19 @@ function createDynamicInputs(questionTypes) {
 
 // Return the label for each input
 function createDynamicInputsLabel(questionType) {
-    const color = (questionType.startsWith('p1')
-		   ? (chess_data.playerToMove == 'b' ? "Black" : "White")
-		   : (chess_data.playerToMove == 'b' ? "White" : "Black"))
+    // questionType est p1AllLegal / p2Checks etc.
+    // On veut afficher White/Black en "absolu" (pas p1/p2)
 
-    var moveType;
+    const isP1 = questionType.startsWith('p1');
+    const color = (isP1 === (chess_data.playerToMove === 'w')) ? "White" : "Black";
+
+    let moveType = "Moves";
     switch (questionType.slice(2)) {
-    case "Captures":
-	moveType = "Captures";
-	break;
-    case "Checks":
-	moveType = "Checks";
-	break;
-    case "AllLegal":
-	moveType = "Moves";
-	break;
+        case "Captures": moveType = "Captures"; break;
+        case "Checks":   moveType = "Checks"; break;
+        case "AllLegal": moveType = "Moves"; break;
     }
-	
+
     return `${color}'s ${moveType}:`;
 }
 
