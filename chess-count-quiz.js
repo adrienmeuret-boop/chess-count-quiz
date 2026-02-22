@@ -19,11 +19,11 @@ function countChecks(game) {
         return tempGame.in_check();
     });
 
-    return {
-        count: checkingMoves.length,
-        moves: checkingMoves.map(m => m.san),
-        squares: checkingMoves.map(m => m.to) // ✅ cases destinations
-    };
+return {
+    count: checkingMoves.length,
+    moves: checkingMoves.map(m => m.san),
+    targets: checkingMoves.map(m => ({ to: m.to, piece: m.piece }))
+};
 }
 
 // Return the number of possible capturing moves
@@ -31,22 +31,22 @@ function countCaptures(game) {
     const moves = game.moves({ verbose: true });
     const capturingMoves = moves.filter(m => m.flags.includes('c') || m.flags.includes('e'));
 
-    return {
-        count: capturingMoves.length,
-        moves: capturingMoves.map(m => m.san),
-        squares: capturingMoves.map(m => m.to) // ✅ cases destinations
-    };
+return {
+    count: capturingMoves.length,
+    moves: capturingMoves.map(m => m.san),
+    targets: capturingMoves.map(m => ({ to: m.to, piece: m.piece }))
+};
 }
 
 // Return the total number of moves
 function countAllLegal(game) {
     const moves = game.moves({ verbose: true });
 
-    return {
-        count: moves.length,
-        moves: moves.map(m => m.san),
-        squares: moves.map(m => m.to) // ✅ cases destinations
-    };
+return {
+    count: moves.length,
+    moves: moves.map(m => m.san),
+    targets: moves.map(m => ({ to: m.to, piece: m.piece }))
+};
 }
 
 // Return a game where it's the specified player to move ('w' or 'b') from the given FEN
@@ -354,6 +354,70 @@ function highlightSquares(squares) {
     });
 }
 
+// --- Piece markers (6 zones) --------------------------------
+
+function ensurePieceMarkers() {
+    const boardEl = document.getElementById('board');
+    if (!boardEl) return;
+
+    // pour chaque case, on injecte une div.pm6 si absente
+    const squares = boardEl.querySelectorAll('[data-square], .square-55d63');
+    squares.forEach(sqEl => {
+        if (sqEl.querySelector(':scope > .pm6')) return;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'pm6';
+
+        // order doesn't matter, CSS positions by class
+        ['p','n','b','r','q','k'].forEach(piece => {
+            const d = document.createElement('div');
+            d.className = `pm ${piece}`;
+            wrap.appendChild(d);
+        });
+
+        sqEl.appendChild(wrap);
+    });
+}
+
+function clearPieceMarkers() {
+    const boardEl = document.getElementById('board');
+    if (!boardEl) return;
+    boardEl.querySelectorAll('.pm6 .pm.on').forEach(el => el.classList.remove('on'));
+}
+
+function markSquarePiece(square, piece) {
+    const boardEl = document.getElementById('board');
+    if (!boardEl) return;
+
+    // trouver l’élément case
+    const sqEl =
+        boardEl.querySelector(`[data-square="${square}"]`) ||
+        boardEl.querySelector(`.square-${square}`);
+
+    if (!sqEl) return;
+
+    // sécurité: s’assurer que les marqueurs existent
+    if (!sqEl.querySelector(':scope > .pm6')) {
+        ensurePieceMarkers();
+    }
+
+    const marker = sqEl.querySelector(`:scope > .pm6 .pm.${piece}`);
+    if (marker) marker.classList.add('on');
+}
+
+function highlightMovesByPiece(moveList) {
+    // moveList: [{to:'e4', piece:'p'}, ...]
+    clearPieceMarkers();
+    ensurePieceMarkers();
+
+    if (!Array.isArray(moveList)) return;
+
+    moveList.forEach(m => {
+        if (!m?.to || !m?.piece) return;
+        markSquarePiece(m.to, m.piece);
+    });
+}
+
 function setupHighlightButtons() {
  const mapBtnTo = {
     // Boutons affichés "White ..."
@@ -372,14 +436,18 @@ function setupHighlightButtons() {
         if (!btn) return;
 
         btn.onclick = () => {
-            const ans = chess_data?.correct?.[qType];
-            if (!ans?.squares) return;
-            highlightSquares(ans.squares);
+const ans = chess_data?.correct?.[qType];
+if (!ans?.targets) return;
+highlightMovesByPiece(ans.targets);
         };
     });
 
-    const clearBtn = document.getElementById('hl_clear');
-    if (clearBtn) clearBtn.onclick = clearBoardHighlights;
+const clearBtn = document.getElementById('hl_clear');
+if (clearBtn) {
+    clearBtn.onclick = () => {
+        clearBoardHighlights(); // si l’ancien surlignage existe encore
+        clearPieceMarkers();    // nouveau système par pièces
+    };
 }
 
 // ------------------------------------------------------------
@@ -500,7 +568,8 @@ function loadNewPuzzle() {
     const prior_game = getGame(game_and_ply.game,
 			       Math.max(0, game_and_ply.ply - chess_data.plyAhead))
     chess_data.board.position(prior_game.fen());
-
+	ensurePieceMarkers();
+	clearPieceMarkers();
     updateMovesDisplay();
     
     // Get correct answers, which may return null if a side is in check
@@ -753,8 +822,10 @@ function setPlayerToMoveAfter() {
 function setBoard() {
     chess_data.board = Chessboard('board', 'start');
     if (chess_data.playerToMove == 'b') {
-	chess_data.board.flip();
+        chess_data.board.flip();
     }
+    // ✅ injecte les marqueurs une fois que le board DOM est en place
+    ensurePieceMarkers();
 }
 
 // Set the inputs where the user specifies how many possible moves there are
