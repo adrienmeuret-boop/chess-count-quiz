@@ -197,3 +197,18 @@ input[type="number"]::-ms-reveal {
 .hl-red {
   box-shadow: inset 0 0 0 2px rgba(255, 0, 0, 0.85);
 }
+
+.board-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#boardHighlightsControls {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  max-width: 400px;
+}
