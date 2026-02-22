@@ -264,7 +264,7 @@ function revealAnswers() {
             : '';
 shownMovesLabel.innerHTML =
     `<span style="font-weight:700; font-size:1.4em;">${correct.count}</span>` +
-    (movesText ? ` (${movesText})` : '');
+    (movesText ? ` <span style="font-size:1em;">(${movesText})</span>` : '');
     });
 
     var showMovesButton = document.getElementById("showMovesButton");
