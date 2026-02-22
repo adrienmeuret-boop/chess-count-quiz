@@ -288,22 +288,22 @@ input[type="number"]::-ms-reveal {
 }
 
 /* ===== HAUT : FROID ===== */
-/* tour : bleu pur */
+/* tour : bleu franc (base froide) */
 #board .pm6 .pm.r {
-  --pm-border: rgba(70, 120, 255, 0.95);
-  --pm-fill:   rgba(70, 120, 255, 0.45);
+  --pm-border: rgba(40, 110, 255, 0.95);
+  --pm-fill:   rgba(40, 110, 255, 0.45);
 }
 
-/* dame : bleu-vert (plus “fort” que la tour) */
+/* dame : bleu-vert plus “fort” (plus saturé + un peu plus vert) */
 #board .pm6 .pm.q {
-  --pm-border: rgba(0, 170, 200, 0.95);
-  --pm-fill:   rgba(0, 170, 200, 0.45);
+  --pm-border: rgba(0, 170, 210, 0.95);
+  --pm-fill:   rgba(0, 170, 210, 0.45);
 }
 
-/* roi : vert turquoise dominant */
+/* roi : vert dominant (beaucoup plus vert, plus sombre -> impossible de confondre avec la dame) */
 #board .pm6 .pm.k {
-  --pm-border: rgba(0, 200, 140, 0.95);
-  --pm-fill:   rgba(0, 200, 140, 0.45);
+  --pm-border: rgba(0, 170, 90, 0.95);
+  --pm-fill:   rgba(0, 170, 90, 0.45);
 }
 
 /* === Piece markers : squares with frame + hatching === */
