@@ -240,11 +240,32 @@ function penalizeTime() {
     updateTimerDisplay(chess_data);
 }
     
+function revealAnswers() {
+    chess_data.questionTypes.forEach((id) => {
+        const shownMovesLabel = document.getElementById(id + "ShownMoves");
+        const correct = chess_data.correct?.[id];
+        if (!shownMovesLabel || !correct) return;
 
-// This gets called when the game timer runs out
+        const movesText = Array.isArray(correct.moves)
+            ? correct.moves.join(', ')
+            : '';
+        shownMovesLabel.textContent =
+            `Correct: ${correct.count}` +
+            (movesText ? ` (${movesText})` : '');
+    });
+
+    var showMovesButton = document.getElementById("showMovesButton");
+    if (showMovesButton) {
+        showMovesButton.disabled = true;
+        showMovesButton.style.backgroundColor = "#d3d3d3";
+    }
+}
+
 function endGame() {
-    if (confirm(`Time's up! Final Score: ${chess_data.score}`)) {
-	startNewGame();
+    revealAnswers();
+
+    if (confirm(`Time's up! Final Score: ${chess_data.score}\n\nStart a new game?`)) {
+        startNewGame();
     }
 }
 
