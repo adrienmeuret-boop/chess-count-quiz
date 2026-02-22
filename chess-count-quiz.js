@@ -286,8 +286,7 @@ function endGame() {
     revealAnswers();
 
     // ✅ Pas de pop-up, pas de restart automatique.
-    // La page reste en place et les réponses sont visibles.
-	}
+    // La page reste en place, les réponses sont visibles.
 }
 
 
