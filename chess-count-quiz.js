@@ -261,9 +261,32 @@ function penalizeTime() {
         endGame();
     }
 }
-    
+
+function qTypeForColorAndKind(color, kind) {
+    const p1Color = chess_data.playerToMove; // 'w' ou 'b'
+    const prefix = (color === p1Color) ? 'p1' : 'p2';
+    return `${prefix}${kind}`;
+}
+
+function getFixedDisplayQuestionTypes() {
+    // Ordre FIXE: White puis Black, et Moves -> Checks -> Captures
+    const kinds = ['AllLegal', 'Checks', 'Captures'];
+    const out = [];
+
+    ['w', 'b'].forEach(color => {
+        kinds.forEach(kind => {
+            const qt = qTypeForColorAndKind(color, kind);
+            if (Array.isArray(chess_data.questionTypes) && chess_data.questionTypes.includes(qt)) {
+                out.push(qt);
+            }
+        });
+    });
+
+    return out;
+}
+
 function revealAnswers() {
-    chess_data.questionTypes.forEach((id) => {
+getFixedDisplayQuestionTypes().forEach((id) => {
         const shownMovesLabel = document.getElementById(id + "ShownMoves");
         const correct = chess_data.correct?.[id];
         if (!shownMovesLabel || !correct) return;
@@ -329,31 +352,31 @@ function highlightSquares(squares) {
 }
 
 function setupHighlightButtons() {
-    const mapping = {
-        hl_p1AllLegal: 'p1AllLegal',
-        hl_p2AllLegal: 'p2AllLegal',
-        hl_p1Checks: 'p1Checks',
-        hl_p2Checks: 'p2Checks',
-        hl_p1Captures: 'p1Captures',
-        hl_p2Captures: 'p2Captures',
+    const mapBtnTo = {
+        // Boutons affichés "White ..."
+        hl_p1AllLegal: qTypeForColorAndKind('w', 'AllLegal'),
+        hl_p1Checks:   qTypeForColorAndKind('w', 'Checks'),
+        hl_p1Captures: qTypeForColorAndKind('w', 'Captures'),
+
+        // Boutons affichés "Black ..."
+        hl_p2AllLegal: qTypeForColorAndKind('b', 'AllLegal'),
+        hl_p2Checks:   qTypeForColorAndKind('b', 'Checks'),
+        hl_p2Captures: qTypeForColorAndKind('b', 'Captures'),
     };
 
-    Object.entries(mapping).forEach(([btnId, qType]) => {
+    Object.entries(mapBtnTo).forEach(([btnId, qType]) => {
         const btn = document.getElementById(btnId);
         if (!btn) return;
 
         btn.onclick = () => {
             const ans = chess_data?.correct?.[qType];
-            if (!ans || !ans.squares) return;
+            if (!ans?.squares) return;
             highlightSquares(ans.squares);
         };
     });
 
-    // ✅ Clear button
     const clearBtn = document.getElementById('hl_clear');
-    if (clearBtn) {
-        clearBtn.onclick = clearBoardHighlights;
-    }
+    if (clearBtn) clearBtn.onclick = clearBoardHighlights;
 }
 
 // ------------------------------------------------------------
@@ -481,13 +504,12 @@ function loadNewPuzzle() {
     chess_data.correct = getCorrectAnswers(chess_data.fen, chess_data.questionTypes);
 
     // Initialize all answers to start as false
-    chess_data.is_correct = Object.fromEntries(
-        chess_data.questionTypes.map(name => [name, false])
-    );
-
+chess_data.is_correct = Object.fromEntries(
+    getFixedDisplayQuestionTypes().map(name => [name, false])
+);
     console.log(chess_data);
         
-    chess_data.questionTypes.forEach((id) => {
+getFixedDisplayQuestionTypes().forEach((id) => {
         const input = document.getElementById(id);
         input.value = 0;
         const feedbackIcon = document.getElementById(id + "FeedbackIcon");
@@ -525,7 +547,7 @@ function submitAnswers(event) {
 
     if (gameEnded) return; // évite de jouer après la fin
 
-    chess_data.questionTypes.forEach((id) => {
+getFixedDisplayQuestionTypes().forEach((id) => {
         const input = document.getElementById(id);
         const inputValue = parseInt(input.value, 10);
         const isCorrect = inputValue === chess_data.correct[id].count;
@@ -593,32 +615,37 @@ async function saveSettings() {
     // Timer settings
     const showTimer = document.getElementById('showTimer').checked;
     chess_data.showTimer = showTimer;
-    localStorage.setItem('showTimer', showTimer); // Save preference
-    setTimerVisibility(showTimer); // Apply preference immediately
-    
+    localStorage.setItem('showTimer', showTimer);
+    setTimerVisibility(showTimer);
+
     // Player to move
     const selectedToMove = document.querySelector('input[name="playerToMove"]:checked');
-    localStorage.setItem('selectedToMove', selectedToMove.value); // Save preference
+    localStorage.setItem('selectedToMove', selectedToMove.value);
     setPlayerToMove(selectedToMove.value);
 
     // Set positions, weights, and board
     chess_data.games = await getGames();
     chess_data.game_weights = await getWeights();
     setBoard();
-    
+
     // Which count questions are asked
     const questionCheckboxes = document.querySelectorAll('input[name="quizOption"]:checked');
     chess_data.questionTypes = Array.from(questionCheckboxes).map(opt => opt.value);
-    localStorage.setItem('questionTypes', JSON.stringify(chess_data.questionTypes)); // Save preference
-    createDynamicInputs(chess_data.questionTypes);
-    
+    localStorage.setItem('questionTypes', JSON.stringify(chess_data.questionTypes));
+
+    // ✅ Force l’ordre d’affichage (White puis Black, Moves->Checks->Captures)
+    createDynamicInputs(getFixedDisplayQuestionTypes());
+
+    // ✅ Rebranche les boutons de surlignage (important après changement du trait)
+    setupHighlightButtons();
+
     // Save ply ahead setting
-    const plyAhead = parseInt(document.getElementById('plyAhead').value);
+    const plyAhead = parseInt(document.getElementById('plyAhead').value, 10);
     chess_data.plyAhead = plyAhead;
     localStorage.setItem('plyAhead', plyAhead);
 
     setPlayerToMoveAfter();
-    
+
     settings.style.display = "none"; // Close the settings window
     startNewGame();
 }
@@ -693,7 +720,7 @@ async function loadSettings() {
     })
 
     console.log(chess_data.questionTypes);
-    createDynamicInputs(chess_data.questionTypes);
+createDynamicInputs(getFixedDisplayQuestionTypes());
 }
 
 // Set the player to move
@@ -809,5 +836,4 @@ function createDynamicInputsLabel(questionType) {
 
     startNewGame();
 })();
-
 
