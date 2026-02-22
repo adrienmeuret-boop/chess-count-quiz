@@ -285,9 +285,9 @@ function endGame() {
 
     revealAnswers();
 
-    if (confirm(`Time's up! Final Score: ${chess_data.score}\n\nStart a new game?`)) {
-        startNewGame();
-    }
+    // ✅ Pas de pop-up, pas de restart automatique.
+    // La page reste en place et les réponses sont visibles.
+	}
 }
 
 
@@ -465,8 +465,8 @@ function submitAnswers(event) {
         const isCorrect = inputValue === chess_data.correct[id].count;
 
         const feedbackIcon = document.getElementById(id + "FeedbackIcon");
-        feedbackIcon.textContent = isCorrect ? '✓' : '✗';
-        feedbackIcon.className = isCorrect ? 'correct' : 'incorrect';
+feedbackIcon.textContent = isCorrect ? '✓ Correct' : '✗ Incorrect';
+feedbackIcon.className = isCorrect ? 'correct' : 'incorrect';
 
         if (!chess_data.is_correct[id] && isCorrect) {
             chess_data.is_correct[id] = true;
