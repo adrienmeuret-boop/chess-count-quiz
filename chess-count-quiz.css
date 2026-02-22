@@ -341,3 +341,15 @@ input[type="number"]::-ms-reveal {
     transparent 8px
   );
 }
+
+/* ========================================================= */
+/* Cadre global par camp (lecture générale)                  */
+/* ========================================================= */
+
+#board .hl-side-w {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+}
+
+#board .hl-side-b {
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.55);
+}
