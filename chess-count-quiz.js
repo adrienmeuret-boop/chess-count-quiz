@@ -3,7 +3,8 @@
 
 let chess_data = null; // See loadSettings for value of chess_data
 let pgn_games = []; // Array to store loaded PGN games
-
+let gameEnded = false;
+let timerInterval = null;
 
 // -----------------------------------------------------------
 // Chess functions
@@ -213,13 +214,21 @@ function resetScore() {
 
 // Start the timer count down
 function initTimer() {
-    updateTimerDisplay(chess_data);
+    // évite d'empiler plusieurs setInterval
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+
+    updateTimerDisplay();
     timerInterval = setInterval(() => {
+        if (gameEnded) return; // si la partie est finie, on ne touche plus au temps
+
         chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 1);
-	updateTimerDisplay(chess_data);
-	
+        updateTimerDisplay();
+
         if (chess_data.timeRemaining <= 0) {
-	    endGame(chess_data);
+            endGame();
         }
     }, 1000);
 }
@@ -236,8 +245,12 @@ function startTimer() {
 
 // Deduct 10 seconds for incorrect answer
 function penalizeTime() {
-    chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 10); // lose 10 seconds per wrong answer
-    updateTimerDisplay(chess_data);
+    chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 10);
+    updateTimerDisplay();
+
+    if (chess_data.timeRemaining <= 0) {
+        endGame();
+    }
 }
     
 function revealAnswers() {
@@ -262,6 +275,14 @@ function revealAnswers() {
 }
 
 function endGame() {
+    if (gameEnded) return;
+    gameEnded = true;
+
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+
     revealAnswers();
 
     if (confirm(`Time's up! Final Score: ${chess_data.score}\n\nStart a new game?`)) {
@@ -275,14 +296,7 @@ function endGame() {
 
 // Function to show moves and disable the button
 function showMoves() {
-    var showMovesButton = document.getElementById("showMovesButton");
-    showMovesButton.disabled = true;
-    showMovesButton.style.backgroundColor = "#d3d3d3"; // Grey out the button
-
-    chess_data.questionTypes.forEach((id) => {
-	const shownMovesLabel = document.getElementById(id + "ShownMoves");
-	shownMovesLabel.textContent = chess_data.correct[id].moves;
-    });
+    revealAnswers();
 }
 
 // Add event listener to the button
@@ -421,9 +435,11 @@ function loadNewPuzzle() {
 }
 
 function startNewGame() {
+    gameEnded = false;      // ✅ IMPORTANT
     resetScore();
     loadNewPuzzle();
-    startTimer();
+    startTimer();           // remet timeRemaining
+    initTimer();            // ✅ redémarre le setInterval si on l’a stoppé
 }
 
 // Return the event handler that is called when the user clicks to
@@ -441,15 +457,14 @@ function submitAnswers(event) {
         feedbackIcon.textContent = isCorrect ? '✓' : '✗'; // Set the icon
         feedbackIcon.className = isCorrect ? 'correct' : 'incorrect'; // Set the class for styling
 	
-	if (!chess_data.is_correct[id] && isCorrect) {
-	    chess_data.is_correct[id] = true;
-	    incrementScore(chess_data);
-	}
+if (!chess_data.is_correct[id] && isCorrect) {
+    chess_data.is_correct[id] = true;
+    incrementScore();
+}
 	
 	allCorrect = allCorrect && isCorrect;
-	if (!isCorrect) {
-	    penalizeTime(chess_data)
-	}
+if (!isCorrect) {
+    penalizeTime();
     });
     
     const all_correct = Object.values(chess_data.is_correct).reduce((acc, cur) => acc && cur, true);
