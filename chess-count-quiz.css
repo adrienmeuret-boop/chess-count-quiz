@@ -208,129 +208,77 @@ input[type="number"]::-ms-reveal {
   font-weight: bold;
 }
 
-/* épaisseur des carrés divisée par 2 */
-.hl-red {
-  box-shadow: inset 0 0 0 2px rgba(255, 0, 0, 0.85);
+/* --- Piece markers inside squares (6 zones) --- */
+
+/* important: chaque case doit être position:relative */
+#board .square-55d63 {
+  position: relative;
 }
 
-.board-column {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* conteneur des 6 mini-zones */
+#board .pm6 {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
 }
 
-#boardHighlightsControls {
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
-  max-width: 400px;
+/* mini-zone : invisible par défaut */
+#board .pm6 .pm {
+  position: absolute;
+  opacity: 0;
+  box-sizing: border-box;
 }
 
-.hl-red {
-  box-shadow: inset 0 0 0 2px rgba(200, 0, 0, 0.9);
+/* visible si activé */
+#board .pm6 .pm.on {
+  opacity: 1;
+}
+
+/* ✅ rendu EXACT comme .hl-red : cadre + hachures */
+#board .pm6 .pm {
+  box-shadow: inset 0 0 0 2px var(--pm-border);
+}
+
+#board .pm6 .pm::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   background-image: repeating-linear-gradient(
     45deg,
-    rgba(255, 0, 0, 0.25),
-    rgba(255, 0, 0, 0.25) 4px,
+    var(--pm-fill),
+    var(--pm-fill) 4px,
     transparent 4px,
     transparent 8px
   );
 }
 
-/* --- Piece heatmap markers inside squares (6 zones) --- */
+/* --- positions (3 colonnes x 2 lignes) --- */
+/* bas (chaud) : pion, cavalier, fou */
+#board .pm6 .pm.p { left: 0%;      top: 50%; width: 33.333%; height: 50%; }
+#board .pm6 .pm.n { left: 33.333%; top: 50%; width: 33.333%; height: 50%; }
+#board .pm6 .pm.b { left: 66.666%; top: 50%; width: 33.333%; height: 50%; }
 
-:root{
-  /* semi-transparent stripe color per piece */
-  --p-stripe: rgba(255, 140, 0, 0.45);   /* pawn: orange */
-  --n-stripe: rgba(255, 215, 0, 0.45);   /* knight: gold */
-  --b-stripe: rgba(60, 179, 113, 0.45);  /* bishop: green */
-  --r-stripe: rgba(65, 105, 225, 0.45);  /* rook: blue */
-  --q-stripe: rgba(138, 43, 226, 0.45);  /* queen: purple */
-  --k-stripe: rgba(0, 206, 209, 0.45);   /* king: cyan */
+/* haut (froid/fort) : tour, dame, roi */
+#board .pm6 .pm.r { left: 0%;      top: 0%;  width: 33.333%; height: 50%; }
+#board .pm6 .pm.q { left: 33.333%; top: 0%;  width: 33.333%; height: 50%; }
+#board .pm6 .pm.k { left: 66.666%; top: 0%;  width: 33.333%; height: 50%; }
 
-  --stripe-size: 7px;   /* largeur des hachures */
-  --stripe-gap: 7px;
-}
+/* --- couleurs par pièce (cadre + hachures) --- */
+/* bas (chaud, force croissante) */
+#board .pm6 .pm.p { --pm-border: rgba(220,170,0,0.95); --pm-fill: rgba(220,170,0,0.35); } /* pion : jaune */
+#board .pm6 .pm.n { --pm-border: rgba(255,140,0,0.95); --pm-fill: rgba(255,140,0,0.35); } /* cavalier : orange */
+#board .pm6 .pm.b { --pm-border: rgba(220,60,60,0.95); --pm-fill: rgba(220,60,60,0.35); }  /* fou : rouge */
 
-/* chessboard.js squares: usually .square-55d63 */
-#board .square-55d63{
-  position: relative; /* pour placer les marqueurs */
-}
-
-/* container for 6 markers */
-#board .pm6{
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 5; /* au-dessus du fond, sous les pièces (les pièces ont souvent z-index > 10) */
-}
-
-/* each mini-zone */
-#board .pm6 .pm{
-  position: absolute;
-  opacity: 0;            /* caché par défaut */
-  transition: opacity .08s linear;
-}
-
-/* active = visible */
-#board .pm6 .pm.on{
-  opacity: 1;
-}
-
-/* Hachures diagonales (↗) : fond transparent + bandes */
-#board .pm6 .pm{
-  background-image:
-    repeating-linear-gradient(
-      -45deg,
-      var(--pm-color) 0,
-      var(--pm-color) var(--stripe-size),
-      rgba(0,0,0,0) var(--stripe-size),
-      rgba(0,0,0,0) calc(var(--stripe-size) + var(--stripe-gap))
-    );
-}
-
-/* 6 positions: 3 colonnes x 2 lignes */
-
-/* bas (chaud) */
-#board .pm6 .pm.p { left: 0%;   top: 50%; width: 33.333%; height: 50%; --pm-color: var(--p-stripe); } /* pawn */
-#board .pm6 .pm.n { left: 33.333%; top: 50%; width: 33.333%; height: 50%; --pm-color: var(--n-stripe); } /* knight */
-#board .pm6 .pm.b { left: 66.666%; top: 50%; width: 33.333%; height: 50%; --pm-color: var(--b-stripe); } /* bishop */
-
-/* haut (froid) */
-#board .pm6 .pm.r { left: 0%;   top: 0%;  width: 33.333%; height: 50%; --pm-color: var(--r-stripe); } /* rook */
-#board .pm6 .pm.q { left: 33.333%; top: 0%; width: 33.333%; height: 50%; --pm-color: var(--q-stripe); } /* queen */
-#board .pm6 .pm.k { left: 66.666%; top: 0%; width: 33.333%; height: 50%; --pm-color: var(--k-stripe); } /* king */
+/* haut (froid, force croissante) */
+#board .pm6 .pm.r { --pm-border: rgba(60,120,255,0.95); --pm-fill: rgba(60,120,255,0.35); } /* tour : bleu */
+#board .pm6 .pm.q { --pm-border: rgba(140,80,200,0.95); --pm-fill: rgba(140,80,200,0.35); } /* dame : violet */
+#board .pm6 .pm.k { --pm-border: rgba(60,200,160,0.95); --pm-fill: rgba(60,200,160,0.35); } /* roi : teal */
 
 /* === Piece markers : squares with frame + hatching === */
 
-.pm {
-    position: absolute;
-    width: 50%;
-    height: 50%;
-    opacity: 0;
-    box-sizing: border-box;
-    background-size: 6px 6px;
-    transition: opacity 0.15s ease;
-}
-
-/* activation */
-.pm.on {
-    opacity: 0.75;
-}
-
-/* cadre */
-.pm::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border: 1px solid rgba(0,0,0,0.45);
-    box-sizing: border-box;
-}
-
-/* hachures diagonales */
-/* === Mini square markers: EXACT SAME RENDER AS .hl-red === */
+/* === Mini-piece markers : EXACT clone of .hl-red, colorized === */
 
 .pm {
   position: absolute;
@@ -344,12 +292,12 @@ input[type="number"]::-ms-reveal {
   opacity: 1;
 }
 
-/* Cadre EXACTEMENT identique */
+/* Cadre identique à .hl-red */
 .pm {
-  box-shadow: inset 0 0 0 2px rgba(200, 0, 0, 0.9);
+  box-shadow: inset 0 0 0 2px var(--pm-color);
 }
 
-/* Hachures EXACTEMENT identiques */
+/* Hachures identiques à .hl-red */
 .pm::after {
   content: "";
   position: absolute;
@@ -357,8 +305,8 @@ input[type="number"]::-ms-reveal {
   pointer-events: none;
   background-image: repeating-linear-gradient(
     45deg,
-    rgba(255, 0, 0, 0.35),
-    rgba(255, 0, 0, 0.35) 4px,
+    var(--pm-color-light),
+    var(--pm-color-light) 4px,
     transparent 4px,
     transparent 8px
   );
