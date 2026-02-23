@@ -306,42 +306,6 @@ input[type="number"]::-ms-reveal {
   --pm-fill:   rgba(0, 170, 90, 0.45);
 }
 
-/* === Piece markers : squares with frame + hatching === */
-
-/* === Mini-piece markers : EXACT clone of .hl-red, colorized === */
-
-.pm {
-  position: absolute;
-  width: 50%;
-  height: 50%;
-  box-sizing: border-box;
-  opacity: 0;
-}
-
-.pm.on {
-  opacity: 1;
-}
-
-/* Cadre identique à .hl-red */
-.pm {
-  box-shadow: inset 0 0 0 2px var(--pm-color);
-}
-
-/* Hachures identiques à .hl-red */
-.pm::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image: repeating-linear-gradient(
-    45deg,
-    var(--pm-color-light),
-    var(--pm-color-light) 4px,
-    transparent 4px,
-    transparent 8px
-  );
-}
-
 /* ========================================================= */
 /* Cadre global par camp (lecture générale)                  */
 /* ========================================================= */
@@ -353,3 +317,54 @@ input[type="number"]::-ms-reveal {
 #board .hl-side-b {
   box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.55);
 }
+
+/* ========================================================= */
+/* Grand carré par case (pmBig) : même style que les mini     */
+/* ========================================================= */
+
+#board .pmBig{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;            /* sous les mini-carrés (.pm6 est z-index:5) */
+  opacity: 0;            /* caché par défaut */
+  box-sizing: border-box;
+}
+
+#board .pmBig.on{
+  opacity: 1;
+}
+
+/* même rendu que les mini : cadre + hachures */
+#board .pmBig{
+  box-shadow: inset 0 0 0 2px var(--pm-border);
+}
+#board .pmBig::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--pm-fill),
+    var(--pm-fill) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+/* ========================= */
+/* Couleurs "pièce" (1 seule)*/
+/* ========================= */
+#board .pmBig.piece-p { --pm-border: rgba(255, 200, 40, 0.95); --pm-fill: rgba(255, 200, 40, 0.35); }
+#board .pmBig.piece-n { --pm-border: rgba(255, 140, 0, 0.95);  --pm-fill: rgba(255, 140, 0, 0.35); }
+#board .pmBig.piece-b { --pm-border: rgba(210, 50, 50, 0.95);  --pm-fill: rgba(210, 50, 50, 0.35); }
+#board .pmBig.piece-r { --pm-border: rgba(40, 110, 255, 0.95); --pm-fill: rgba(40, 110, 255, 0.35); }
+#board .pmBig.piece-q { --pm-border: rgba(0, 170, 210, 0.95);  --pm-fill: rgba(0, 170, 210, 0.35); }
+#board .pmBig.piece-k { --pm-border: rgba(0, 170, 90, 0.95);   --pm-fill: rgba(0, 170, 90, 0.35); }
+
+/* ============================= */
+/* Couleurs "joueur" (multiples) */
+/* ============================= */
+#board .pmBig.side-w { --pm-border: rgba(255, 255, 255, 0.80); --pm-fill: rgba(255, 255, 255, 0.25); }
+#board .pmBig.side-b { --pm-border: rgba(0, 0, 0, 0.75);       --pm-fill: rgba(0, 0, 0, 0.20); }
