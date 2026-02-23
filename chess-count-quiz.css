@@ -290,10 +290,10 @@ input[type="number"]::-ms-reveal {
 /* bas = chaud / haut = froid, hiérarchie très lisible */
 
 /* ===== BAS : CHAUD ===== */
-/* pion : jaune soutenu (lisible sur beige/marron) */
+/* Pawn: darker yellow for better contrast */
 #board .pm6 .pm.p {
-  --pm-border: rgba(255, 200, 40, 0.95);
-  --pm-fill:   rgba(255, 200, 40, 0.45);
+  --pm-border: rgba(210, 170, 30, 0.98);
+  --pm-fill:   rgba(210, 170, 30, 0.45);
 }
 
 /* cavalier : orange franc */
@@ -368,7 +368,7 @@ input[type="number"]::-ms-reveal {
 /* ========================= */
 /* Couleurs "pièce" (1 seule)*/
 /* ========================= */
-#board .pmBig.piece-p { --pm-border: rgba(255, 200, 40, 0.95); --pm-fill: rgba(255, 200, 40, 0.35); }
+#board .pmBig.piece-p { --pm-border: rgba(210, 170, 30, 0.98); --pm-fill: rgba(210, 170, 30, 0.35); }
 #board .pmBig.piece-n { --pm-border: rgba(255, 140, 0, 0.95);  --pm-fill: rgba(255, 140, 0, 0.35); }
 #board .pmBig.piece-b { --pm-border: rgba(210, 50, 50, 0.95);  --pm-fill: rgba(210, 50, 50, 0.35); }
 #board .pmBig.piece-r { --pm-border: rgba(40, 110, 255, 0.95); --pm-fill: rgba(40, 110, 255, 0.35); }
