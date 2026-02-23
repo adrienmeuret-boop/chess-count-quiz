@@ -357,3 +357,88 @@ input[type="number"]::-ms-reveal {
 /* ============================= */
 #board .pmBig.side-w { --pm-border: rgba(255, 255, 255, 0.80); --pm-fill: rgba(255, 255, 255, 0.25); }
 #board .pmBig.side-b { --pm-border: rgba(0, 0, 0, 0.75);       --pm-fill: rgba(0, 0, 0, 0.20); }
+
+/* ===========================
+   Legend under the board
+   (BONUS x2 integrated)
+   1) same centering as #board
+   2) legend width = its content
+   =========================== */
+
+/* BONUS #1: center legend exactly like the board */
+#board,
+.legend{
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* BONUS #2: legend takes the width of its content (clean alignment) */
+.legend{
+  display: inline-block;   /* content-width box */
+  margin-top: 12px;
+  user-select: none;
+}
+
+.legend-title{
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.legend-grid{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 14px;
+  align-items: center;
+}
+
+.legend-item{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 22px;
+}
+
+.legend-label{
+  font-size: 14px;
+}
+
+/* Swatch: same style as pmBig (frame + hatching) */
+.legend-swatch{
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  position: relative;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 0 2px var(--pm-border);
+}
+
+.legend-swatch::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--pm-fill),
+    var(--pm-fill) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+/* Piece colors (same as pmBig) */
+.legend-swatch.piece-p { --pm-border: rgba(255, 200, 40, 0.95); --pm-fill: rgba(255, 200, 40, 0.35); }
+.legend-swatch.piece-n { --pm-border: rgba(255, 140, 0, 0.95);  --pm-fill: rgba(255, 140, 0, 0.35); }
+.legend-swatch.piece-b { --pm-border: rgba(210, 50, 50, 0.95);  --pm-fill: rgba(210, 50, 50, 0.35); }
+.legend-swatch.piece-r { --pm-border: rgba(40, 110, 255, 0.95); --pm-fill: rgba(40, 110, 255, 0.35); }
+.legend-swatch.piece-q { --pm-border: rgba(0, 170, 210, 0.95);  --pm-fill: rgba(0, 170, 210, 0.35); }
+.legend-swatch.piece-k { --pm-border: rgba(0, 170, 90, 0.95);   --pm-fill: rgba(0, 170, 90, 0.35); }
+
+/* Player colors for "multiple markers on same square" */
+.legend-swatch.side-w  { --pm-border: rgba(255,255,255,0.80); --pm-fill: rgba(255,255,255,0.25); }
+.legend-swatch.side-b  { --pm-border: rgba(0,0,0,0.75);       --pm-fill: rgba(0,0,0,0.20); }
+
+.legend-note{
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.75;
+}
