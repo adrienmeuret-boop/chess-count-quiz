@@ -47,13 +47,14 @@ h2{
   grid-template-columns: var(--board-size) minmax(520px, 1fr);
   column-gap: var(--gap);
   align-items: start;
+
+  margin-left: calc(2 * var(--page-pad));
 }
 
 /* Colonne gauche : échiquier uniquement */
 #board{
   width: var(--board-size);
   height: var(--board-size);
-  margin-left: calc(2 * var(--page-pad));
 }
 
 /* Colonne droite */
