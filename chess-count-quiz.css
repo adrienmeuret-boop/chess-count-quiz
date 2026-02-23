@@ -35,9 +35,10 @@ body{
 }
 
 h2{
-  margin: 0 0 12px 0;
-  font-size: 26px;
-  font-weight: 700;
+  margin: 0 0 16px 0;
+  font-size: 36px;      /* ≈ 2× la base (18px) */
+  font-weight: 800;
+  line-height: 1.1;
 }
 
 /* ===== Layout principal ===== */
