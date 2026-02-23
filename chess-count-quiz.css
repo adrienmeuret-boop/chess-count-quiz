@@ -53,6 +53,7 @@ h2{
 #board{
   width: var(--board-size);
   height: var(--board-size);
+  margin-left: calc(2 * var(--page-pad));
 }
 
 /* Colonne droite */
