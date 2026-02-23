@@ -35,6 +35,19 @@ body{
   margin: 0;
   padding: var(--page-pad);
 }
+
+/* ===== Footer (Settings + Positions + See) ===== */
+.footer-block{
+  margin-top: 12px;
+}
+
+.footer-block p{
+  margin: 4px 0;
+}
+
+#settingsButton{
+  margin-bottom: 6px;
+}
 /* Décale tout le contenu visible (titre, bouton settings, container, paragraphes du bas) */
 body > *{
   margin-left: var(--shift-x);
