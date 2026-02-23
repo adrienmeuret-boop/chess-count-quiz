@@ -78,38 +78,28 @@
     <div id="board"></div>
 
     <div id="boardHighlightsControls">
-      <!-- tes boutons highlight ici -->
+      <button id="hl_p1AllLegal" class="action-button" type="button">White’s Moves</button>
+      <button id="hl_p2AllLegal" class="action-button" type="button">Black’s Moves</button>
+      <button id="hl_p1Checks" class="action-button" type="button">White’s Checks</button>
+      <button id="hl_p2Checks" class="action-button" type="button">Black’s Checks</button>
+      <button id="hl_p1Captures" class="action-button" type="button">White’s Captures</button>
+      <button id="hl_p2Captures" class="action-button" type="button">Black’s Captures</button>
+      <button id="hl_clear" class="action-button" type="button">Clear</button>
     </div>
 
+    <!-- IMPORTANT : il ne doit y avoir QU'UN SEUL #pieceLegend dans toute la page -->
     <div id="pieceLegend" class="legend">
       <div class="legend-title">Legend</div>
 
       <div class="legend-grid">
-        <div class="legend-item">
-          <span class="legend-swatch piece-p"></span><span class="legend-label">Pawn (P)</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-swatch piece-n"></span><span class="legend-label">Knight (N)</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-swatch piece-b"></span><span class="legend-label">Bishop (B)</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-swatch piece-r"></span><span class="legend-label">Rook (R)</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-swatch piece-q"></span><span class="legend-label">Queen (Q)</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-swatch piece-k"></span><span class="legend-label">King (K)</span>
-        </div>
-
-        <div class="legend-item">
-          <span class="legend-swatch side-w"></span><span class="legend-label">Player: White</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-swatch side-b"></span><span class="legend-label">Player: Black</span>
-        </div>
+        <div class="legend-item"><span class="legend-swatch piece-p"></span><span class="legend-label">Pawn (P)</span></div>
+        <div class="legend-item"><span class="legend-swatch piece-n"></span><span class="legend-label">Knight (N)</span></div>
+        <div class="legend-item"><span class="legend-swatch piece-b"></span><span class="legend-label">Bishop (B)</span></div>
+        <div class="legend-item"><span class="legend-swatch piece-r"></span><span class="legend-label">Rook (R)</span></div>
+        <div class="legend-item"><span class="legend-swatch piece-q"></span><span class="legend-label">Queen (Q)</span></div>
+        <div class="legend-item"><span class="legend-swatch piece-k"></span><span class="legend-label">King (K)</span></div>
+        <div class="legend-item"><span class="legend-swatch side-w"></span><span class="legend-label">Player: White</span></div>
+        <div class="legend-item"><span class="legend-swatch side-b"></span><span class="legend-label">Player: Black</span></div>
       </div>
 
       <div class="legend-note">
@@ -128,7 +118,12 @@
     </div>
 
     <form id="chessCountForm">
-      <!-- le reste de ton form -->
+      <!-- ✅ COLLE ICI ton formulaire existant (inputs + boutons Submit/Show Moves etc.) -->
+    </form>
+  </div>
+</div>
+
+
 	
 	<form id="chessCountForm">
 	  <div id="count-inputs">
