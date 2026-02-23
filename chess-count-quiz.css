@@ -464,3 +464,7 @@ input[type="number"]::-ms-reveal {
   opacity: 0.75;
 }
 
+#showMovesButton{
+  margin-top: 10px;
+}
+
