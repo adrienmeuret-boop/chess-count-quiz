@@ -35,10 +35,10 @@ body{
 }
 
 h2{
-  margin: 0 0 20px 0;
-  font-size: 72px;     /* 2 × 36px = vraiment dominant */
-  font-weight: 900;
-  line-height: 1.05;
+  margin: 0 0 18px 0;
+  font-size: 56px;   /* entre 36 et 72 : équilibre parfait */
+  font-weight: 800;
+  line-height: 1.08;
 }
 
 /* ===== Layout principal ===== */
