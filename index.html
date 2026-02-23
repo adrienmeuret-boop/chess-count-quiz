@@ -87,7 +87,6 @@
       <button id="hl_clear" class="action-button" type="button">Clear</button>
     </div>
 
-    <!-- IMPORTANT : il ne doit y avoir QU'UN SEUL #pieceLegend dans toute la page -->
     <div id="pieceLegend" class="legend">
       <div class="legend-title">Legend</div>
 
@@ -117,24 +116,13 @@
       <p>10 second penalty per wrong answer</p>
     </div>
 
-	<form id="chessCountForm">
-	  <div id="count-inputs">
-	    <!-- Dynamic input fields will be appended here based on settings -->
-	  </div>
-	  <button type="submit" id="submit" class="action-button">Submit Counts</button>
-	</form>
+    <form id="chessCountForm">
+      <div id="count-inputs">
+        <!-- Dynamic input fields will be appended here based on settings -->
+      </div>
+      <button type="submit" id="submit" class="action-button">Submit Counts</button>
+    </form>
+
+    <button id="showMovesButton" class="action-button" type="button">Show Moves</button>
   </div>
 </div>
-
-
-	
-
-	<button id="showMovesButton" class="action-button">Show Moves</button>
-      </div>
-    </div>
-    <P>Positions from the <a href="https://database.lichess.org/">Lichess puzzle database</a></p>
-    <P>See <a href="https://github.com/bescoto/chess-count-quiz">https://github.com/bescoto/chess-count-quiz</a> for source code</p>
-    <script src="chess-count-quiz.js"></script>
-</body>
-</html>
-
