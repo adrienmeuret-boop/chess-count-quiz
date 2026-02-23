@@ -91,6 +91,43 @@
       <button id="hl_clear" type="button">Clear</button>
     </div>
   </div>
+
+<div id="pieceLegend" class="legend">
+  <div class="legend-title">Legend</div>
+
+  <div class="legend-grid">
+    <div class="legend-item">
+      <span class="legend-swatch piece-p"></span><span class="legend-label">Pawn (P)</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-swatch piece-n"></span><span class="legend-label">Knight (N)</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-swatch piece-b"></span><span class="legend-label">Bishop (B)</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-swatch piece-r"></span><span class="legend-label">Rook (R)</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-swatch piece-q"></span><span class="legend-label">Queen (Q)</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-swatch piece-k"></span><span class="legend-label">King (K)</span>
+    </div>
+
+    <!-- Bonus: couleur joueur (multi-pièces sur une case) -->
+    <div class="legend-item">
+      <span class="legend-swatch side-w"></span><span class="legend-label">Player: White</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-swatch side-b"></span><span class="legend-label">Player: Black</span>
+    </div>
+  </div>
+
+  <div class="legend-note">
+    If a square has multiple piece markers, the big square uses player color (white/black).
+  </div>
+</div>	
 	
       <div class="info">
 	<div id="score">Score: 0</div>
