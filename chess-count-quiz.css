@@ -339,3 +339,63 @@ input[type="number"]{ -moz-appearance: textfield; }
 .movesText{
   line-height: 1.25;
 }
+
+/* ============================
+   ETAPE 1 : déplacer les boutons highlight à droite
+   + légende dessous
+   ============================ */
+
+/* 1) Le layout principal en 2 colonnes : échiquier à gauche, panneau à droite */
+.container{
+  display: grid;
+  grid-template-columns: 840px 1fr; /* ajuste si besoin, l’échiquier prendra la place gauche */
+  column-gap: 28px;
+  align-items: start;
+}
+
+/* 2) Colonne gauche : uniquement l’échiquier */
+#board{
+  width: 840px;              /* ajuste plus tard, là on stabilise */
+  height: 840px;
+}
+
+/* 3) Les boutons passent dans la colonne droite */
+#boardHighlightsControls{
+  /* on les met à droite, sous la zone info */
+  margin-top: 12px;
+  width: 520px;
+  max-width: 100%;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+
+  /* IMPORTANT : évite tout chevauchement */
+  position: relative;
+  z-index: 1;
+}
+
+/* Les boutons prennent toute la largeur de leur cellule */
+#boardHighlightsControls .action-button{
+  width: 100%;
+}
+
+/* 4) La légende sous les boutons, colonne droite */
+#pieceLegend{
+  margin-top: 12px;
+  width: 520px;
+  max-width: 100%;
+
+  position: relative;
+  z-index: 1;
+}
+
+/* 5) IMPORTANT : comme #boardHighlightsControls et #pieceLegend sont dans .board-col (colonne gauche),
+      on les "retire" du flux gauche et on les place à droite via une astuce :
+      - on force .board-col à ne pas “contenir” visuellement ces blocs
+      - on les aligne sur la droite en leur donnant une marge gauche auto
+*/
+#boardHighlightsControls,
+#pieceLegend{
+  margin-left: auto;
+}
