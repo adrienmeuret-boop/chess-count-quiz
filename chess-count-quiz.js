@@ -505,10 +505,17 @@ function setupHighlightButtons() {
         return;
       }
 
-      const ans = chess_data?.correct?.[cfg.qType];
-      if (!ans?.targets) return;
+// Récupère la réponse si déjà calculée, sinon calcule-la à la volée
+if (!chess_data.correct) chess_data.correct = {};
 
-      highlightMovesByPiece(ans.targets, cfg.side);
+let ans = chess_data.correct[cfg.qType];
+if (!ans) {
+  ans = getOneCorrectAnswer(chess_data.fen, cfg.qType);
+  chess_data.correct[cfg.qType] = ans;
+}
+
+if (!ans?.targets) return;
+highlightMovesByPiece(ans.targets, cfg.side);
     };
   });
 }
@@ -635,8 +642,18 @@ function loadNewPuzzle() {
 	clearPieceMarkers();
     updateMovesDisplay();
     
-    // Get correct answers, which may return null if a side is in check
-    chess_data.correct = getCorrectAnswers(chess_data.fen, chess_data.questionTypes);
+// Calcule les réponses sélectionnées dans les settings
+chess_data.correct = getCorrectAnswers(chess_data.fen, chess_data.questionTypes);
+
+// Calcule AUSSI AllLegal pour les boutons de highlight
+[
+  qTypeForAbsColorAndKind('w', 'AllLegal'),
+  qTypeForAbsColorAndKind('b', 'AllLegal')
+].forEach(qType => {
+  if (!chess_data.correct[qType]) {
+    chess_data.correct[qType] = getOneCorrectAnswer(chess_data.fen, qType);
+  }
+});
 
     // Initialize all answers to start as false
 chess_data.is_correct = Object.fromEntries(
