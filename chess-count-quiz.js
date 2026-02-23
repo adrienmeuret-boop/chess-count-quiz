@@ -357,26 +357,34 @@ function highlightSquares(squares) {
 // --- Piece markers (6 zones) --------------------------------
 
 function ensurePieceMarkers() {
-    const boardEl = document.getElementById('board');
-    if (!boardEl) return;
+  const boardEl = document.getElementById('board');
+  if (!boardEl) return;
 
-    // Chessboard.js : les cases ont la classe .square-55d63
-    const squares = boardEl.querySelectorAll('.square-55d63');
+  // Chessboard.js : les cases ont la classe .square-55d63
+  const squares = boardEl.querySelectorAll('.square-55d63');
 
-    squares.forEach(sqEl => {
-        if (sqEl.querySelector(':scope > .pm6')) return;
+  squares.forEach(sqEl => {
+    // grand carré (1 par case)
+    if (!sqEl.querySelector(':scope > .pmBig')) {
+      const big = document.createElement('div');
+      big.className = 'pmBig';
+      sqEl.appendChild(big);
+    }
 
-        const wrap = document.createElement('div');
-        wrap.className = 'pm6';
+    // conteneur des 6 mini-zones (1 par case)
+    if (sqEl.querySelector(':scope > .pm6')) return;
 
-        ['p','n','b','r','q','k'].forEach(piece => {
-            const d = document.createElement('div');
-            d.className = `pm ${piece}`;
-            wrap.appendChild(d);
-        });
+    const wrap = document.createElement('div');
+    wrap.className = 'pm6';
 
-        sqEl.appendChild(wrap);
+    ['p','n','b','r','q','k'].forEach(piece => {
+      const d = document.createElement('div');
+      d.className = `pm ${piece}`;
+      wrap.appendChild(d);
     });
+
+    sqEl.appendChild(wrap);
+  });
 }
 
 function clearPieceMarkers() {
@@ -385,72 +393,111 @@ function clearPieceMarkers() {
     boardEl.querySelectorAll('.pm6 .pm.on').forEach(el => el.classList.remove('on'));
 }
 
-function markSquarePiece(square, piece, side /* 'w' ou 'b' */) {
-    const boardEl = document.getElementById('board');
-    if (!boardEl) return;
+function clearBigMarkers() {
+  const boardEl = document.getElementById('board');
+  if (!boardEl) return;
 
-    const sqEl =
-        boardEl.querySelector(`[data-square="${square}"]`) ||
-        boardEl.querySelector(`.square-${square}`);
+  boardEl.querySelectorAll('.pmBig').forEach(el => {
+    el.classList.remove('on', 'side-w', 'side-b');
+    el.classList.remove('piece-p', 'piece-n', 'piece-b', 'piece-r', 'piece-q', 'piece-k');
+  });
+}
 
-    if (!sqEl) return;
+function markSquarePiece(square, piece) {
+  const boardEl = document.getElementById('board');
+  if (!boardEl) return;
 
-    // mini-carrés par pièce (inchangé)
-    if (!sqEl.querySelector(':scope > .pm6')) {
-        ensurePieceMarkers();
-    }
-    const marker = sqEl.querySelector(`:scope > .pm6 .pm.${piece}`);
-    if (marker) marker.classList.add('on');
+  const sqEl =
+    boardEl.querySelector(`[data-square="${square}"]`) ||
+    boardEl.querySelector(`.square-${square}`);
 
-    // ✅ cadre global par camp
-    if (side === 'w') sqEl.classList.add('hl-side-w');
-    if (side === 'b') sqEl.classList.add('hl-side-b');
+  if (!sqEl) return;
+
+  if (!sqEl.querySelector(':scope > .pm6')) {
+    ensurePieceMarkers();
+  }
+
+  const marker = sqEl.querySelector(`:scope > .pm6 .pm.${piece}`);
+  if (marker) marker.classList.add('on');
 }
 
 function highlightMovesByPiece(moveList, side /* 'w'|'b' */) {
-    clearPieceMarkers();
-    ensurePieceMarkers();
+  clearPieceMarkers();
+  clearBigMarkers();
+  ensurePieceMarkers();
 
-    if (!Array.isArray(moveList)) return;
+  if (!Array.isArray(moveList)) return;
 
-    moveList.forEach(m => {
-        if (!m?.to || !m?.piece) return;
-        markSquarePiece(m.to, m.piece, side);
-    });
+  // regroupe les pièces possibles par case (to)
+  const map = new Map(); // square -> Set(pieces)
+
+  moveList.forEach(m => {
+    if (!m?.to || !m?.piece) return;
+    if (!map.has(m.to)) map.set(m.to, new Set());
+    map.get(m.to).add(m.piece);
+  });
+
+  const boardEl = document.getElementById('board');
+
+  // applique mini + grand rendu
+  for (const [sq, piecesSet] of map.entries()) {
+    const pieces = Array.from(piecesSet);
+
+    // 1) active les mini-carrés
+    pieces.forEach(p => markSquarePiece(sq, p));
+
+    // 2) grand carré
+    const sqEl =
+      boardEl.querySelector(`[data-square="${sq}"]`) ||
+      boardEl.querySelector(`.square-${sq}`);
+
+    if (!sqEl) continue;
+
+    const big = sqEl.querySelector(':scope > .pmBig');
+    if (!big) continue;
+
+    big.classList.add('on');
+
+    if (pieces.length === 1) {
+      // même couleur que la pièce
+      big.classList.add(`piece-${pieces[0]}`);
+    } else {
+      // plusieurs : couleur du joueur
+      big.classList.add(side === 'w' ? 'side-w' : 'side-b');
+    }
+  }
 }
 
 function setupHighlightButtons() {
   const mapBtnTo = {
-    // Boutons affichés "White ..."
-    hl_p1AllLegal: qTypeForAbsColorAndKind('w', 'AllLegal'),
-    hl_p1Checks:   qTypeForAbsColorAndKind('w', 'Checks'),
-    hl_p1Captures: qTypeForAbsColorAndKind('w', 'Captures'),
+    // White buttons
+    hl_p1AllLegal: { qType: qTypeForAbsColorAndKind('w', 'AllLegal'), side: 'w' },
+    hl_p1Checks:   { qType: qTypeForAbsColorAndKind('w', 'Checks'),   side: 'w' },
+    hl_p1Captures: { qType: qTypeForAbsColorAndKind('w', 'Captures'), side: 'w' },
 
-    // Boutons affichés "Black ..."
-    hl_p2AllLegal: qTypeForAbsColorAndKind('b', 'AllLegal'),
-    hl_p2Checks:   qTypeForAbsColorAndKind('b', 'Checks'),
-    hl_p2Captures: qTypeForAbsColorAndKind('b', 'Captures'),
+    // Black buttons
+    hl_p2AllLegal: { qType: qTypeForAbsColorAndKind('b', 'AllLegal'), side: 'b' },
+    hl_p2Checks:   { qType: qTypeForAbsColorAndKind('b', 'Checks'),   side: 'b' },
+    hl_p2Captures: { qType: qTypeForAbsColorAndKind('b', 'Captures'), side: 'b' },
   };
 
-  Object.entries(mapBtnTo).forEach(([btnId, qType]) => {
+  Object.entries(mapBtnTo).forEach(([btnId, cfg]) => {
     const btn = document.getElementById(btnId);
     if (!btn) return;
 
     btn.onclick = () => {
-      const ans = chess_data?.correct?.[qType];
+      const ans = chess_data?.correct?.[cfg.qType];
       if (!ans?.targets) return;
-
-      // ✅ ton nouveau système : colorisation par pièce
-      highlightMovesByPiece(ans.targets);
+      highlightMovesByPiece(ans.targets, cfg.side);
     };
   });
 
-  // ✅ Clear button
   const clearBtn = document.getElementById('hl_clear');
   if (clearBtn) {
     clearBtn.onclick = () => {
-      clearBoardHighlights(); // si tu as encore l’ancien système quelque part
-      clearPieceMarkers();    // le nouveau système (6 zones)
+      clearBoardHighlights();
+      clearPieceMarkers();
+      clearBigMarkers();
     };
   }
 }
