@@ -70,8 +70,8 @@ h2{
   font-weight: 800;
 }
 #timer{
-  font-size: 1.4em;
-  font-weight: 700;
+  font-size: 1.5em;   /* 2em - 25% = 1.5em */
+  font-weight: 600;
 }
 
 #timerSection p{
@@ -80,11 +80,11 @@ h2{
 }
 
 #remainingMoves{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: monospace;
   margin: 8px 0 0;
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-size: 16px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 1.4em;
 }
 
 /* ===== Formulaire ===== */
