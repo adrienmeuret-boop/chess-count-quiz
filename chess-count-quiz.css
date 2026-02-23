@@ -256,3 +256,27 @@ input[type="number"]::-webkit-outer-spin-button{
   margin: 0;
 }
 input[type="number"]{ -moz-appearance: textfield; }
+
+#movesList{
+  margin-top: 12px;
+  font-family: monospace;
+  display: none; /* apparait seulement après Show Moves */
+  max-width: 100%;
+}
+
+.movesRow{
+  display: grid;
+  grid-template-columns: 130px 1fr; /* label | liste */
+  column-gap: 14px;
+  padding: 6px 0;
+  align-items: start;
+}
+
+.movesLabel{
+  white-space: pre-line; /* pour le \n => 2 lignes */
+  line-height: 1.05;
+}
+
+.movesText{
+  line-height: 1.25;
+}
