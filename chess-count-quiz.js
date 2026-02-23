@@ -387,11 +387,7 @@ function ensurePieceMarkers() {
   });
 }
 
-function clearPieceMarkers() {
-    const boardEl = document.getElementById('board');
-    if (!boardEl) return;
-    boardEl.querySelectorAll('.pm6 .pm.on').forEach(el => el.classList.remove('on'));
-}
+function clearPieceMarkers()
 
 function clearBigMarkers() {
   const boardEl = document.getElementById('board');
