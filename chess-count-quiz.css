@@ -2,6 +2,8 @@
   --page-pad: 24px;
   --gap: 28px;
 
+  --shift-x: calc(2 * var(--page-pad)); /* +2pad en plus du padding body = total 3pad */
+  
   /* Echiquier : très grand sur 1920x1200 avec marge */
   --board-size: clamp(800px, calc(100vh - 2 * var(--page-pad)), 1160px);
 
@@ -33,7 +35,15 @@ body{
   margin: 0;
   padding: var(--page-pad);
 }
+/* Décale tout le contenu visible (titre, bouton settings, container, paragraphes du bas) */
+body > *{
+  margin-left: var(--shift-x);
+}
 
+/* Ne décale pas le modal (sinon il n'est plus centré plein écran) */
+#settingsModal{
+  margin-left: 0;
+}
 h2{
   margin: 0 0 18px 0;
   font-size: 56px;   /* entre 36 et 72 : équilibre parfait */
