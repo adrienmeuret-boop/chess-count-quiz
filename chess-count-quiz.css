@@ -374,10 +374,16 @@ input[type="number"]::-ms-reveal {
 #board .pmBig.piece-k { --pm-border: rgba(0, 170, 90, 0.95);   --pm-fill: rgba(0, 170, 90, 0.35); }
 
 /* ============================= */
-/* Couleurs "joueur" (multiples) */
-/* ============================= */
-#board .pmBig.side-w { --pm-border: rgba(255, 255, 255, 0.80); --pm-fill: rgba(255, 255, 255, 0.25); }
-#board .pmBig.side-b { --pm-border: rgba(0, 0, 0, 0.75);       --pm-fill: rgba(0, 0, 0, 0.20); }
+/* Board: player colors (true white on board) */
+#board .pmBig.side-w {
+  --pm-border: rgba(255,255,255,0.95);
+  --pm-fill:   rgba(255,255,255,0.35);
+}
+
+#board .pmBig.side-b {
+  --pm-border: rgba(0,0,0,0.75);
+  --pm-fill:   rgba(0,0,0,0.20);
+}
 
 /* ===========================
    Legend under the board
