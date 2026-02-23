@@ -38,7 +38,7 @@ body{
 
 /* ===== Footer (Settings + Positions + See) ===== */
 .footer-block{
-  margin-top: 12px;
+  margin-top: -24px;
 }
 
 .footer-block p{
