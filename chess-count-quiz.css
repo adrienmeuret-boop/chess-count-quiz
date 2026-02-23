@@ -471,12 +471,28 @@ input[type="number"]::-ms-reveal {
   margin-top: 10px;
 }
 
-/* SOLID mini squares — ONE NUMBER to control opacity */
+/* =========================
+   SOLID mini squares (pm6)
+   One-number opacity control
+   ========================= */
+
+/* 👇 SEUL CHIFFRE À CHANGER */
+#board { --solidA: 0.75; }  /* 0.4 léger, 0.7 moyen, 1 opaque */
+
+/* Stop hatching when solid */
 #board .pm6 .pm.solid::after{
   background-image: none !important;
-  background-color: color-mix(
-    in srgb,
-    var(--pm-fill) 0%,   /* 👈 CHANGE ONLY THIS NUMBER */
-    transparent
-  ) !important;
+}
+
+/* Set per-piece RGB (NO alpha here) */
+#board .pm6 .pm.p{ --solid-rgb: 210, 170, 30; }   /* pawn (jaune foncé) */
+#board .pm6 .pm.n{ --solid-rgb: 255, 140, 0; }    /* knight */
+#board .pm6 .pm.b{ --solid-rgb: 210, 50, 50; }    /* bishop */
+#board .pm6 .pm.r{ --solid-rgb: 40, 110, 255; }   /* rook */
+#board .pm6 .pm.q{ --solid-rgb: 0, 170, 210; }    /* queen */
+#board .pm6 .pm.k{ --solid-rgb: 0, 170, 90; }     /* king */
+
+/* Solid fill is applied on the element itself (reliable) */
+#board .pm6 .pm.solid{
+  background-color: rgba(var(--solid-rgb), var(--solidA)) !important;
 }
