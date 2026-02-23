@@ -58,8 +58,8 @@ body > *{
   margin-left: 0;
 }
 h2{
-  margin: 0 0 18px 0;
-  font-size: 56px;   /* entre 36 et 72 : équilibre parfait */
+  margin: 0 0 24px 0;   /* même espace que board → bouton */
+  font-size: 56px;
   font-weight: 800;
   line-height: 1.08;
 }
