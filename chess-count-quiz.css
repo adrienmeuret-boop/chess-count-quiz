@@ -470,10 +470,20 @@ input[type="number"]::-ms-reveal {
 #showMovesButton{
   margin-top: 10px;
 }
-
-/* Solid fill for MINI squares ONLY — keep piece color, independent alpha */
-#board .pm6 .pm.solid::after{
-  background-image: none;           /* no hatching */
-  background-color: var(--pm-fill); /* keeps the piece's color */
-  opacity: 1;                    /* 👈 CHANGE THIS NUMBER */
+/* === SOLID mini squares: independent alpha (change only --solidA) === */
+:root{
+  --solidA: 0.75; /* 👈 mets 0.6, 0.8, 1, etc. */
 }
+
+/* disable hatching when solid */
+#board .pm6 .pm.solid::after{
+  background-image: none;
+}
+
+/* SOLID fill per piece (same hue as your piece colors, but alpha = --solidA) */
+#board .pm6 .pm.solid.p::after{ background-color: rgba(210, 170, 30, var(--solidA)); } /* pawn */
+#board .pm6 .pm.solid.n::after{ background-color: rgba(255, 140, 0,  var(--solidA)); } /* knight */
+#board .pm6 .pm.solid.b::after{ background-color: rgba(210, 50, 50,  var(--solidA)); } /* bishop */
+#board .pm6 .pm.solid.r::after{ background-color: rgba(40, 110, 255, var(--solidA)); } /* rook */
+#board .pm6 .pm.solid.q::after{ background-color: rgba(0, 170, 210,  var(--solidA)); } /* queen */
+#board .pm6 .pm.solid.k::after{ background-color: rgba(0, 170, 90,   var(--solidA)); } /* king */
