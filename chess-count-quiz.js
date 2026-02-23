@@ -301,12 +301,13 @@ function revealAnswers() {
       ? correct.moves.join(", ")
       : "";
 
-    appendAnswerToBottomPanel(
-      createDynamicInputsLabel(id),
-      String(correct.count),
-      movesText
-    );
-  });
+appendAnswerToBottomPanel(
+  createDynamicInputsLabel(questionType),
+  correct.count,
+  movesText
+);
+// shownMovesLabel.innerHTML = ...
+});
 
   const showMovesButton = document.getElementById("showMovesButton");
   if (showMovesButton) {
