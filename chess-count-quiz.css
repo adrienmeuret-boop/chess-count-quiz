@@ -374,9 +374,11 @@ input[type="number"]::-ms-reveal {
 
 /* BONUS #2: legend takes the width of its content (clean alignment) */
 .legend{
-  display: block;              /* important: real block below the board */
-  width: fit-content;          /* bonus: legend width = content width */
-  margin: 12px auto 0;         /* centered like the board */
+  position: relative;   /* empêche tout positionnement bizarre */
+  display: block;
+  clear: both;          /* sécurité supplémentaire */
+  width: fit-content;
+  margin: 12px auto 0;
   user-select: none;
 }
 
@@ -453,4 +455,10 @@ input[type="number"]::-ms-reveal {
   content: "";
   display: block;
   clear: both;
+}
+
+/* === FIX DEFINITIF : board contains its floated squares === */
+#board{
+  display: block;
+  overflow: auto;   /* contient les float:left des squares */
 }
