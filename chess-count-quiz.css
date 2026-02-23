@@ -399,3 +399,20 @@ input[type="number"]{ -moz-appearance: textfield; }
 #pieceLegend{
   margin-left: auto;
 }
+
+/* Boutons highlight à droite (dans .info) */
+.info #boardHighlightsControls{
+  margin-top: 12px;
+  max-width: 520px;
+}
+
+/* Légende juste dessous */
+.info #pieceLegend{
+  margin-top: 12px;
+  max-width: 520px;
+}
+
+/* Evite tout chevauchement bizarre */
+#boardHighlightsControls, #pieceLegend{
+  position: static;
+}
