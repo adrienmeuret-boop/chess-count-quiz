@@ -374,9 +374,8 @@ input[type="number"]::-ms-reveal {
 
 /* BONUS #2: legend takes the width of its content (clean alignment) */
 .legend{
-  position: relative;   /* empêche tout positionnement bizarre */
   display: block;
-  clear: both;          /* sécurité supplémentaire */
+  clear: both;
   width: fit-content;
   margin: 12px auto 0;
   user-select: none;
@@ -474,6 +473,15 @@ input[type="number"]::-ms-reveal {
   position: static !important; /* not absolute/fixed/relative tricks */
   display: block !important;
   clear: both !important;      /* go under any floats */
+  width: fit-content !important;
+  margin: 12px auto 0 !important;
+}
+
+/* === FINAL FIX: force legend to sit UNDER the board === */
+#pieceLegend{
+  position: static !important;
+  clear: both !important;
+  display: block !important;
   width: fit-content !important;
   margin: 12px auto 0 !important;
 }
