@@ -344,7 +344,7 @@ input[type="number"]::-ms-reveal {
 }
 
 #board .pmBig.on{
-  opacity: 1;
+  opacity: 0.65;   /* TRANSPARENCE GLOBALE */
 }
 
 /* même rendu que les mini : cadre + hachures */
