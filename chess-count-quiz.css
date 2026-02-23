@@ -470,26 +470,13 @@ input[type="number"]::-ms-reveal {
 #showMovesButton{
   margin-top: 10px;
 }
-/* ================================
-   SOLID (mini squares ONLY)
-   Same-piece duplicate -> solid fill
-   ================================ */
 
-/* 1) kill hatching when solid (force override) */
+/* SOLID mini squares — ONE NUMBER to control opacity */
 #board .pm6 .pm.solid::after{
   background-image: none !important;
+  background-color: color-mix(
+    in srgb,
+    var(--pm-fill) 70%,   /* 👈 CHANGE ONLY THIS NUMBER */
+    transparent
+  ) !important;
 }
-
-/* 2) solid fill is on the element itself (not ::after) */
-#board .pm6 .pm.solid{
-  /* change ONLY the last number (alpha) */
-  background-color: rgba(40, 110, 255, 1) !important; /* fallback if no piece class matched */
-}
-
-/* 3) per piece: set the color + independent alpha (change the last number) */
-#board .pm6 .pm.solid.p{ background-color: rgba(210, 170, 30,  1) !important; } /* pawn */
-#board .pm6 .pm.solid.n{ background-color: rgba(255, 140, 0,   1) !important; } /* knight */
-#board .pm6 .pm.solid.b{ background-color: rgba(210, 50, 50,   1) !important; } /* bishop */
-#board .pm6 .pm.solid.r{ background-color: rgba(40, 110, 255,  1) !important; } /* rook */
-#board .pm6 .pm.solid.q{ background-color: rgba(0, 170, 210,   1) !important; } /* queen */
-#board .pm6 .pm.solid.k{ background-color: rgba(0, 170, 90,    1) !important; } /* king */
