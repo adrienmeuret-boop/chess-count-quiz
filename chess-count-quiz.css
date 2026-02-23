@@ -3,7 +3,7 @@
   --gap: 28px;
 
   /* Echiquier : grand sur 1920x1200 avec marge */
-  --board-size: clamp(640px, 74vmin, 920px);
+--board-size: clamp(720px, calc(100vh - 2 * var(--page-pad)), 1040px);
 
   /* Alignement du formulaire */
   --label-w: 130px;
