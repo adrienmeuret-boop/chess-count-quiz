@@ -289,15 +289,14 @@ function getFixedDisplayQuestionTypes() {
 }
 
 function revealAnswers() {
-
-  // --- reset de la liste sous Clear ---
+  // reset liste sous Clear
   const movesList = document.getElementById("movesList");
-  movesList.innerHTML = "";
-  movesList.style.display = "block";
+  if (movesList) {
+    movesList.innerHTML = "";
+    movesList.style.display = "block";
+  }
 
-  // --- boucle sur toutes les questions ---
   getFixedDisplayQuestionTypes().forEach((id) => {
-
     const shownMovesLabel = document.getElementById(id + "ShownMoves");
     const correct = chess_data.correct?.[id];
     if (!shownMovesLabel || !correct) return;
@@ -306,36 +305,35 @@ function revealAnswers() {
       ? correct.moves.join(", ")
       : "";
 
-    // 1) À CÔTÉ DES INPUTS : UNIQUEMENT LE CHIFFRE
+    // 1) A côté des inputs : UNIQUEMENT le chiffre
     shownMovesLabel.innerHTML =
       `<span style="font-weight:700; font-size:1.4em;">${correct.count}</span>`;
 
-    // 2) SOUS LE BOUTON CLEAR : LA LISTE DES COUPS
-    const row = document.createElement("div");
-    row.className = "movesRow";
+    // 2) Sous Clear : label + (liste)
+    if (movesList) {
+      const row = document.createElement("div");
+      row.className = "movesRow";
 
-    const lab = document.createElement("div");
-    lab.className = "movesLabel";
-    lab.textContent = createDynamicInputsLabel(id);
+      const lab = document.createElement("div");
+      lab.className = "movesLabel";
+      lab.textContent = createDynamicInputsLabel(id);
 
-    const txt = document.createElement("div");
-    txt.className = "movesText";
-    txt.textContent = movesText ? `(${movesText})` : "";
+      const txt = document.createElement("div");
+      txt.className = "movesText";
+      txt.textContent = movesText ? `(${movesText})` : "";
 
-    row.appendChild(lab);
-    row.appendChild(txt);
-
-    movesList.appendChild(row);
+      row.appendChild(lab);
+      row.appendChild(txt);
+      movesList.appendChild(row);
+    }
   });
 
-  // --- désactivation du bouton Show Moves ---
   const showMovesButton = document.getElementById("showMovesButton");
   if (showMovesButton) {
     showMovesButton.disabled = true;
     showMovesButton.style.backgroundColor = "#d3d3d3";
   }
 }
-
 function endGame() {
     if (gameEnded) return;
     gameEnded = true;
