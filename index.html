@@ -78,64 +78,57 @@
     <div id="board"></div>
 
     <div id="boardHighlightsControls">
-      <!-- tes boutons highlight (inchangés) -->
+      <!-- tes boutons highlight ici -->
     </div>
 
     <div id="pieceLegend" class="legend">
-      <!-- ta légende (inchangée) -->
+      <div class="legend-title">Legend</div>
+
+      <div class="legend-grid">
+        <div class="legend-item">
+          <span class="legend-swatch piece-p"></span><span class="legend-label">Pawn (P)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch piece-n"></span><span class="legend-label">Knight (N)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch piece-b"></span><span class="legend-label">Bishop (B)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch piece-r"></span><span class="legend-label">Rook (R)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch piece-q"></span><span class="legend-label">Queen (Q)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch piece-k"></span><span class="legend-label">King (K)</span>
+        </div>
+
+        <div class="legend-item">
+          <span class="legend-swatch side-w"></span><span class="legend-label">Player: White</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-swatch side-b"></span><span class="legend-label">Player: Black</span>
+        </div>
+      </div>
+
+      <div class="legend-note">
+        If a square has multiple piece markers, the big square uses player color (white/black).
+      </div>
     </div>
   </div>
 
   <div class="info">
-    <!-- ton timer/score/form (inchangés) -->
-  </div>
-</div>
+    <div id="score">Score: 0</div>
+    <div id="remainingMoves"></div>
 
-<div id="pieceLegend" class="legend">
-  <div class="legend-title">Legend</div>
-
-  <div class="legend-grid">
-    <div class="legend-item">
-      <span class="legend-swatch piece-p"></span><span class="legend-label">Pawn (P)</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-swatch piece-n"></span><span class="legend-label">Knight (N)</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-swatch piece-b"></span><span class="legend-label">Bishop (B)</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-swatch piece-r"></span><span class="legend-label">Rook (R)</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-swatch piece-q"></span><span class="legend-label">Queen (Q)</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-swatch piece-k"></span><span class="legend-label">King (K)</span>
+    <div id="timerSection">
+      <div id="timer">Time: 03:00</div>
+      <p>10 second penalty per wrong answer</p>
     </div>
 
-    <!-- Bonus: couleur joueur (multi-pièces sur une case) -->
-    <div class="legend-item">
-      <span class="legend-swatch side-w"></span><span class="legend-label">Player: White</span>
-    </div>
-    <div class="legend-item">
-      <span class="legend-swatch side-b"></span><span class="legend-label">Player: Black</span>
-    </div>
-  </div>
-
-  <div class="legend-note">
-    If a square has multiple piece markers, the big square uses player color (white/black).
-  </div>
-</div>	
-	
-      <div class="info">
-	<div id="score">Score: 0</div>
-	<div id="remainingMoves"></div>
-
-	<div id="timerSection">
-	  <div id="timer">Time: 03:00</div>
-	  <p>10 second penalty per wrong answer</p>
-	</div>
+    <form id="chessCountForm">
+      <!-- le reste de ton form -->
 	
 	<form id="chessCountForm">
 	  <div id="count-inputs">
