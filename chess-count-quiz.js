@@ -387,7 +387,14 @@ function ensurePieceMarkers() {
   });
 }
 
-function clearPieceMarkers()
+function clearPieceMarkers() {
+    const boardEl = document.getElementById('board');
+    if (!boardEl) return;
+
+    boardEl
+      .querySelectorAll('.pm6 .pm.on, .pm6 .pm.solid')
+      .forEach(el => el.classList.remove('on', 'solid'));
+}
 
 function clearBigMarkers() {
   const boardEl = document.getElementById('board');
