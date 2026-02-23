@@ -428,41 +428,56 @@ function highlightMovesByPiece(moveList, side /* 'w'|'b' */) {
 
   if (!Array.isArray(moveList)) return;
 
-  // regroupe les pièces possibles par case (to)
-  const map = new Map(); // square -> Set(pieces)
+  // square -> Map(piece -> count)
+  const map = new Map();
 
   moveList.forEach(m => {
     if (!m?.to || !m?.piece) return;
-    if (!map.has(m.to)) map.set(m.to, new Set());
-    map.get(m.to).add(m.piece);
+    if (!map.has(m.to)) map.set(m.to, new Map());
+    const counts = map.get(m.to);
+    counts.set(m.piece, (counts.get(m.piece) || 0) + 1);
   });
 
   const boardEl = document.getElementById('board');
 
-  // applique mini + grand rendu
-  for (const [sq, piecesSet] of map.entries()) {
-    const pieces = Array.from(piecesSet);
+  for (const [sq, counts] of map.entries()) {
+    const piecesDistinct = Array.from(counts.keys());
 
-    // 1) active les mini-carrés
-    pieces.forEach(p => markSquarePiece(sq, p));
+    // 1) Active les mini-carrés (une fois par pièce distincte)
+    piecesDistinct.forEach(p => markSquarePiece(sq, p));
 
-    // 2) grand carré
+    // 2) Si doublon (même pièce >=2), rendre SOLIDE le mini-carré correspondant
+    //    -> uniquement le petit carré de cette pièce, pas le grand.
     const sqEl =
       boardEl.querySelector(`[data-square="${sq}"]`) ||
       boardEl.querySelector(`.square-${sq}`);
 
     if (!sqEl) continue;
 
+    const pm6 = sqEl.querySelector(':scope > .pm6');
+    if (!pm6) continue;
+
+    for (const p of piecesDistinct) {
+      if ((counts.get(p) || 0) >= 2) {
+        // Le mini carré existe sous la forme .pm6 .pm.<piece>
+        const mini = pm6.querySelector(`.pm.${p}`);
+        if (mini) mini.classList.add('solid');
+      }
+    }
+
+    // 3) Grand carré : NE CHANGE PAS (comportement actuel)
     const big = sqEl.querySelector(':scope > .pmBig');
     if (!big) continue;
 
     big.classList.add('on');
+    big.classList.remove(
+      'piece-p','piece-n','piece-b','piece-r','piece-q','piece-k',
+      'side-w','side-b'
+    );
 
-    if (pieces.length === 1) {
-      // même couleur que la pièce
-      big.classList.add(`piece-${pieces[0]}`);
+    if (piecesDistinct.length === 1) {
+      big.classList.add(`piece-${piecesDistinct[0]}`);
     } else {
-      // plusieurs : couleur du joueur
       big.classList.add(side === 'w' ? 'side-w' : 'side-b');
     }
   }
