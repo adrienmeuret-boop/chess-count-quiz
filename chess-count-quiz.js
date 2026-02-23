@@ -1031,6 +1031,7 @@ function appendAnswerToBottomPanel(label, count, movesText) {
 
 (async () => {
     await loadSettings();
+	document.getElementById("settingsPanel").style.display = "none";
 
     // ✅ active les boutons de highlight sous l’échiquier
     setupHighlightButtons();
