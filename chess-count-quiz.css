@@ -375,10 +375,10 @@ input[type="number"]::-ms-reveal {
 #board .pmBig.piece-q { --pm-border: rgba(0, 170, 210, 0.95);  --pm-fill: rgba(0, 170, 210, 0.35); }
 #board .pmBig.piece-k { --pm-border: rgba(0, 170, 90, 0.95);   --pm-fill: rgba(0, 170, 90, 0.35); }
 
-/* Board: WHITE should look white (crisper border, lighter fill) */
+/* Board: use EXACT same white as legend */
 #board .pmBig.side-w {
-  --pm-border: rgba(255,255,255,1.0);   /* bord 100% blanc */
-  --pm-fill:   rgba(255,255,255,0.18);  /* remplissage très léger */
+  --pm-border: rgba(180,180,180,0.95);
+  --pm-fill:   rgba(180,180,180,0.30);
 }
 
 #board .pmBig.side-b {
