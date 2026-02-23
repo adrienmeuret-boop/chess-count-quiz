@@ -289,26 +289,46 @@ function getFixedDisplayQuestionTypes() {
 }
 
 function revealAnswers() {
-  const panel = document.getElementById("answersPanel");
-  panel.innerHTML = "";
-  panel.style.display = "block";
 
+  // --- reset de la liste sous Clear ---
+  const movesList = document.getElementById("movesList");
+  movesList.innerHTML = "";
+  movesList.style.display = "block";
+
+  // --- boucle sur toutes les questions ---
   getFixedDisplayQuestionTypes().forEach((id) => {
+
+    const shownMovesLabel = document.getElementById(id + "ShownMoves");
     const correct = chess_data.correct?.[id];
-    if (!correct) return;
+    if (!shownMovesLabel || !correct) return;
 
     const movesText = Array.isArray(correct.moves)
       ? correct.moves.join(", ")
       : "";
 
-appendAnswerToBottomPanel(
-  createDynamicInputsLabel(questionType),
-  correct.count,
-  movesText
-);
-// shownMovesLabel.innerHTML = ...
-});
+    // 1) À CÔTÉ DES INPUTS : UNIQUEMENT LE CHIFFRE
+    shownMovesLabel.innerHTML =
+      `<span style="font-weight:700; font-size:1.4em;">${correct.count}</span>`;
 
+    // 2) SOUS LE BOUTON CLEAR : LA LISTE DES COUPS
+    const row = document.createElement("div");
+    row.className = "movesRow";
+
+    const lab = document.createElement("div");
+    lab.className = "movesLabel";
+    lab.textContent = createDynamicInputsLabel(id);
+
+    const txt = document.createElement("div");
+    txt.className = "movesText";
+    txt.textContent = movesText ? `(${movesText})` : "";
+
+    row.appendChild(lab);
+    row.appendChild(txt);
+
+    movesList.appendChild(row);
+  });
+
+  // --- désactivation du bouton Show Moves ---
   const showMovesButton = document.getElementById("showMovesButton");
   if (showMovesButton) {
     showMovesButton.disabled = true;
