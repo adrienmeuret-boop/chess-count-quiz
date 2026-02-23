@@ -1,411 +1,85 @@
+:root{
+  /* Echiquier maximisé pour 1920x1200 avec marge */
+  --page-pad: 24px;
+  --gap: 28px;
+  --board-size: clamp(560px, 72vmin, 880px);
+
+  /* Colonnes d’alignement pour le formulaire (flèches / input / feedback) */
+  --label-w: 130px;
+  --btn-w: 40px;
+  --input-w: 56px;
+  --fb-w: 22px;
+}
+
+/* ===== Page ===== */
+body{
+  margin: 0;
+  padding: var(--page-pad);
+}
+
+/* Layout global : gauche = échiquier ; droite = bloc info + bloc rouge ; bas = réponses (turquoise) */
 .container{
-  display: flex;
-  align-items: flex-start;
-  gap: 24px;
+  display: grid;
+  grid-template-columns: var(--board-size) minmax(520px, 1fr);
+  grid-template-areas:
+    "board right"
+    "answers answers";
+  column-gap: var(--gap);
+  row-gap: 18px;
+  align-items: start;
 }
 
-.board-col{
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+/* Sans toucher à ton HTML : les enfants de .board-col deviennent des “items” de la grille */
+.board-col{ display: contents; }
 
-/* IMPORTANT : ne mets PAS height:auto ici */
+/* Echiquier */
 #board{
-  width: 400px;
-  height: 400px;
-  display: flow-root; /* contient les floats des cases, sans scrollbar */
+  grid-area: board;
+  width: var(--board-size);
+  height: var(--board-size);
+  display: flow-root;
 }
 
+/* Colonne droite = score/time/form + le “cadre rouge” (boutons + legend + liens) */
 .info{
+  grid-area: right;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  touch-action: manipulation;
+  gap: 12px;
+  align-self: start;
 }
 
+/* On force le bloc boutons/legend/liens à passer dans la colonne droite */
+#boardHighlightsControls,
+.legend,
+#highlight-controls,
+#showMovesButton{
+  grid-area: right;
+}
+
+/* ===== Bloc rouge : boutons (6) ===== */
 #boardHighlightsControls{
-  width: 400px;
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.legend{
-  width: 400px;
-  margin-top: 12px;
-}
-
-#timer {
-    font-size: 1.2em;
-}
-
-#score {
-    font-size: 2em;
-}
-
-form#chessCountForm label { 
-    display: block; /* Makes labels take their own line for better readability */
-}
-
-form#chessCountForm input[type="number"] {
-    width: 30px; /* Sets a fixed width for input fields */
-}
-
-.input-group {
-    display: flex;
-    gap: 8px; /* Adjusts the space between elements */
-    margin-bottom: 10px; /* Adds margin to the bottom of each form group */
-}
-
-.correct { color: green; }
-.incorrect { color: red; }
-
-.increment, .decrement {
-    background-color: #f0f0f0;
-    border: none;
-    padding: 5px 10px;
-    font-size: 24px;
-    cursor: pointer;
-}
-
-.action-button {
-    width: 150px;
-    padding: 5px 10px;
-    font-size: 16px;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    cursor: pointer;
-    color: black; /* Ensure the font color is black */
-}
-
-.action-button:disabled {
-    background-color: #d3d3d3;
-    cursor: not-allowed;
-}
-
-/* ---------------------------------------------------------- */
-/* Browser-specific tweaking */
-
-
-/* Since we already have increment/decrement arrows, remove the smaller ones from the input */
-/* For Webkit browsers like Chrome, Safari */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-/* For Firefox */
-input[type="number"] {
-    -moz-appearance: textfield;
-}
-
-/* For IE10+ */
-input[type="number"]::-ms-clear,
-input[type="number"]::-ms-reveal {
-    display: none;
-}
-
-/* ---------------------------------------------------------- */
-/* Settings panel */
-
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: 15% auto; /* 15% from the top and centered */
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%; /* Could be more or less, depending on screen size */
-}
-
-.close-button {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-}
-
-.close-button:hover,
-.close-button:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-#remainingMoves {
-    font-family: monospace;
-    margin: 10px 0;
-    padding: 5px;
-    border-radius: 4px;
-    font-size: 0.9em;
-}
-
-.moves-table {
-    border-collapse: collapse;
-    margin: 10px 0;
-    font-family: monospace;
-    font-size: 1.2em;  /* Make the font bigger */
-}
-
-.moves-table th,
-.moves-table td {
-    padding: 4px 8px;
-    text-align: left;
-}
-
-.moves-table th {
-    font-weight: bold;
-}
-
-.moves-title {
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-/* --- Square highlight (only the square, not pieces) --- */
-.hl-red {
-  position: relative;
-  box-shadow: inset 0 0 0 2px rgba(200, 0, 0, 0.9);
-}
-
-.hl-red::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(255, 0, 0, 0.35),
-    rgba(255, 0, 0, 0.35) 4px,
-    transparent 4px,
-    transparent 8px
-  );
-}
-
-/* --- 6 buttons under board --- */
-#boardHighlightsControls {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  width: 100%;
-  max-width: 400px;
-}
-
-#boardHighlightsControls button {
-  padding: 8px 10px;
-  cursor: pointer;
-}
-#highlight-controls {
   margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
+  width: min(520px, 100%);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
-#highlight-controls button {
-  padding: 4px 8px;
-  font-size: 0.85em;
+#boardHighlightsControls button{
+  padding: 10px 12px;
   cursor: pointer;
 }
 
-#highlight-controls button.clear {
-  background: #eee;
-  font-weight: bold;
-}
-
-/* --- Piece markers inside squares (6 zones) --- */
-
-/* important: chaque case doit être position:relative */
-#board .square-55d63 {
-  position: relative;
-}
-
-/* conteneur des 6 mini-zones */
-#board .pm6 {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 5;
-}
-
-/* mini-zone : invisible par défaut */
-#board .pm6 .pm {
-  position: absolute;
-  opacity: 0;
-  box-sizing: border-box;
-}
-
-/* visible si activé */
-#board .pm6 .pm.on {
-  opacity: 1;
-}
-
-/* ✅ rendu EXACT comme .hl-red : cadre + hachures */
-#board .pm6 .pm {
-  box-shadow: inset 0 0 0 2px var(--pm-border);
-}
-
-#board .pm6 .pm::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image: repeating-linear-gradient(
-    45deg,
-    var(--pm-fill),
-    var(--pm-fill) 4px,
-    transparent 4px,
-    transparent 8px
-  );
-}
-
-/* --- positions (3 colonnes x 2 lignes) --- */
-/* bas (chaud) : pion, cavalier, fou */
-#board .pm6 .pm.p { left: 0%;      top: 50%; width: 33.333%; height: 50%; }
-#board .pm6 .pm.n { left: 33.333%; top: 50%; width: 33.333%; height: 50%; }
-#board .pm6 .pm.b { left: 66.666%; top: 50%; width: 33.333%; height: 50%; }
-
-/* haut (froid/fort) : tour, dame, roi */
-#board .pm6 .pm.r { left: 0%;      top: 0%;  width: 33.333%; height: 50%; }
-#board .pm6 .pm.q { left: 33.333%; top: 0%;  width: 33.333%; height: 50%; }
-#board .pm6 .pm.k { left: 66.666%; top: 0%;  width: 33.333%; height: 50%; }
-
-/* --- couleurs par pièce (cadre + hachures) --- */
-/* bas = chaud / haut = froid, hiérarchie très lisible */
-
-/* ===== BAS : CHAUD ===== */
-/* Pawn: darker yellow for better contrast */
-#board .pm6 .pm.p {
-  --pm-border: rgba(210, 170, 30, 0.98);
-  --pm-fill:   rgba(210, 170, 30, 0.45);
-}
-
-/* cavalier : orange franc */
-#board .pm6 .pm.n {
-  --pm-border: rgba(255, 140, 0, 0.95);
-  --pm-fill:   rgba(255, 140, 0, 0.45);
-}
-
-/* fou : rouge chaud */
-#board .pm6 .pm.b {
-  --pm-border: rgba(210, 50, 50, 0.95);
-  --pm-fill:   rgba(210, 50, 50, 0.45);
-}
-
-/* ===== HAUT : FROID ===== */
-/* tour : bleu franc (base froide) */
-#board .pm6 .pm.r {
-  --pm-border: rgba(40, 110, 255, 0.95);
-  --pm-fill:   rgba(40, 110, 255, 0.45);
-}
-
-/* dame : bleu-vert plus “fort” (plus saturé + un peu plus vert) */
-#board .pm6 .pm.q {
-  --pm-border: rgba(0, 170, 210, 0.95);
-  --pm-fill:   rgba(0, 170, 210, 0.45);
-}
-
-/* roi : vert dominant (beaucoup plus vert, plus sombre -> impossible de confondre avec la dame) */
-#board .pm6 .pm.k {
-  --pm-border: rgba(0, 170, 90, 0.95);
-  --pm-fill:   rgba(0, 170, 90, 0.45);
-}
-
-
-/* ========================================================= */
-/* Grand carré par case (pmBig) : même style que les mini     */
-/* ========================================================= */
-
-#board .pmBig{
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-
-  z-index: 6;        /* AU-DESSUS des pm6 */
-  opacity: 0;        /* caché par défaut */
-
-  box-sizing: border-box;
-}
-
-#board .pmBig.on{
-  opacity: 0.65;   /* TRANSPARENCE GLOBALE */
-}
-
-/* même rendu que les mini : cadre + hachures */
-#board .pmBig{
-  box-shadow: inset 0 0 0 2px var(--pm-border);
-}
-#board .pmBig::after{
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image: repeating-linear-gradient(
-    45deg,
-    var(--pm-fill),
-    var(--pm-fill) 4px,
-    transparent 4px,
-    transparent 8px
-  );
-}
-
-/* ========================= */
-/* Couleurs "pièce" (1 seule)*/
-/* ========================= */
-#board .pmBig.piece-p { --pm-border: rgba(210, 170, 30, 0.98); --pm-fill: rgba(210, 170, 30, 0.35); }
-#board .pmBig.piece-n { --pm-border: rgba(255, 140, 0, 0.95);  --pm-fill: rgba(255, 140, 0, 0.35); }
-#board .pmBig.piece-b { --pm-border: rgba(210, 50, 50, 0.95);  --pm-fill: rgba(210, 50, 50, 0.35); }
-#board .pmBig.piece-r { --pm-border: rgba(40, 110, 255, 0.95); --pm-fill: rgba(40, 110, 255, 0.35); }
-#board .pmBig.piece-q { --pm-border: rgba(0, 170, 210, 0.95);  --pm-fill: rgba(0, 170, 210, 0.35); }
-#board .pmBig.piece-k { --pm-border: rgba(0, 170, 90, 0.95);   --pm-fill: rgba(0, 170, 90, 0.35); }
-
-/* Board: use EXACT same white as legend */
-#board .pmBig.side-w {
-  --pm-border: rgba(90, 94, 100, 0.95);
-  --pm-fill:   rgba(90, 94, 100, 0.35);
-}
-
-#board .pmBig.side-b {
-  --pm-border: rgba(0,0,0,0.75);
-  --pm-fill:   rgba(0,0,0,0.20);
-}
-
-/* ===========================
-   Legend under the board
-   (BONUS x2 integrated)
-   1) same centering as #board
-   2) legend width = its content
-   =========================== */
-
-
-/* BONUS #2: legend takes the width of its content (clean alignment) */
+/* Legend / liens : sous les boutons, dans la colonne droite */
 .legend{
-  display: block;
-  clear: both;
-  width: fit-content;
-  margin: 12px auto 0;
-  user-select: none;
+  width: min(520px, 100%);
+  margin: 0;
 }
 
 .legend-title{
   font-weight: 600;
-  margin-bottom: 8px;
+  margin: 12px 0 8px;
 }
 
 .legend-grid{
@@ -421,12 +95,8 @@ input[type="number"]::-ms-reveal {
   gap: 8px;
   min-height: 22px;
 }
+.legend-label{ font-size: 14px; }
 
-.legend-label{
-  font-size: 14px;
-}
-
-/* Swatch: same style as pmBig (frame + hatching) */
 .legend-swatch{
   width: 18px;
   height: 18px;
@@ -435,7 +105,6 @@ input[type="number"]::-ms-reveal {
   box-sizing: border-box;
   box-shadow: inset 0 0 0 2px var(--pm-border);
 }
-
 .legend-swatch::after{
   content: "";
   position: absolute;
@@ -449,50 +118,141 @@ input[type="number"]::-ms-reveal {
   );
 }
 
-/* Piece colors (same as pmBig) */
 .legend-swatch.piece-p { --pm-border: rgba(255, 200, 40, 0.95); --pm-fill: rgba(255, 200, 40, 0.35); }
 .legend-swatch.piece-n { --pm-border: rgba(255, 140, 0, 0.95);  --pm-fill: rgba(255, 140, 0, 0.35); }
 .legend-swatch.piece-b { --pm-border: rgba(210, 50, 50, 0.95);  --pm-fill: rgba(210, 50, 50, 0.35); }
 .legend-swatch.piece-r { --pm-border: rgba(40, 110, 255, 0.95); --pm-fill: rgba(40, 110, 255, 0.35); }
 .legend-swatch.piece-q { --pm-border: rgba(0, 170, 210, 0.95);  --pm-fill: rgba(0, 170, 210, 0.35); }
 .legend-swatch.piece-k { --pm-border: rgba(0, 170, 90, 0.95);   --pm-fill: rgba(0, 170, 90, 0.35); }
-
-/* Player colors for "multiple markers on same square" (make white visible) */
-.legend-swatch.side-w  { --pm-border: rgba(90, 94, 100, 0.95); --pm-fill: rgba(90, 94, 100, 0.35); }
-.legend-swatch.side-b  { --pm-border: rgba(0,0,0,0.75);       --pm-fill: rgba(0,0,0,0.20); }
+.legend-swatch.side-w  { --pm-border: rgba(180,180,180,0.95); --pm-fill: rgba(180,180,180,0.30); }
+.legend-swatch.side-b  { --pm-border: rgba(0,0,0,0.75);     --pm-fill: rgba(0,0,0,0.20); }
 
 .legend-note{
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 12px;
   opacity: 0.75;
 }
 
-#showMovesButton{
+/* ===== Score / time ===== */
+#score { font-size: 2em; }
+#timer { font-size: 1.2em; }
+
+#remainingMoves{
+  font-family: monospace;
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 0.95em;
+}
+
+/* ===== Formulaire : aligner flèches + input (traits rouges) ===== */
+form#chessCountForm label{ display: block; }
+
+.input-group{
+  display: grid;
+  grid-template-columns: var(--label-w) var(--btn-w) var(--input-w) var(--btn-w) var(--fb-w);
+  align-items: center;
+  column-gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* Labels sur 2 lignes (via \n en JS) */
+.input-group > label{
+  white-space: pre-line;
+  line-height: 1.05;
+}
+
+form#chessCountForm input[type="number"]{
+  width: var(--input-w);
+  text-align: center;
+  font-size: 16px;
+  padding: 4px 6px;
+  box-sizing: border-box;
+}
+
+/* Flèches */
+.increment, .decrement{
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 6px 0;
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* Feedback icon */
+.feedbackIcon{
+  width: var(--fb-w);
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+.correct{ color: green; }
+.incorrect{ color: red; }
+
+/* On masque les shownMoves dans le formulaire : ils vont partir en bas */
+.shownMoves{
+  display: none;
+}
+
+/* Boutons d’action */
+.action-button{
+  width: 150px;
+  padding: 6px 10px;
+  font-size: 16px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  color: black;
+}
+.action-button:disabled{
+  background-color: #d3d3d3;
+  cursor: not-allowed;
+}
+
+/* ===== Panneau réponses en bas (cadre turquoise) ===== */
+#answersPanel{
+  grid-area: answers;
   margin-top: 10px;
+  padding: 14px 12px;
+  border: 2px solid rgba(0, 190, 190, 0.9);
+  border-radius: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  display: none; /* affiché seulement quand on “Show Moves” */
 }
 
-/* =========================
-   SOLID mini squares (pm6)
-   One-number opacity control
-   ========================= */
-
-/* 👇 SEUL CHIFFRE À CHANGER */
-#board { --solidA: 0.75; }  /* 0.4 léger, 0.7 moyen, 1 opaque */
-
-/* Stop hatching when solid */
-#board .pm6 .pm.solid::after{
-  background-image: none !important;
+.answers-row{
+  display: grid;
+  grid-template-columns: var(--label-w) 70px 1fr; /* label, count bold, moves list */
+  column-gap: 18px;
+  align-items: start;
+  padding: 6px 0;
 }
 
-/* Set per-piece RGB (NO alpha here) */
-#board .pm6 .pm.p{ --solid-rgb: 210, 170, 30; }   /* pawn (jaune foncé) */
-#board .pm6 .pm.n{ --solid-rgb: 255, 140, 0; }    /* knight */
-#board .pm6 .pm.b{ --solid-rgb: 210, 50, 50; }    /* bishop */
-#board .pm6 .pm.r{ --solid-rgb: 40, 110, 255; }   /* rook */
-#board .pm6 .pm.q{ --solid-rgb: 0, 170, 210; }    /* queen */
-#board .pm6 .pm.k{ --solid-rgb: 0, 170, 90; }     /* king */
-
-/* Solid fill is applied on the element itself (reliable) */
-#board .pm6 .pm.solid{
-  background-color: rgba(var(--solid-rgb), var(--solidA)) !important;
+.answers-label{
+  white-space: pre-line;
+  font-family: monospace;
+  line-height: 1.05;
 }
+
+.answers-count{
+  font-family: monospace;
+  font-size: 20px;
+  font-weight: 800; /* chiffres en gras */
+  text-align: right; /* alignement propre */
+}
+
+.answers-moves{
+  font-family: monospace;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+/* Remove native spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"]{ -moz-appearance: textfield; }
