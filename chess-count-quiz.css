@@ -150,7 +150,7 @@ form#chessCountForm label{ display: block; }
 
 .input-group{
   display: grid;
-  grid-template-columns: var(--label-w) var(--btn-w) var(--input-w) var(--btn-w) var(--fb-w);
+  grid-template-columns: var(--label-w) var(--btn-w) var(--input-w) var(--btn-w) var(--fb-w) 90px;
   align-items: center;
   column-gap: 10px;
   margin-bottom: 10px;
@@ -190,9 +190,11 @@ form#chessCountForm input[type="number"]{
 .correct{ color: green; }
 .incorrect{ color: red; }
 
-/* On masque les shownMoves dans le formulaire : ils vont partir en bas */
+/* Affiche le compteur à côté des inputs */
 .shownMoves{
-  display: none;
+  display: block;
+  font-family: monospace;
+  text-align: right;
 }
 
 /* Boutons d’action */
@@ -310,4 +312,30 @@ input[type="number"]{ -moz-appearance: textfield; }
   color: black;
   text-decoration: none;
   cursor: pointer;
+}
+
+/* Liste des coups sous Clear */
+#movesList{
+  grid-area: right;          /* reste dans la colonne droite */
+  width: min(900px, 100%);
+  margin-top: 12px;
+  font-family: monospace;
+  display: none;             /* visible seulement après Show Moves */
+}
+
+.movesRow{
+  display: grid;
+  grid-template-columns: var(--label-w) 1fr; /* label | liste */
+  column-gap: 14px;
+  padding: 6px 0;
+  align-items: start;
+}
+
+.movesLabel{
+  white-space: pre-line; /* \n => 2 lignes */
+  line-height: 1.05;
+}
+
+.movesText{
+  line-height: 1.25;
 }
