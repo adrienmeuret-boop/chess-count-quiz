@@ -460,10 +460,6 @@ input[type="number"]::-ms-reveal {
 .legend-swatch.side-w  { --pm-border: rgba(180,180,180,0.95); --pm-fill: rgba(180,180,180,0.30); }
 .legend-swatch.side-b  { --pm-border: rgba(0,0,0,0.75);       --pm-fill: rgba(0,0,0,0.20); }
 
-/* Player colors for "multiple markers on same square" */
-#board .pmBig.side-w { --pm-border: rgba(180,180,180,0.95); --pm-fill: rgba(180,180,180,0.30); }
-#board .pmBig.side-b { --pm-border: rgba(0,0,0,0.75);       --pm-fill: rgba(0,0,0,0.20); }
-
 .legend-note{
   margin-top: 8px;
   font-size: 12px;
