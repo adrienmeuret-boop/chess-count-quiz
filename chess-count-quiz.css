@@ -462,3 +462,18 @@ input[type="number"]::-ms-reveal {
   display: block;
   overflow: auto;   /* contient les float:left des squares */
 }
+
+/* ===== FORCE board to have height (contain floats) ===== */
+#board{
+  display: block !important;
+  overflow: auto !important;   /* contains float:left squares */
+}
+
+/* ===== FORCE legend to be in normal document flow ===== */
+#pieceLegend{
+  position: static !important; /* not absolute/fixed/relative tricks */
+  display: block !important;
+  clear: both !important;      /* go under any floats */
+  width: fit-content !important;
+  margin: 12px auto 0 !important;
+}
