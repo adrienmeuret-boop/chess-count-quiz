@@ -471,8 +471,9 @@ input[type="number"]::-ms-reveal {
   margin-top: 10px;
 }
 
-/* Solid fill for MINI squares ONLY — independent alpha */
+/* Solid fill for MINI squares ONLY — keep piece color, independent alpha */
 #board .pm6 .pm.solid::after{
-  background-image: none;                 /* no hatching */
-  background-color: rgba(90, 94, 100, 0.75); /* 👈 CHANGE CE CHIFFRE */
+  background-image: none;           /* no hatching */
+  background-color: var(--pm-fill); /* keeps the piece's color */
+  opacity: 0.75;                    /* 👈 CHANGE THIS NUMBER */
 }
