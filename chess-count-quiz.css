@@ -336,8 +336,10 @@ input[type="number"]::-ms-reveal {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 4;            /* sous les mini-carrés (.pm6 est z-index:5) */
-  opacity: 0;            /* caché par défaut */
+
+  z-index: 6;        /* AU-DESSUS des pm6 */
+  opacity: 0;        /* caché par défaut */
+
   box-sizing: border-box;
 }
 
