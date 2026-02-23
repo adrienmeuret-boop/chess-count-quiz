@@ -469,37 +469,48 @@ function highlightMovesByPiece(moveList, side /* 'w'|'b' */) {
 }
 
 function setupHighlightButtons() {
-  const mapBtnTo = {
-    // White buttons
-    hl_p1AllLegal: { qType: qTypeForAbsColorAndKind('w', 'AllLegal'), side: 'w' },
-    hl_p1Checks:   { qType: qTypeForAbsColorAndKind('w', 'Checks'),   side: 'w' },
-    hl_p1Captures: { qType: qTypeForAbsColorAndKind('w', 'Captures'), side: 'w' },
-
-    // Black buttons
-    hl_p2AllLegal: { qType: qTypeForAbsColorAndKind('b', 'AllLegal'), side: 'b' },
-    hl_p2Checks:   { qType: qTypeForAbsColorAndKind('b', 'Checks'),   side: 'b' },
-    hl_p2Captures: { qType: qTypeForAbsColorAndKind('b', 'Captures'), side: 'b' },
+  // Associe un "libellé de bouton" -> (qType + side)
+  const byLabel = {
+    "white’s moves":   { qType: qTypeForAbsColorAndKind('w', 'AllLegal'), side: 'w' },
+    "black’s moves":   { qType: qTypeForAbsColorAndKind('b', 'AllLegal'), side: 'b' },
+    "white’s checks":  { qType: qTypeForAbsColorAndKind('w', 'Checks'),   side: 'w' },
+    "black’s checks":  { qType: qTypeForAbsColorAndKind('b', 'Checks'),   side: 'b' },
+    "white’s captures":{ qType: qTypeForAbsColorAndKind('w', 'Captures'), side: 'w' },
+    "black’s captures":{ qType: qTypeForAbsColorAndKind('b', 'Captures'), side: 'b' },
+    "clear":           { clear: true },
   };
 
-  Object.entries(mapBtnTo).forEach(([btnId, cfg]) => {
-    const btn = document.getElementById(btnId);
-    if (!btn) return;
+  // Nettoyage + normalisation du texte (apostrophe typographique ou simple)
+  const norm = (s) =>
+    (s || "")
+      .trim()
+      .toLowerCase()
+      .replaceAll("'", "’")          // force apostrophe typographique
+      .replace(/\s+/g, " ");         // espaces multiples -> 1 espace
+
+  // Prend tous les boutons de la page et branche ceux qui matchent par texte
+  document.querySelectorAll("button").forEach(btn => {
+    const key = norm(btn.textContent);
+    const cfg = byLabel[key];
+    if (!cfg) return;
+
+    // IMPORTANT: évite un submit si le bouton est dans un <form>
+    btn.type = "button";
 
     btn.onclick = () => {
+      if (cfg.clear) {
+        clearBoardHighlights();
+        clearPieceMarkers();
+        clearBigMarkers();
+        return;
+      }
+
       const ans = chess_data?.correct?.[cfg.qType];
       if (!ans?.targets) return;
+
       highlightMovesByPiece(ans.targets, cfg.side);
     };
   });
-
-  const clearBtn = document.getElementById('hl_clear');
-  if (clearBtn) {
-    clearBtn.onclick = () => {
-      clearBoardHighlights();
-      clearPieceMarkers();
-      clearBigMarkers();
-    };
-  }
 }
 
 // ------------------------------------------------------------
