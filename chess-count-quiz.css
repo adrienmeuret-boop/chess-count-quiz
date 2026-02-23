@@ -476,7 +476,7 @@ input[type="number"]::-ms-reveal {
   background-image: none !important;
   background-color: color-mix(
     in srgb,
-    var(--pm-fill) 50%,   /* 👈 CHANGE ONLY THIS NUMBER */
+    var(--pm-fill) 60%,   /* 👈 CHANGE ONLY THIS NUMBER */
     transparent
   ) !important;
 }
