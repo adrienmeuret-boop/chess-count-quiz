@@ -1,28 +1,40 @@
-.container {
+.container{
   display: flex;
   align-items: flex-start;
-  gap: 20px;
+  gap: 24px;
 }
 
-/* Colonne board : contient board + boutons + légende */
 .board-col{
   display: flex;
   flex-direction: column;
-  align-items: center;  /* centre le board et la légende */
+  align-items: center;
 }
 
-/* Board : contient les float:left des cases SANS scrollbar/artefact */
+/* IMPORTANT : ne mets PAS height:auto ici */
 #board{
-  max-width: 400px;
-  display: flow-root;  /* FIX PROPRE pour contenir les floats */
+  width: 400px;
+  height: 400px;
+  display: flow-root; /* contient les floats des cases, sans scrollbar */
 }
 
-/* Panneau info */
-.info {
+.info{
   display: flex;
   flex-direction: column;
   gap: 10px;
   touch-action: manipulation;
+}
+
+#boardHighlightsControls{
+  width: 400px;
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.legend{
+  width: 400px;
+  margin-top: 12px;
 }
 
 #timer {
