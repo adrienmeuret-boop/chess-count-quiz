@@ -190,7 +190,8 @@ input[type="number"]::-ms-reveal {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  max-width: 400px; /* même largeur que le board */
+  width: 100%;
+  max-width: 400px;
 }
 
 #boardHighlightsControls button {
