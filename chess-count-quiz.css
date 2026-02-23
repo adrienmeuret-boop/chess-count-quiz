@@ -471,3 +471,8 @@ input[type="number"]::-ms-reveal {
   margin-top: 10px;
 }
 
+/* Solid fill ONLY when JS adds .solid (same piece appears >=2 on a square) */
+#board .pmBig.solid::after{
+  background-image: none;         /* stop hatching */
+  background-color: var(--pm-fill); /* same color + same alpha */
+}
