@@ -1047,6 +1047,25 @@ function appendAnswerToBottomPanel(label, count, movesText) {
 // -----------------------------------------------------------
 // Main logic, which depends on loaded positions
 
+function moveHighlightControlsToRight() {
+  const info = document.querySelector(".info");
+  const controls = document.getElementById("boardHighlightsControls");
+  const legend = document.getElementById("pieceLegend");
+  const form = document.getElementById("chessCountForm");
+
+  if (!info || !controls || !legend) return;
+
+  // On place boutons + légende dans la colonne de droite,
+  // idéalement juste avant le formulaire (pour être "en haut à droite")
+  if (form) {
+    info.insertBefore(controls, form);
+    info.insertBefore(legend, form);
+  } else {
+    info.appendChild(controls);
+    info.appendChild(legend);
+  }
+}
+
 (async () => {
     await loadSettings();
 	document.getElementById("settingsPanel").style.display = "none";
