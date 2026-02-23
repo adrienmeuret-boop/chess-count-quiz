@@ -475,5 +475,5 @@ input[type="number"]::-ms-reveal {
 #board .pm6 .pm.solid::after{
   background-image: none;           /* no hatching */
   background-color: var(--pm-fill); /* keeps the piece's color */
-  opacity: 0.75;                    /* 👈 CHANGE THIS NUMBER */
+  opacity: 1;                    /* 👈 CHANGE THIS NUMBER */
 }
