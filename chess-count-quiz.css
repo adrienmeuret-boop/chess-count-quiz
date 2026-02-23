@@ -1,14 +1,16 @@
 :root{
-  /* Echiquier maximisé pour 1920x1200 avec marge */
   --page-pad: 24px;
   --gap: 28px;
-  --board-size: clamp(560px, 72vmin, 880px);
 
-  /* Colonnes d’alignement pour le formulaire (flèches / input / feedback) */
+  /* Echiquier : grand sur 1920x1200 avec marge */
+  --board-size: clamp(640px, 74vmin, 920px);
+
+  /* Alignement du formulaire */
   --label-w: 130px;
   --btn-w: 40px;
   --input-w: 56px;
   --fb-w: 22px;
+  --count-w: 90px; /* colonne du chiffre en gras */
 }
 
 /* ===== Page ===== */
@@ -17,61 +19,123 @@ body{
   padding: var(--page-pad);
 }
 
-/* Layout global : gauche = échiquier ; droite = bloc info + bloc rouge ; bas = réponses (turquoise) */
+h2{
+  margin: 0 0 12px 0;
+}
+
+/* ===== Layout principal ===== */
 .container{
   display: grid;
   grid-template-columns: var(--board-size) minmax(520px, 1fr);
-  grid-template-areas:
-    "board right"
-    "answers answers";
   column-gap: var(--gap);
-  row-gap: 18px;
   align-items: start;
 }
 
-/* Sans toucher à ton HTML : les enfants de .board-col deviennent des “items” de la grille */
-.board-col{ display: contents; }
-
-/* Echiquier */
+/* Colonne gauche : échiquier uniquement */
 #board{
-  grid-area: board;
   width: var(--board-size);
   height: var(--board-size);
-  display: flow-root;
 }
 
-/* Colonne droite = score/time/form + le “cadre rouge” (boutons + legend + liens) */
+/* Colonne droite */
 .info{
-  grid-area: right;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  align-self: start;
 }
 
-/* On force le bloc boutons/legend/liens à passer dans la colonne droite */
-#boardHighlightsControls,
-.legend,
-#highlight-controls,
-#showMovesButton{
-  grid-area: right;
+/* ===== Score / timer ===== */
+#score { font-size: 2em; }
+#timer { font-size: 1.2em; }
+
+#remainingMoves{
+  font-family: monospace;
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 0.95em;
 }
 
-/* ===== Bloc rouge : boutons (6) ===== */
+/* ===== Formulaire ===== */
+form#chessCountForm label{ display: block; }
+
+.input-group{
+  display: grid;
+  grid-template-columns: var(--label-w) var(--btn-w) var(--input-w) var(--btn-w) var(--fb-w) var(--count-w);
+  align-items: center;
+  column-gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* Labels sur 2 lignes (via \n en JS) */
+.input-group > label{
+  white-space: pre-line;
+  line-height: 1.05;
+}
+
+form#chessCountForm input[type="number"]{
+  width: var(--input-w);
+  text-align: center;
+  font-size: 16px;
+  padding: 4px 6px;
+  box-sizing: border-box;
+}
+
+/* Flèches */
+.increment, .decrement{
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 6px 0;
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* Feedback icon */
+.feedbackIcon{
+  width: var(--fb-w);
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+.correct{ color: green; }
+.incorrect{ color: red; }
+
+/* Chiffre en gras à droite des inputs */
+.shownMoves{
+  display: block;
+  font-family: monospace;
+  text-align: right;
+}
+
+/* Boutons génériques */
+.action-button{
+  width: 150px;
+  padding: 6px 10px;
+  font-size: 16px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  color: black;
+}
+.action-button:disabled{
+  background-color: #d3d3d3;
+  cursor: not-allowed;
+}
+
+/* ===== Boutons highlight (dans .info, après le form) ===== */
 #boardHighlightsControls{
-  margin-top: 10px;
+  margin-top: 8px;
   width: min(520px, 100%);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
-
-#boardHighlightsControls button{
-  padding: 10px 12px;
-  cursor: pointer;
+#boardHighlightsControls .action-button{
+  width: 100%;
 }
 
-/* Legend / liens : sous les boutons, dans la colonne droite */
+/* ===== Legend sous les boutons ===== */
 .legend{
   width: min(520px, 100%);
   margin: 0;
@@ -133,149 +197,24 @@ body{
   opacity: 0.75;
 }
 
-/* ===== Score / time ===== */
-#score { font-size: 2em; }
-#timer { font-size: 1.2em; }
-
-#remainingMoves{
-  font-family: monospace;
-  margin: 8px 0 0;
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 0.95em;
-}
-
-/* ===== Formulaire : aligner flèches + input (traits rouges) ===== */
-form#chessCountForm label{ display: block; }
-
-.input-group{
-  display: grid;
-  grid-template-columns: var(--label-w) var(--btn-w) var(--input-w) var(--btn-w) var(--fb-w) 90px;
-  align-items: center;
-  column-gap: 10px;
-  margin-bottom: 10px;
-}
-
-/* Labels sur 2 lignes (via \n en JS) */
-.input-group > label{
-  white-space: pre-line;
-  line-height: 1.05;
-}
-
-form#chessCountForm input[type="number"]{
-  width: var(--input-w);
-  text-align: center;
-  font-size: 16px;
-  padding: 4px 6px;
-  box-sizing: border-box;
-}
-
-/* Flèches */
-.increment, .decrement{
-  background-color: #f0f0f0;
-  border: 1px solid #ccc;
-  padding: 6px 0;
-  font-size: 22px;
-  cursor: pointer;
-  line-height: 1;
-}
-
-/* Feedback icon */
-.feedbackIcon{
-  width: var(--fb-w);
-  text-align: center;
-  font-size: 18px;
-  font-weight: 700;
-}
-.correct{ color: green; }
-.incorrect{ color: red; }
-
-/* Affiche le compteur à côté des inputs */
-.shownMoves{
-  display: block;
-  font-family: monospace;
-  text-align: right;
-}
-
-/* Boutons d’action */
-.action-button{
-  width: 150px;
-  padding: 6px 10px;
-  font-size: 16px;
-  background-color: #f0f0f0;
-  border: 1px solid #ccc;
-  cursor: pointer;
-  color: black;
-}
-.action-button:disabled{
-  background-color: #d3d3d3;
-  cursor: not-allowed;
-}
-
-/* ===== Panneau réponses en bas (cadre turquoise) ===== */
-#answersPanel{
-  grid-area: answers;
-  margin-top: 10px;
-  padding: 14px 12px;
-  border: 2px solid rgba(0, 190, 190, 0.9);
-  border-radius: 6px;
-  width: 100%;
-  box-sizing: border-box;
-  display: none; /* affiché seulement quand on “Show Moves” */
-}
-
-.answers-row{
-  display: grid;
-  grid-template-columns: var(--label-w) 70px 1fr; /* label, count bold, moves list */
-  column-gap: 18px;
-  align-items: start;
-  padding: 6px 0;
-}
-
-.answers-label{
-  white-space: pre-line;
-  font-family: monospace;
-  line-height: 1.05;
-}
-
-.answers-count{
-  font-family: monospace;
-  font-size: 20px;
-  font-weight: 800; /* chiffres en gras */
-  text-align: right; /* alignement propre */
-}
-
-.answers-moves{
-  font-family: monospace;
-  font-size: 16px;
-  line-height: 1.25;
-}
-
-/* Remove native spinners */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button{
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type="number"]{ -moz-appearance: textfield; }
-
+/* ===== Moves list tout en bas (hors container) ===== */
 #movesList{
   margin-top: 12px;
   font-family: monospace;
-  display: none; /* apparait seulement après Show Moves */
-  max-width: 100%;
+  display: none; /* show after Show Moves */
+  max-width: 1100px;
 }
 
 .movesRow{
   display: grid;
-  grid-template-columns: 130px 1fr; /* label | liste */
+  grid-template-columns: var(--label-w) 1fr;
   column-gap: 14px;
   padding: 6px 0;
   align-items: start;
 }
 
 .movesLabel{
-  white-space: pre-line; /* pour le \n => 2 lignes */
+  white-space: pre-line;
   line-height: 1.05;
 }
 
@@ -283,7 +222,7 @@ input[type="number"]{ -moz-appearance: textfield; }
   line-height: 1.25;
 }
 
-/* ===== Settings modal (restaure le comportement “fermé au chargement”) ===== */
+/* ===== Settings modal ===== */
 .modal{
   display: none;
   position: fixed;
@@ -296,10 +235,10 @@ input[type="number"]{ -moz-appearance: textfield; }
 }
 .modal-content{
   background-color: #fefefe;
-  margin: 15% auto;
+  margin: 10% auto;
   padding: 20px;
   border: 1px solid #888;
-  width: 80%;
+  width: min(900px, 80%);
 }
 .close-button{
   color: #aaa;
@@ -314,105 +253,10 @@ input[type="number"]{ -moz-appearance: textfield; }
   cursor: pointer;
 }
 
-/* Liste des coups sous Clear */
-#movesList{
-  grid-area: right;          /* reste dans la colonne droite */
-  width: min(900px, 100%);
-  margin-top: 12px;
-  font-family: monospace;
-  display: none;             /* visible seulement après Show Moves */
+/* Remove native spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
 }
-
-.movesRow{
-  display: grid;
-  grid-template-columns: var(--label-w) 1fr; /* label | liste */
-  column-gap: 14px;
-  padding: 6px 0;
-  align-items: start;
-}
-
-.movesLabel{
-  white-space: pre-line; /* \n => 2 lignes */
-  line-height: 1.05;
-}
-
-.movesText{
-  line-height: 1.25;
-}
-
-/* ============================
-   ETAPE 1 : déplacer les boutons highlight à droite
-   + légende dessous
-   ============================ */
-
-/* 1) Le layout principal en 2 colonnes : échiquier à gauche, panneau à droite */
-.container{
-  display: grid;
-  grid-template-columns: 840px 1fr; /* ajuste si besoin, l’échiquier prendra la place gauche */
-  column-gap: 28px;
-  align-items: start;
-}
-
-/* 2) Colonne gauche : uniquement l’échiquier */
-#board{
-  width: 840px;              /* ajuste plus tard, là on stabilise */
-  height: 840px;
-}
-
-/* 3) Les boutons passent dans la colonne droite */
-#boardHighlightsControls{
-  /* on les met à droite, sous la zone info */
-  margin-top: 12px;
-  width: 520px;
-  max-width: 100%;
-
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-
-  /* IMPORTANT : évite tout chevauchement */
-  position: relative;
-  z-index: 1;
-}
-
-/* Les boutons prennent toute la largeur de leur cellule */
-#boardHighlightsControls .action-button{
-  width: 100%;
-}
-
-/* 4) La légende sous les boutons, colonne droite */
-#pieceLegend{
-  margin-top: 12px;
-  width: 520px;
-  max-width: 100%;
-
-  position: relative;
-  z-index: 1;
-}
-
-/* 5) IMPORTANT : comme #boardHighlightsControls et #pieceLegend sont dans .board-col (colonne gauche),
-      on les "retire" du flux gauche et on les place à droite via une astuce :
-      - on force .board-col à ne pas “contenir” visuellement ces blocs
-      - on les aligne sur la droite en leur donnant une marge gauche auto
-*/
-#boardHighlightsControls,
-#pieceLegend{
-  margin-left: auto;
-}
-
-/* Boutons highlight à droite (dans .info) */
-.info #boardHighlightsControls{
-  margin-top: 12px;
-  max-width: 520px;
-}
-
-/* Légende juste dessous */
-.info #pieceLegend{
-  margin-top: 12px;
-  max-width: 520px;
-}
-
-/* Evite tout chevauchement bizarre */
-#boardHighlightsControls, #pieceLegend{
-  position: static;
-}
+input[type="number"]{ -moz-appearance: textfield; }
