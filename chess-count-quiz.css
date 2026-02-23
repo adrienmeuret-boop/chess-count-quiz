@@ -306,17 +306,6 @@ input[type="number"]::-ms-reveal {
   --pm-fill:   rgba(0, 170, 90, 0.45);
 }
 
-/* ========================================================= */
-/* Cadre global par camp (lecture générale)                  */
-/* ========================================================= */
-
-#board .hl-side-w {
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
-}
-
-#board .hl-side-b {
-  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.55);
-}
 
 /* ========================================================= */
 /* Grand carré par case (pmBig) : même style que les mini     */
