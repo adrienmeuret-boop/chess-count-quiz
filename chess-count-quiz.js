@@ -289,6 +289,9 @@ function getFixedDisplayQuestionTypes() {
 }
 
 function revealAnswers() {
+	const panel = getOrCreateAnswersPanel();
+panel.innerHTML = "";
+panel.style.display = "block";
 getFixedDisplayQuestionTypes().forEach((id) => {
         const shownMovesLabel = document.getElementById(id + "ShownMoves");
         const correct = chess_data.correct?.[id];
@@ -300,6 +303,9 @@ getFixedDisplayQuestionTypes().forEach((id) => {
 shownMovesLabel.innerHTML =
     `<span style="font-weight:700; font-size:1.4em;">${correct.count}</span>` +
     (movesText ? ` <span style="font-size:1em;">(${movesText})</span>` : '');
+	// shownMovesLabel.innerHTML =
+//   `<span style="font-weight:700; font-size:1.4em;">${correct.count}</span>` +
+//   (movesText ? ` <span style="font-size:1em;">(${movesText})</span>` : '');
     });
 
     var showMovesButton = document.getElementById("showMovesButton");
@@ -978,20 +984,19 @@ function createDynamicInputs(questionTypes) {
 
 // Return the label for each input
 function createDynamicInputsLabel(questionType) {
-    // questionType est p1AllLegal / p2Checks etc.
-    // On veut afficher White/Black en "absolu" (pas p1/p2)
+  const isP1 = questionType.startsWith('p1');
+  const colorAbs = isP1
+    ? chess_data.playerToMove
+    : (chess_data.playerToMove === 'w' ? 'b' : 'w');
 
-    const isP1 = questionType.startsWith('p1');
-    const color = (isP1 === (chess_data.playerToMove === 'w')) ? "White" : "Black";
+  const who = (colorAbs === 'w') ? "White's" : "Black's";
 
-    let moveType = "Moves";
-    switch (questionType.slice(2)) {
-        case "Captures": moveType = "Captures"; break;
-        case "Checks":   moveType = "Checks"; break;
-        case "AllLegal": moveType = "Moves"; break;
-    }
+  let what = "Moves";
+  if (questionType.endsWith("Checks")) what = "Checks";
+  if (questionType.endsWith("Captures")) what = "Captures";
 
-    return `${color}'s ${moveType}:`;
+  // \n = retour à la ligne
+  return `${who}\n${what}:`;
 }
 
 // -----------------------------------------------------------
