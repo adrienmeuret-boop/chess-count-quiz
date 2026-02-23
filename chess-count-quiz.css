@@ -377,8 +377,8 @@ input[type="number"]::-ms-reveal {
 
 /* Board: use EXACT same white as legend */
 #board .pmBig.side-w {
-  --pm-border: rgba(180,180,180,0.95);
-  --pm-fill:   rgba(180,180,180,0.30);
+  --pm-border: rgba(90, 94, 100, 0.95);
+  --pm-fill:   rgba(90, 94, 100, 0.30);
 }
 
 #board .pmBig.side-b {
@@ -458,7 +458,7 @@ input[type="number"]::-ms-reveal {
 .legend-swatch.piece-k { --pm-border: rgba(0, 170, 90, 0.95);   --pm-fill: rgba(0, 170, 90, 0.35); }
 
 /* Player colors for "multiple markers on same square" (make white visible) */
-.legend-swatch.side-w  { --pm-border: rgba(180,180,180,0.95); --pm-fill: rgba(180,180,180,0.30); }
+.legend-swatch.side-w  { --pm-border: rgba(90, 94, 100, 0.95); --pm-fill: rgba(90, 94, 100, 0.30); }
 .legend-swatch.side-b  { --pm-border: rgba(0,0,0,0.75);       --pm-fill: rgba(0,0,0,0.20); }
 
 .legend-note{
