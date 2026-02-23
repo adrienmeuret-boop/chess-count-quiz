@@ -289,30 +289,30 @@ function getFixedDisplayQuestionTypes() {
 }
 
 function revealAnswers() {
-	const panel = getOrCreateAnswersPanel();
-panel.innerHTML = "";
-panel.style.display = "block";
-getFixedDisplayQuestionTypes().forEach((id) => {
-        const shownMovesLabel = document.getElementById(id + "ShownMoves");
-        const correct = chess_data.correct?.[id];
-        if (!shownMovesLabel || !correct) return;
+  const panel = document.getElementById("answersPanel");
+  panel.innerHTML = "";
+  panel.style.display = "block";
 
-        const movesText = Array.isArray(correct.moves)
-            ? correct.moves.join(', ')
-            : '';
-shownMovesLabel.innerHTML =
-    `<span style="font-weight:700; font-size:1.4em;">${correct.count}</span>` +
-    (movesText ? ` <span style="font-size:1em;">(${movesText})</span>` : '');
-	// shownMovesLabel.innerHTML =
-//   `<span style="font-weight:700; font-size:1.4em;">${correct.count}</span>` +
-//   (movesText ? ` <span style="font-size:1em;">(${movesText})</span>` : '');
-    });
+  getFixedDisplayQuestionTypes().forEach((id) => {
+    const correct = chess_data.correct?.[id];
+    if (!correct) return;
 
-    var showMovesButton = document.getElementById("showMovesButton");
-    if (showMovesButton) {
-        showMovesButton.disabled = true;
-        showMovesButton.style.backgroundColor = "#d3d3d3";
-    }
+    const movesText = Array.isArray(correct.moves)
+      ? correct.moves.join(", ")
+      : "";
+
+    appendAnswerToBottomPanel(
+      createDynamicInputsLabel(id),
+      String(correct.count),
+      movesText
+    );
+  });
+
+  const showMovesButton = document.getElementById("showMovesButton");
+  if (showMovesButton) {
+    showMovesButton.disabled = true;
+    showMovesButton.style.backgroundColor = "#d3d3d3";
+  }
 }
 
 function endGame() {
@@ -997,6 +997,32 @@ function createDynamicInputsLabel(questionType) {
 
   // \n = retour à la ligne
   return `${who}\n${what}:`;
+}
+
+function appendAnswerToBottomPanel(label, count, movesText) {
+  const panel = document.getElementById("answersPanel");
+  panel.style.display = "block";
+
+  const row = document.createElement("div");
+  row.className = "answers-row";
+
+  const lab = document.createElement("div");
+  lab.className = "answers-label";
+  lab.textContent = label;
+
+  const cnt = document.createElement("div");
+  cnt.className = "answers-count";
+  cnt.textContent = count;
+
+  const mv = document.createElement("div");
+  mv.className = "answers-moves";
+  mv.textContent = movesText ? `(${movesText})` : "";
+
+  row.appendChild(lab);
+  row.appendChild(cnt);
+  row.appendChild(mv);
+
+  panel.appendChild(row);
 }
 
 // -----------------------------------------------------------
