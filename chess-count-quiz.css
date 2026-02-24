@@ -67,7 +67,7 @@ h2{
 /* ===== Layout principal ===== */
 .container{
   display: grid;
-  grid-template-columns: var(--board-size) minmax(520px, 1fr);
+  grid-template-columns: var(--board-size) minmax(520px, 1fr) 320px; /* + colonne timer */
   column-gap: var(--gap);
   align-items: start;
 }
@@ -91,14 +91,17 @@ h2{
   font-size: 2.4em;
   font-weight: 800;
 }
-#timer{
-  font-size: 1.5em;   /* 2em - 25% = 1.5em */
-  font-weight: 600;
+/* Style timer (seulement dans la colonne timer à droite) */
+.timer-col #timer{
+  font-size: 4.5em;     /* 1.5em × 3 */
+  font-weight: 800;
+  line-height: 1;
 }
-
-#timerSection p{
+/* Phrase sous le timer : reste petite */
+.timer-penalty{
   margin: 6px 0 0 0;
   font-size: var(--small-font);
+  opacity: 0.85;
 }
 
 #remainingMoves{
