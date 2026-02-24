@@ -67,9 +67,17 @@ h2{
 /* ===== Layout principal ===== */
 .container{
   display: grid;
-  grid-template-columns: var(--board-size) minmax(520px, 1fr) 320px; /* + colonne timer */
+
+  /* 3 colonnes "à côte" (le milieu ne s'étire plus) */
+  grid-template-columns: var(--board-size) minmax(520px, 560px) 320px;
+
   column-gap: var(--gap);
   align-items: start;
+
+  /* évite que la grille s'étale sur toute la largeur et crée un grand vide */
+  width: fit-content;
+  max-width: 100%;
+  justify-content: start;
 }
 
 /* Colonne gauche : échiquier uniquement */
