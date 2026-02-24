@@ -86,6 +86,18 @@ h2{
   min-width: 520px;
 }
 
+/* ===== Colonne timer (à droite) ===== */
+.timer-col{
+  display: flex;
+  align-items: flex-start; /* mets flex-end si tu veux aligné à droite */
+}
+
+#timerSection{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 /* ===== Score / timer ===== */
 #score{
   font-size: 2.4em;
@@ -267,7 +279,7 @@ h2{
   margin-top: 16px;
   display: none; /* show after Show Moves */
   max-width: 1200px;
-  margin-left: calc(var(--board-size) + var(--gap));
+  margin-left: calc(var(--board-size) + var(--gap) + 520px);
   font-size: var(--base-font);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
