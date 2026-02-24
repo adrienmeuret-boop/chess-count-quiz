@@ -79,15 +79,10 @@
       <div id="board"></div>
     </div>
 
-    <!-- RIGHT COLUMN -->
+    <!-- MIDDLE COLUMN -->
     <div class="info">
       <div id="score">Score: 0</div>
       <div id="remainingMoves"></div>
-
-      <div id="timerSection">
-        <div id="timer">Time: 03:00</div>
-        <p>10 second penalty per wrong answer</p>
-      </div>
 
       <form id="chessCountForm">
         <div id="count-inputs">
@@ -130,8 +125,16 @@
         </div>
       </div>
     </div>
-  </div>
 
+    <!-- RIGHT COLUMN (TIMER) -->
+    <div class="timer-col">
+      <div id="timerSection">
+        <div id="timer">Time: 03:00</div>
+        <p class="timer-penalty">10 second penalty per wrong answer</p>
+      </div>
+    </div>
+  </div>
+  
 <div class="footer-block">
   <button id="settingsButton" type="button" class="action-button">
     Settings
