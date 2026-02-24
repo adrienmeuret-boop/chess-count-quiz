@@ -65,13 +65,18 @@ h2{
 }
 
 /* ===== Layout principal ===== */
+/* ===== Layout principal ===== */
 .container{
   display: grid;
 
-  /* 3 colonnes "à côte" (le milieu ne s'étire plus) */
-  grid-template-columns: var(--board-size) minmax(520px, 560px) 320px;
+  /* 4 colonnes : board | info | spacer | timer */
+  grid-template-columns:
+    var(--board-size)
+    minmax(520px, 560px)
+    calc(var(--gap) * 3)
+    320px;
 
-  column-gap: var(--gap);
+  column-gap: var(--gap);   /* sert encore pour les autres écarts si besoin */
   align-items: start;
 
   /* évite que la grille s'étale sur toute la largeur et crée un grand vide */
@@ -217,6 +222,21 @@ h2{
   width: 100%;
 }
 
+/* Submit & Show Moves : pleine largeur comme les boutons highlight */
+.full-width{
+  width: 100%;
+}
+
+/* Espace vide entre Submit Counts et White's Moves
+   (même hauteur que l'ancien bouton Show Moves) */
+.submit-gap{
+  height: 44px;
+}
+
+/* Optionnel : le bouton Show Moves sous le timer prend toute la colonne */
+.timer-col #showMovesButton{
+  margin-top: 16px;
+}
 /* ===== Legend sous les boutons ===== */
 .legend{
   width: min(560px, 100%);
