@@ -36,9 +36,8 @@ body{
   padding: var(--page-pad);
 }
 
-/* ===== Footer (Settings + Positions + See) ===== */
 .footer-block{
-  margin-top: -24px;
+  margin-top: 48px; /* espace clair sous la grille */
 }
 
 .footer-block p{
@@ -100,15 +99,30 @@ h2{
 }
 
 /* ===== Colonne timer (à droite) ===== */
+/* ===== Colonne timer (à droite) ===== */
 .timer-col{
   display: flex;
-  align-items: flex-start; /* mets flex-end si tu veux aligné à droite */
+  flex-direction: column;  /* empile timer puis bouton */
+  align-items: flex-start;
 }
 
 #timerSection{
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+}
+
+/* Time sur une seule ligne */
+.timer-col #timer{
+  white-space: nowrap;
+}
+
+/* Show Moves sous le timer, pleine largeur */
+.timer-col #showMovesButton{
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  white-space: nowrap;
 }
 
 /* ===== Score / timer ===== */
@@ -233,10 +247,6 @@ h2{
   height: 44px;
 }
 
-/* Optionnel : le bouton Show Moves sous le timer prend toute la colonne */
-.timer-col #showMovesButton{
-  margin-top: 16px;
-}
 /* ===== Legend sous les boutons ===== */
 .legend{
   width: min(560px, 100%);
