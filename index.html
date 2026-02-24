@@ -73,77 +73,83 @@
     </div>
   </div>
 
- <div class="container">
-  <!-- LEFT COLUMN -->
-  <div class="board-col">
-    <div id="board"></div>
-  </div>
-
-  <!-- MIDDLE COLUMN -->
-  <div class="info">
-    <div id="score">Score: 0</div>
-    <div id="remainingMoves"></div>
-
-    <form id="chessCountForm">
-      <div id="count-inputs">
-        <!-- Dynamic input fields will be appended here based on settings -->
-      </div>
-      <button type="submit" id="submit" class="action-button">Submit Counts</button>
-    </form>
-
-    <button id="showMovesButton" class="action-button" type="button">Show Moves</button>
-
-    <div id="boardHighlightsControls">
-      <button id="hl_p1AllLegal" class="action-button" type="button">White’s Moves</button>
-      <button id="hl_p2AllLegal" class="action-button" type="button">Black’s Moves</button>
-      <button id="hl_p1Checks" class="action-button" type="button">White’s Checks</button>
-      <button id="hl_p2Checks" class="action-button" type="button">Black’s Checks</button>
-      <button id="hl_p1Captures" class="action-button" type="button">White’s Captures</button>
-      <button id="hl_p2Captures" class="action-button" type="button">Black’s Captures</button>
-      <button id="hl_clear" class="action-button" type="button">Clear</button>
+  <div class="container">
+    <!-- LEFT COLUMN -->
+    <div class="board-col">
+      <div id="board"></div>
     </div>
 
-    <!-- Légende SOUS les boutons -->
-    <div id="pieceLegend" class="legend">
-      <div class="legend-title">Legend</div>
+    <!-- MIDDLE COLUMN -->
+    <div class="info">
+      <div id="score">Score: 0</div>
+      <div id="remainingMoves"></div>
 
-      <div class="legend-grid">
-        <div class="legend-item"><span class="legend-swatch piece-p"></span><span class="legend-label">Pawn (P)</span></div>
-        <div class="legend-item"><span class="legend-swatch piece-n"></span><span class="legend-label">Knight (N)</span></div>
-        <div class="legend-item"><span class="legend-swatch piece-b"></span><span class="legend-label">Bishop (B)</span></div>
-        <div class="legend-item"><span class="legend-swatch piece-r"></span><span class="legend-label">Rook (R)</span></div>
-        <div class="legend-item"><span class="legend-swatch piece-q"></span><span class="legend-label">Queen (Q)</span></div>
-        <div class="legend-item"><span class="legend-swatch piece-k"></span><span class="legend-label">King (K)</span></div>
-        <div class="legend-item"><span class="legend-swatch side-w"></span><span class="legend-label">Player: White</span></div>
-        <div class="legend-item"><span class="legend-swatch side-b"></span><span class="legend-label">Player: Black</span></div>
+      <form id="chessCountForm">
+        <div id="count-inputs">
+          <!-- Dynamic input fields will be appended here based on settings -->
+        </div>
+
+        <!-- Submit aligné comme les boutons highlight (plein largeur) -->
+        <button type="submit" id="submit" class="action-button full-width">Submit Counts</button>
+      </form>
+
+      <!-- Espace vide = même hauteur que l'ancien bouton Show Moves (réglé en CSS) -->
+      <div class="submit-gap"></div>
+
+      <div id="boardHighlightsControls">
+        <button id="hl_p1AllLegal" class="action-button" type="button">White’s Moves</button>
+        <button id="hl_p2AllLegal" class="action-button" type="button">Black’s Moves</button>
+        <button id="hl_p1Checks" class="action-button" type="button">White’s Checks</button>
+        <button id="hl_p2Checks" class="action-button" type="button">Black’s Checks</button>
+        <button id="hl_p1Captures" class="action-button" type="button">White’s Captures</button>
+        <button id="hl_p2Captures" class="action-button" type="button">Black’s Captures</button>
+        <button id="hl_clear" class="action-button" type="button">Clear</button>
       </div>
 
-      <div class="legend-note">
-        If a square has multiple piece markers, the big square uses player color (white/black).
+      <!-- Légende SOUS les boutons -->
+      <div id="pieceLegend" class="legend">
+        <div class="legend-title">Legend</div>
+
+        <div class="legend-grid">
+          <div class="legend-item"><span class="legend-swatch piece-p"></span><span class="legend-label">Pawn (P)</span></div>
+          <div class="legend-item"><span class="legend-swatch piece-n"></span><span class="legend-label">Knight (N)</span></div>
+          <div class="legend-item"><span class="legend-swatch piece-b"></span><span class="legend-label">Bishop (B)</span></div>
+          <div class="legend-item"><span class="legend-swatch piece-r"></span><span class="legend-label">Rook (R)</span></div>
+          <div class="legend-item"><span class="legend-swatch piece-q"></span><span class="legend-label">Queen (Q)</span></div>
+          <div class="legend-item"><span class="legend-swatch piece-k"></span><span class="legend-label">King (K)</span></div>
+          <div class="legend-item"><span class="legend-swatch side-w"></span><span class="legend-label">Player: White</span></div>
+          <div class="legend-item"><span class="legend-swatch side-b"></span><span class="legend-label">Player: Black</span></div>
+        </div>
+
+        <div class="legend-note">
+          If a square has multiple piece markers, the big square uses player color (white/black).
+        </div>
       </div>
+    </div>
+
+    <!-- SPACER COLUMN (vide, pour respirer) -->
+    <div class="spacer-col"></div>
+
+    <!-- RIGHT COLUMN (TIMER + Show Moves dessous) -->
+    <div class="timer-col">
+      <div id="timerSection">
+        <div id="timer">Time: 03:00</div>
+        <p class="timer-penalty">10 second penalty per wrong answer</p>
+      </div>
+
+      <!-- Show Moves sous le timer -->
+      <button id="showMovesButton" class="action-button full-width" type="button">Show Moves</button>
     </div>
   </div>
 
-  <!-- SPACER COLUMN (vide, pour respirer) -->
-  <div class="spacer-col"></div>
+  <div class="footer-block">
+    <button id="settingsButton" type="button" class="action-button">
+      Settings
+    </button>
 
-  <!-- RIGHT COLUMN (TIMER) -->
-  <div class="timer-col">
-    <div id="timerSection">
-      <div id="timer">Time: 03:00</div>
-      <p class="timer-penalty">10 second penalty per wrong answer</p>
-    </div>
+    <p>Positions from the <a href="https://database.lichess.org/">Lichess puzzle database</a></p>
+    <p>See <a href="https://github.com/bescoto/chess-count-quiz">https://github.com/bescoto/chess-count-quiz</a> for source code</p>
   </div>
-</div>
-  
-<div class="footer-block">
-  <button id="settingsButton" type="button" class="action-button">
-    Settings
-  </button>
-
-  <p>Positions from the <a href="https://database.lichess.org/">Lichess puzzle database</a></p>
-  <p>See <a href="https://github.com/bescoto/chess-count-quiz">https://github.com/bescoto/chess-count-quiz</a> for source code</p>
-</div>
 
   <!-- Liste des coups : DOIT être tout en bas sous le lien source -->
   <div id="movesList"></div>
