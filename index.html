@@ -83,6 +83,8 @@
     <div class="info">
       <div id="score">Score: 0</div>
 
+      <div id="remainingMoves"></div>
+
       <form id="chessCountForm">
         <div id="count-inputs">
           <!-- Dynamic input fields will be appended here based on settings -->
@@ -133,6 +135,7 @@
           </div>
         </div>
       </div>
+    </div>
 
     <!-- SPACER COLUMN (vide, pour respirer) -->
     <div class="spacer-col"></div>
@@ -147,8 +150,9 @@
       <!-- Show Moves sous le timer -->
       <button id="showMovesButton" class="action-button full-width" type="button">Show Moves</button>
 
-      <div id="remainingMoves"></div>
+      <div id="movesList"></div>
     </div>
+  </div>
 
   <div class="footer-block">
     <button id="settingsButton" type="button" class="action-button">
