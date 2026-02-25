@@ -622,6 +622,7 @@ function startNewGame() {
   loadNewPuzzle();
   startTimer();
   initTimer();
+  playBuzz();
 
  try {
   if (!playBuzz._ctx) {
