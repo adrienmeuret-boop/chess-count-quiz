@@ -69,11 +69,11 @@ h2{
   display: grid;
 
   /* 4 colonnes : board | info | spacer | timer */
-  grid-template-columns:
+   grid-template-columns:
     var(--board-size)
     minmax(520px, 560px)
-    calc(var(--gap) * 3)
-    560px;
+    calc(var(--gap) * 1.5)
+    720px;
 
   column-gap: var(--gap);   /* sert encore pour les autres écarts si besoin */
   align-items: start;
@@ -96,9 +96,6 @@ h2{
   flex-direction: column;
   gap: 12px;
   min-width: 520px;
-  height: var(--board-size);
-  min-height: 0;
-  overflow: auto;
 }
 
 /* ===== Colonne timer (à droite) ===== */
@@ -179,7 +176,9 @@ h2{
 }
 
 #remainingMoves .moves-table td{ padding: 2px 0; vertical-align: top; text-align: left; white-space: nowrap; }
-#remainingMoves .moves-table{ width: fit-content; border-collapse: separate; border-spacing: 4ch 0; }
+#remainingMoves .moves-table{ width: fit-content; border-collapse: collapse; }
+#remainingMoves .moves-table td.turn{ padding-right: 1ch; }
+#remainingMoves .moves-table td.b{ padding-left: 4ch; }
 
 #remainingMoves .moves-table .turn{
   width: 4.0ch;
