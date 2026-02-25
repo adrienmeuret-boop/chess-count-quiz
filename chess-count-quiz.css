@@ -112,8 +112,8 @@ h2{
   flex-direction: column;
   gap: 12px;
   min-width: 520px;
-  max-height: var(--board-size);
-  overflow: hidden;
+  max-height: none;
+  overflow: visible;
 }
 
 /* ===== Colonne timer (à droite) ===== */
