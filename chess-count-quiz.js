@@ -500,35 +500,23 @@ function createMovesTableHtml(movesList, isBlackToMove) {
         <h3>Compute counts after these moves:</h3>
         <table class="moves-table">
             <tr>
-                <th>White</th>
-                <th>Black</th>
+                <th class="ply">#</th>
+                <th class="move">Move</th>
             </tr>`;
 
-  if (isBlackToMove) {
+  for (let i = 0; i < movesList.length; i++) {
+    const ply = i + 1;
+    let mv = movesList[i] || "";
+
+    if (isBlackToMove && i === 0 && mv) {
+      mv = `... ${mv}`;
+    }
+
     tableHtml += `
             <tr>
-                <td></td>
-                <td>${movesList[0] || ""}</td>
+                <td class="ply">${ply}.</td>
+                <td class="move">${mv}</td>
             </tr>`;
-    for (let i = 1; i < movesList.length; i += 2) {
-      const whiteMove = movesList[i] || "";
-      const blackMove = i + 1 < movesList.length ? movesList[i + 1] : "";
-      tableHtml += `
-                <tr>
-                    <td>${whiteMove}</td>
-                    <td>${blackMove}</td>
-                </tr>`;
-    }
-  } else {
-    for (let i = 0; i < movesList.length; i += 2) {
-      const whiteMove = movesList[i] || "";
-      const blackMove = i + 1 < movesList.length ? movesList[i + 1] : "";
-      tableHtml += `
-                <tr>
-                    <td>${whiteMove}</td>
-                    <td>${blackMove}</td>
-                </tr>`;
-    }
   }
 
   tableHtml += "</table>";
