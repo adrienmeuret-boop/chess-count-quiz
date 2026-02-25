@@ -450,7 +450,7 @@ input[type="number"]{ -moz-appearance: textfield; }
   background: var(--pm-fill);
 }
 
-#board .pm6 .pm.p{ --pm-border: rgba(135, 85, 0, 0.98); --pm-fill: rgba(255, 205, 60, 0.42); }
+#board .pm6 .pm.p{ --pm-border: rgba(135, 85, 0, 0.98); --pm-fill: rgba(0, 180, 0, 0.70); }
 #board .pm6 .pm.n{ --pm-border: rgba(255, 140, 0, 0.95);  --pm-fill: rgba(255, 140, 0, 0.35); }
 #board .pm6 .pm.b{ --pm-border: rgba(210, 50, 50, 0.95);  --pm-fill: rgba(210, 50, 50, 0.35); }
 #board .pm6 .pm.r{ --pm-border: rgba(40, 110, 255, 0.95); --pm-fill: rgba(40, 110, 255, 0.35); }
