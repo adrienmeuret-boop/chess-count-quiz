@@ -163,23 +163,26 @@ h2{
   width: 100%;
   border-collapse: collapse;
   margin: 0;
-  font-size: 0.72em;
+  font-size: 0.80em;
 }
 
-#remainingMoves .moves-table th,
 #remainingMoves .moves-table td{
   padding: 2px 6px;
   vertical-align: top;
   text-align: left;
-}
-
-#remainingMoves .moves-table .ply{
-  width: 4.5ch;
   white-space: nowrap;
 }
 
-#remainingMoves .moves-table .mv{
-  white-space: nowrap;
+#remainingMoves .moves-table .turn{
+  width: 4.0ch;
+}
+
+#remainingMoves .moves-table .w{
+  width: 50%;
+}
+
+#remainingMoves .moves-table .b{
+  width: 50%;
 }
 
 /* ===== Formulaire ===== */
