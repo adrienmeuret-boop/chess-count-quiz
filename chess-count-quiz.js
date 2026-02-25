@@ -293,9 +293,34 @@ function revealAnswers() {
   }
 }
 
+function playBuzz() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    o.type = "square";
+    o.frequency.value = 140;
+
+    g.gain.value = 0.0001;
+    g.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+
+    o.connect(g);
+    g.connect(ctx.destination);
+
+    o.start();
+    o.stop(ctx.currentTime + 0.23);
+
+    o.onended = () => ctx.close();
+  } catch (e) {}
+}
+
 function endGame() {
   if (gameEnded) return;
   gameEnded = true;
+
+  if (chess_data.timeRemaining <= 0) playBuzz();
 
   if (timerInterval) {
     clearInterval(timerInterval);
@@ -626,7 +651,6 @@ function startNewGame() {
 
 function submitAnswers(event) {
   event.preventDefault();
-  if (gameEnded) return;
 
   getFixedDisplayQuestionTypes().forEach((id) => {
     const input = document.getElementById(id);
