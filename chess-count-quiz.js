@@ -206,7 +206,7 @@ function initTimer() {
     chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 1);
     updateTimerDisplay();
 
-    if (chess_data.timeRemaining <= 0) {   playBuzz();   endGame(); }
+    if (chess_data.timeRemaining <= 0) {   gameEnded = true;   playBuzz();   endGame(); }
   }, 1000);
 }
 
@@ -221,7 +221,7 @@ function startTimer() {
 function penalizeTime() {
   chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 10);
   updateTimerDisplay();
-  if (chess_data.timeRemaining <= 0) {   playBuzz();   endGame(); }
+  if (chess_data.timeRemaining <= 0) {   gameEnded = true;   playBuzz();   endGame(); }
 }
 
 // -----------------------------------------------------------
