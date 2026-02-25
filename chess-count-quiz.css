@@ -390,9 +390,17 @@ input[type="number"]{ -moz-appearance: textfield; }
   inset: 4px;
   border-radius: 3px;
   pointer-events: none;
+
+  /* couleur visible partout */
+  background-color: rgba(59, 130, 246, 0.55); /* bleu proche black's moves */
+  outline: 2px solid rgba(15, 23, 42, 0.70);  /* contraste net */
+
   opacity: 0;
 }
-#board .pmBig.on{ opacity: 1; }
+
+#board .pmBig.on{
+  opacity: 1;
+}
 
 #board .pmBig.piece-p { box-shadow: inset 0 0 0 3px rgba(255, 200, 40, 0.95); background: rgba(255, 200, 40, 0.20); }
 #board .pmBig.piece-n { box-shadow: inset 0 0 0 3px rgba(255, 140, 0, 0.95);  background: rgba(255, 140, 0, 0.20); }
