@@ -350,8 +350,12 @@ h2{
 #movesList{
   margin-top: 16px;
   display: none; /* show after Show Moves */
-  max-width: 1200px;
-  margin-left: calc(var(--board-size) + var(--gap) + 520px);
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
   font-size: var(--base-font);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
