@@ -356,7 +356,7 @@ h2{
 /* ===== Moves list tout en bas (hors container) ===== */
 #movesList{ margin-top: 16px; display: none; /* show after Show Moves */ width: 100%; max-width: 100%; margin-left: 0; font-size: 1.35em; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
 .movesRow{ display: grid; grid-template-columns: 9ch 1fr; column-gap: 1ch; padding: 6px 0; align-items: start; }
-.movesLabel{ white-space: pre-line; line-height: 1.2; font-weight: 400; font-size: 1em; }
+.movesLabel{ white-space: pre-line; line-height: 1.2; font-weight: 5050; font-size: 1em; }
 .movesText{ line-height: 1.3; font-size: 1em; }
 
 /* ===== Settings modal ===== */
