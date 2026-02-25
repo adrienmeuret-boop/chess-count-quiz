@@ -64,9 +64,11 @@ h2{
 }
 
 /* ===== Layout principal ===== */
-/* ===== Layout principal ===== */
 .container{
   display: grid;
+  grid-auto-rows: 1fr;
+  height: var(--board-size);
+}
 
   /* 4 colonnes : board | info | spacer | timer */
    grid-template-columns:
@@ -87,7 +89,7 @@ h2{
 /* Colonne gauche : échiquier uniquement */
 #board{
   width: var(--board-size);
-  height: var(--board-size);
+  height: 100%;
 }
 
 /* Colonne droite */
@@ -96,6 +98,8 @@ h2{
   flex-direction: column;
   gap: 12px;
   min-width: 520px;
+  height: 100%;
+  overflow: auto;
 }
 
 /* ===== Colonne timer (à droite) ===== */
@@ -103,8 +107,9 @@ h2{
   display: flex;
   flex-direction: column;  /* empile timer puis bouton */
   align-items: flex-start;
-  height: var(--board-size);
+  height: 100%;
   min-height: 0;
+  overflow: auto;
 }
 
 .timer-col #remainingMoves{
