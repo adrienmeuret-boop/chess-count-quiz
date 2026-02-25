@@ -417,7 +417,7 @@ input[type="number"]{ -moz-appearance: textfield; }
 /* actif (hachuré) */
 #board .pm6 .pm.on{ 
   opacity: 1; border-color: var(--pm-border); 
-  background-image: repeating-linear-gradient( 45deg, var(--pm-border), var(--pm-border) 4px, transparent 4px, transparent 8px ); }
+  background-image: repeating-linear-gradient( 45deg, var(--pm-hatch), var(--pm-hatch) 4px, transparent 4px, transparent 8px ); }
 
 /* solid si doublon */
 #board .pm6 .pm.on.solid{
@@ -426,12 +426,12 @@ input[type="number"]{ -moz-appearance: textfield; }
 }
 
 /* table couleurs unique (pmBig + pm6 + legend) */
-#board .pm6 .pm.p,#board .pmBig.piece-p,.legend-swatch.piece-p{ --pm-border: rgba(135, 85, 0, 0.98); --pm-fill: rgba(255, 205, 60, 0.65); --pm-solid: rgba(255, 205, 60, 0.82); --pm-big: rgba(255, 205, 60, 0.34); }
-#board .pm6 .pm.n,#board .pmBig.piece-n,.legend-swatch.piece-n{ --pm-border: rgba(255, 140, 0, 0.95); --pm-fill: rgba(255, 140, 0, 0.45); --pm-solid: rgba(255, 140, 0, 0.78); --pm-big: rgba(255, 140, 0, 0.20); }
-#board .pm6 .pm.b,#board .pmBig.piece-b,.legend-swatch.piece-b{ --pm-border: rgba(210, 50, 50, 0.95); --pm-fill: rgba(210, 50, 50, 0.45); --pm-solid: rgba(210, 50, 50, 0.78); --pm-big: rgba(210, 50, 50, 0.18); }
-#board .pm6 .pm.r,#board .pmBig.piece-r,.legend-swatch.piece-r{ --pm-border: rgba(40, 110, 255, 0.95); --pm-fill: rgba(40, 110, 255, 0.45); --pm-solid: rgba(40, 110, 255, 0.78); --pm-big: rgba(40, 110, 255, 0.18); }
-#board .pm6 .pm.q,#board .pmBig.piece-q,.legend-swatch.piece-q{ --pm-border: rgba(0, 170, 210, 0.95); --pm-fill: rgba(0, 170, 210, 0.45); --pm-solid: rgba(0, 170, 210, 0.78); --pm-big: rgba(0, 170, 210, 0.18); }
-#board .pm6 .pm.k,#board .pmBig.piece-k,.legend-swatch.piece-k{ --pm-border: rgba(0, 170, 90, 0.95); --pm-fill: rgba(0, 170, 90, 0.45); --pm-solid: rgba(0, 170, 90, 0.78); --pm-big: rgba(0, 170, 90, 0.18); }
+#board .pm6 .pm.p,#board .pmBig.piece-p,.legend-swatch.piece-p{ --pm-border: rgba(135, 85, 0, 0.98); --pm-hatch: rgba(135, 85, 0, 0.55); --pm-fill: rgba(255, 205, 60, 0.65); --pm-solid: rgba(255, 205, 60, 0.82); --pm-big: rgba(255, 205, 60, 0.34); }
+#board .pm6 .pm.n,#board .pmBig.piece-n,.legend-swatch.piece-n{ --pm-border: rgba(255, 140, 0, 0.95); --pm-hatch: rgba(255, 140, 0, 0.55); --pm-fill: rgba(255, 140, 0, 0.45); --pm-solid: rgba(255, 140, 0, 0.78); --pm-big: rgba(255, 140, 0, 0.20); }
+#board .pm6 .pm.b,#board .pmBig.piece-b,.legend-swatch.piece-b{ --pm-border: rgba(210, 50, 50, 0.95); --pm-hatch: rgba(210, 50, 50, 0.55); --pm-fill: rgba(210, 50, 50, 0.45); --pm-solid: rgba(210, 50, 50, 0.78); --pm-big: rgba(210, 50, 50, 0.18); }
+#board .pm6 .pm.r,#board .pmBig.piece-r,.legend-swatch.piece-r{ --pm-border: rgba(40, 110, 255, 0.95); --pm-hatch: rgba(40, 110, 255, 0.55); --pm-fill: rgba(40, 110, 255, 0.45); --pm-solid: rgba(40, 110, 255, 0.78); --pm-big: rgba(40, 110, 255, 0.18); }
+#board .pm6 .pm.q,#board .pmBig.piece-q,.legend-swatch.piece-q{ --pm-border: rgba(0, 170, 210, 0.95); --pm-hatch: rgba(0, 170, 210, 0.55); --pm-fill: rgba(0, 170, 210, 0.45); --pm-solid: rgba(0, 170, 210, 0.78); --pm-big: rgba(0, 170, 210, 0.18); }
+#board .pm6 .pm.k,#board .pmBig.piece-k,.legend-swatch.piece-k{ --pm-border: rgba(0, 170, 90, 0.95); --pm-hatch: rgba(0, 170, 90, 0.55); --pm-fill: rgba(0, 170, 90, 0.45); --pm-solid: rgba(0, 170, 90, 0.78); --pm-big: rgba(0, 170, 90, 0.18); }
 
-#board .pm6 .pm.side-w,#board .pmBig.side-w,.legend-swatch.side-w{ --pm-border: rgba(25, 25, 25, 0.88); --pm-fill: rgba(255, 255, 255, 0.38); --pm-solid: rgba(255, 255, 255, 0.78); --pm-big: rgba(255, 255, 255, 0.26); }
-#board .pm6 .pm.side-b,#board .pmBig.side-b,.legend-swatch.side-b{ --pm-border: rgba(0, 0, 0, 0.75); --pm-fill: rgba(0, 0, 0, 0.22); --pm-solid: rgba(0, 0, 0, 0.58); --pm-big: rgba(0, 0, 0, 0.10); }
+#board .pm6 .pm.side-w,#board .pmBig.side-w,.legend-swatch.side-w{ --pm-border: rgba(25, 25, 25, 0.88); --pm-hatch: rgba(25, 25, 25, 0.45); --pm-fill: rgba(255, 255, 255, 0.38); --pm-solid: rgba(255, 255, 255, 0.78); --pm-big: rgba(255, 255, 255, 0.26); }
+#board .pm6 .pm.side-b,#board .pmBig.side-b,.legend-swatch.side-b{ --pm-border: rgba(0, 0, 0, 0.75); --pm-hatch: rgba(0, 0, 0, 0.40); --pm-fill: rgba(0, 0, 0, 0.22); --pm-solid: rgba(0, 0, 0, 0.58); --pm-big: rgba(0, 0, 0, 0.10); }
