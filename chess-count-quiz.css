@@ -66,8 +66,20 @@ h2{
 /* ===== Layout principal ===== */
 .container{
   display: grid;
-  height: var(--board-size);
-  overflow: visible;
+
+  /* 4 colonnes : board | info | spacer | timer */
+  grid-template-columns:
+    var(--board-size)
+    minmax(520px, 560px)
+    calc(var(--gap) * 1.5)
+    860px;
+
+  column-gap: var(--gap);
+  align-items: start;
+
+  width: fit-content;
+  max-width: 100%;
+  justify-content: start;
 }
 
   /* 4 colonnes : board | info | spacer | timer */
