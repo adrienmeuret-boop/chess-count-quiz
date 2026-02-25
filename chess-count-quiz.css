@@ -68,7 +68,6 @@ h2{
   display: grid;
   grid-template-columns: auto 1fr 1fr;
   column-gap: var(--gap);
-  align-items: start;
 }
 
   /* 4 colonnes : board | info | spacer | timer */
@@ -118,6 +117,7 @@ h2{
   min-width: 520px;
   max-height: none;
   overflow: visible;
+  padding-top: 96px;
 }
 
 /* ===== Colonne timer (à droite) ===== */
@@ -127,6 +127,7 @@ h2{
   align-items: flex-start;
   max-height: none;
   overflow: visible;
+  padding-top: 96px;
 }
 
 .timer-col #remainingMoves{
