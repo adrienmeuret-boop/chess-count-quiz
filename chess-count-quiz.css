@@ -121,8 +121,8 @@ h2{
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  max-height: var(--board-size);
-  overflow: hidden;
+  max-height: none;
+  overflow: visible;
 }
 
 .timer-col #remainingMoves{
@@ -132,7 +132,6 @@ h2{
   min-height: 0;
   overflow: hidden;
 }
-
 #timerSection{
   display: flex;
   flex-direction: column;
