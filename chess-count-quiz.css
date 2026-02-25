@@ -96,6 +96,9 @@ h2{
   flex-direction: column;
   gap: 12px;
   min-width: 520px;
+  height: var(--board-size);
+  min-height: 0;
+  overflow: auto;
 }
 
 /* ===== Colonne timer (à droite) ===== */
@@ -176,7 +179,7 @@ h2{
 }
 
 #remainingMoves .moves-table td{ padding: 2px 0; vertical-align: top; text-align: left; white-space: nowrap; }
-#remainingMoves .moves-table{ border-collapse: separate; border-spacing: 4ch 0; }
+#remainingMoves .moves-table{ width: fit-content; border-collapse: separate; border-spacing: 4ch 0; }
 
 #remainingMoves .moves-table .turn{
   width: 4.0ch;
@@ -353,7 +356,7 @@ h2{
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-.movesRow{ display: grid; grid-template-columns: var(--label-w) 1fr; column-gap: 8px; padding: 6px 0; align-items: start; }
+.movesRow{ display: grid; grid-template-columns: 9ch 1fr; column-gap: 1ch; padding: 6px 0; align-items: start; }
 
 .movesLabel{
   white-space: pre-line;
