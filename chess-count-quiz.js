@@ -498,25 +498,33 @@ function setupHighlightButtons() {
 function createMovesTableHtml(movesList, isBlackToMove) {
   let tableHtml = `
         <h3>Compute counts after these moves:</h3>
-        <table class="moves-table">
-            <tr>
-                <th class="ply">#</th>
-                <th class="move">Move</th>
-            </tr>`;
+        <table class="moves-table">`;
 
-  for (let i = 0; i < movesList.length; i++) {
-    const ply = i + 1;
-    let mv = movesList[i] || "";
+  let idx = 0;
 
-    if (isBlackToMove && i === 0 && mv) {
-      mv = `... ${mv}`;
-    }
-
+  if (isBlackToMove) {
+    const blackMove = movesList[0] || "";
     tableHtml += `
             <tr>
-                <td class="ply">${ply}.</td>
-                <td class="move">${mv}</td>
+                <td class="turn">1.</td>
+                <td class="w"></td>
+                <td class="b">${blackMove ? `... ${blackMove}` : ""}</td>
             </tr>`;
+    idx = 1;
+  }
+
+  let turn = isBlackToMove ? 2 : 1;
+
+  for (let i = idx; i < movesList.length; i += 2) {
+    const whiteMove = movesList[i] || "";
+    const blackMove = i + 1 < movesList.length ? movesList[i + 1] : "";
+    tableHtml += `
+            <tr>
+                <td class="turn">${turn}.</td>
+                <td class="w">${whiteMove}</td>
+                <td class="b">${blackMove}</td>
+            </tr>`;
+    turn++;
   }
 
   tableHtml += "</table>";
