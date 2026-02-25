@@ -433,5 +433,18 @@ input[type="number"]{ -moz-appearance: textfield; }
 #board .pm6 .pm.q,#board .pmBig.piece-q,.legend-swatch.piece-q{ --pm-border: rgba(0, 170, 210, 0.95); --pm-hatch: rgba(0, 170, 210, 0.55); --pm-fill: rgba(0, 170, 210, 0.45); --pm-solid: rgba(0, 170, 210, 0.78); --pm-big: rgba(0, 170, 210, 0.18); }
 #board .pm6 .pm.k,#board .pmBig.piece-k,.legend-swatch.piece-k{ --pm-border: rgba(0, 170, 90, 0.95); --pm-hatch: rgba(0, 170, 90, 0.55); --pm-fill: rgba(0, 170, 90, 0.45); --pm-solid: rgba(0, 170, 90, 0.78); --pm-big: rgba(0, 170, 90, 0.18); }
 
-#board .pm6 .pm.side-w,#board .pmBig.side-w,.legend-swatch.side-w{ --pm-border: rgba(25, 25, 25, 0.88); --pm-hatch: rgba(25, 25, 25, 0.45); --pm-fill: rgba(255, 255, 255, 0.38); --pm-solid: rgba(255, 255, 255, 0.78); --pm-big: rgba(255, 255, 255, 0.26); }
-#board .pm6 .pm.side-b,#board .pmBig.side-b,.legend-swatch.side-b{ --pm-border: rgba(0, 0, 0, 0.75); --pm-hatch: rgba(0, 0, 0, 0.40); --pm-fill: rgba(0, 0, 0, 0.22); --pm-solid: rgba(0, 0, 0, 0.58); --pm-big: rgba(0, 0, 0, 0.10); }
+#board .pm6 .pm.side-w,#board .pmBig.side-w,.legend-swatch.side-w{
+  --pm-border: rgba(90, 90, 90, 0.80);
+  --pm-hatch: rgba(200, 200, 200, 0.70);
+  --pm-fill: rgba(255, 255, 255, 0.52);
+  --pm-solid: rgba(255, 255, 255, 0.90);
+  --pm-big: rgba(255, 255, 255, 0.38);
+}
+
+#board .pm6 .pm.side-b,#board .pmBig.side-b,.legend-swatch.side-b{
+  --pm-border: rgba(0, 0, 0, 0.75);
+  --pm-hatch: rgba(0, 0, 0, 0.40);
+  --pm-fill: rgba(0, 0, 0, 0.22);
+  --pm-solid: rgba(0, 0, 0, 0.58);
+  --pm-big: rgba(0, 0, 0, 0.16);
+}
