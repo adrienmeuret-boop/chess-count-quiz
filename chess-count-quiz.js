@@ -301,8 +301,6 @@ function endGame() {
     clearInterval(timerInterval);
     timerInterval = null;
   }
-
-  revealAnswers();
 }
 
 // -----------------------------------------------------------
