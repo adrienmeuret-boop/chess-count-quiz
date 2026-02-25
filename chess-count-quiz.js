@@ -620,6 +620,8 @@ function startNewGame() {
   gameEnded = false;
   resetScore();
   loadNewPuzzle();
+  startTimer();
+  initTimer();
 
  try {
   if (!playBuzz._ctx) {
