@@ -219,7 +219,7 @@ h2{
 .input-group > label{
   white-space: pre-line;
   line-height: 1.15;
-  font-size: var(--base-font);
+  font-size: 1.35em;
   font-weight: 600;
 }
 
@@ -227,16 +227,15 @@ h2{
 #chessCountForm input[type="number"]{
   width: var(--input-w);
   text-align: center;
-  font-size: var(--base-font);
+  font-size: 1.35em;
   padding: 6px 8px;
 }
 
-/* Flèches */
 .increment, .decrement{
   background-color: #f0f0f0;
   border: 1px solid #ccc;
   padding: 8px 0;
-  font-size: 22px;
+  font-size: 1.35em;
   cursor: pointer;
   line-height: 1;
   border-radius: 6px;
@@ -287,11 +286,15 @@ h2{
 }
 #boardHighlightsControls .action-button{
   width: 100%;
+  font-size: 1.35em;
 }
-
 /* Submit & Show Moves : pleine largeur comme les boutons highlight */
 .full-width{
   width: 100%;
+}
+
+#submit.action-button{
+  font-size: 1.35em;
 }
 
 /* Espace vide entre Submit Counts et White's Moves
