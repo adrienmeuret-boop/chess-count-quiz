@@ -403,15 +403,7 @@ input[type="number"]{ -moz-appearance: textfield; }
   opacity: 1;
 }
 
-#board .pmBig.piece-p { box-shadow: inset 0 0 0 3px rgba(135, 85, 0, 0.95); background: rgba(255, 205, 60, 0.34); }
-#board .pmBig.piece-n { box-shadow: inset 0 0 0 3px rgba(255, 140, 0, 0.95);  background: rgba(255, 140, 0, 0.20); }
-#board .pmBig.piece-b { box-shadow: inset 0 0 0 3px rgba(210, 50, 50, 0.95);  background: rgba(210, 50, 50, 0.18); }
-#board .pmBig.piece-r { box-shadow: inset 0 0 0 3px rgba(40, 110, 255, 0.95); background: rgba(40, 110, 255, 0.18); }
-#board .pmBig.piece-q { box-shadow: inset 0 0 0 3px rgba(0, 170, 210, 0.95);  background: rgba(0, 170, 210, 0.18); }
-#board .pmBig.piece-k { box-shadow: inset 0 0 0 3px rgba(0, 170, 90, 0.95);   background: rgba(0, 170, 90, 0.18); }
-
-#board .pmBig.side-w { box-shadow: inset 0 0 0 3px rgba(25, 25, 25, 0.88); background: rgba(255, 255, 255, 0.26);}
-#board .pmBig.side-b { box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.75);       background: rgba(0, 0, 0, 0.10); }
+#board .pmBig.piece-p,#board .pmBig.piece-n,#board .pmBig.piece-b,#board .pmBig.piece-r,#board .pmBig.piece-q,#board .pmBig.piece-k,#board .pmBig.side-w,#board .pmBig.side-b{ box-shadow: inset 0 0 0 3px var(--pm-border); background: var(--pm-big); }
 
 /* 6 mini-zones */
 #board .pm6{
@@ -447,12 +439,16 @@ input[type="number"]{ -moz-appearance: textfield; }
 /* solid si doublon */
 #board .pm6 .pm.on.solid{
   background-image: none;
-  background: var(--pm-fill);
+  background: var(--pm-solid);
 }
 
-#board .pm6 .pm.p{ --pm-border: rgba(135, 85, 0, 0.98); --pm-fill: rgba(0, 180, 0, 0.70); }
-#board .pm6 .pm.n{ --pm-border: rgba(255, 140, 0, 0.95);  --pm-fill: rgba(255, 140, 0, 0.35); }
-#board .pm6 .pm.b{ --pm-border: rgba(210, 50, 50, 0.95);  --pm-fill: rgba(210, 50, 50, 0.35); }
-#board .pm6 .pm.r{ --pm-border: rgba(40, 110, 255, 0.95); --pm-fill: rgba(40, 110, 255, 0.35); }
-#board .pm6 .pm.q{ --pm-border: rgba(0, 170, 210, 0.95);  --pm-fill: rgba(0, 170, 210, 0.35); }
-#board .pm6 .pm.k{ --pm-border: rgba(0, 170, 90, 0.95);   --pm-fill: rgba(0, 170, 90, 0.35); }
+/* table couleurs unique (pmBig + pm6) */
+#board .pm6 .pm.p,#board .pmBig.piece-p{ --pm-border: rgba(135, 85, 0, 0.98); --pm-fill: rgba(255, 205, 60, 0.65); --pm-solid: rgba(255, 205, 60, 0.82); --pm-big: rgba(255, 205, 60, 0.34); }
+#board .pm6 .pm.n,#board .pmBig.piece-n{ --pm-border: rgba(255, 140, 0, 0.95); --pm-fill: rgba(255, 140, 0, 0.45); --pm-solid: rgba(255, 140, 0, 0.78); --pm-big: rgba(255, 140, 0, 0.20); }
+#board .pm6 .pm.b,#board .pmBig.piece-b{ --pm-border: rgba(210, 50, 50, 0.95); --pm-fill: rgba(210, 50, 50, 0.45); --pm-solid: rgba(210, 50, 50, 0.78); --pm-big: rgba(210, 50, 50, 0.18); }
+#board .pm6 .pm.r,#board .pmBig.piece-r{ --pm-border: rgba(40, 110, 255, 0.95); --pm-fill: rgba(40, 110, 255, 0.45); --pm-solid: rgba(40, 110, 255, 0.78); --pm-big: rgba(40, 110, 255, 0.18); }
+#board .pm6 .pm.q,#board .pmBig.piece-q{ --pm-border: rgba(0, 170, 210, 0.95); --pm-fill: rgba(0, 170, 210, 0.45); --pm-solid: rgba(0, 170, 210, 0.78); --pm-big: rgba(0, 170, 210, 0.18); }
+#board .pm6 .pm.k,#board .pmBig.piece-k{ --pm-border: rgba(0, 170, 90, 0.95); --pm-fill: rgba(0, 170, 90, 0.45); --pm-solid: rgba(0, 170, 90, 0.78); --pm-big: rgba(0, 170, 90, 0.18); }
+
+#board .pm6 .pm.side-w,#board .pmBig.side-w{ --pm-border: rgba(25, 25, 25, 0.88); --pm-fill: rgba(255, 255, 255, 0.38); --pm-solid: rgba(255, 255, 255, 0.78); --pm-big: rgba(255, 255, 255, 0.26); }
+#board .pm6 .pm.side-b,#board .pmBig.side-b{ --pm-border: rgba(0, 0, 0, 0.75); --pm-fill: rgba(0, 0, 0, 0.22); --pm-solid: rgba(0, 0, 0, 0.58); --pm-big: rgba(0, 0, 0, 0.10); }
