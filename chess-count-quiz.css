@@ -73,7 +73,7 @@ h2{
     var(--board-size)
     minmax(520px, 560px)
     calc(var(--gap) * 3)
-    320px;
+    560px;
 
   column-gap: var(--gap);   /* sert encore pour les autres écarts si besoin */
   align-items: start;
@@ -175,7 +175,7 @@ h2{
   font-size: 0.80em;
 }
 
-#remainingMoves .moves-table td{ padding: 2px 2px; vertical-align: top; text-align: left; white-space: nowrap; }
+#remainingMoves .moves-table td{ padding: 2px 1px; vertical-align: top; text-align: left; white-space: nowrap; }
 
 #remainingMoves .moves-table .turn{
   width: 4.0ch;
