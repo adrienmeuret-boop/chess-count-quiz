@@ -295,44 +295,9 @@ function revealAnswers() {
 
 function playBuzz() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-
-    // Son de canard : forme riche
-    o.type = "sawtooth";
-
-    // Fréquence qui chute (QUAAACK)
-    o.frequency.setValueAtTime(520, ctx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.18);
-
-    // Enveloppe courte et nerveuse
-    g.gain.setValueAtTime(0.0001, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25);
-
-    // Léger vibrato (instabilité du canard)
-    const lfo = ctx.createOscillator();
-    const lfoGain = ctx.createGain();
-    lfo.type = "sine";
-    lfo.frequency.value = 14;
-    lfoGain.gain.value = 25;
-
-    lfo.connect(lfoGain);
-    lfoGain.connect(o.frequency);
-
-    o.connect(g);
-    g.connect(ctx.destination);
-
-    lfo.start();
-    o.start();
-    o.stop(ctx.currentTime + 0.26);
-
-    o.onended = () => {
-      lfo.stop();
-      ctx.close();
-    };
+    if (!playBuzz._audio) playBuzz._audio = new Audio("duck.mp3");
+    playBuzz._audio.currentTime = 0;
+    playBuzz._audio.play();
   } catch (e) {}
 }
 
@@ -924,13 +889,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (startBtn) {
     startBtn.type = "button";
     startBtn.addEventListener("click", startNewGame);
-  }
-
-  // Duck sound on press + release
-  const timerEl = document.getElementById("timer");
-  if (timerEl) {
-    timerEl.addEventListener("pointerdown", playBuzz);
-    timerEl.addEventListener("pointerup", playBuzz);
   }
 
   // Show Answers button wiring
