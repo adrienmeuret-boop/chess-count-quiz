@@ -66,6 +66,9 @@ h2{
 /* ===== Layout principal ===== */
 .container{
   display: grid;
+  height: var(--board-size);
+  overflow: visible;
+}
 
   /* 4 colonnes : board | info | spacer | timer */
   grid-template-columns:
