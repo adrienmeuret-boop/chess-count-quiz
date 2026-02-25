@@ -295,31 +295,15 @@ function revealAnswers() {
 
 function playBuzz() {
   try {
-    if (!playBuzz._ctx || !playBuzz._buffer) return;
-
-    const src = playBuzz._ctx.createBufferSource();
-    src.buffer = playBuzz._buffer;
-
-    const gain = playBuzz._ctx.createGain();
-    gain.gain.value = 1.8; // PLUS FORT
-
-    src.connect(gain);
-    gain.connect(playBuzz._ctx.destination);
-
-    src.start(0);
+    if (!playBuzz._audio) {
+      playBuzz._audio = new Audio("duck.mp3");
+      playBuzz._audio.preload = "auto";
+      playBuzz._audio.volume = 1;
+    }
+    playBuzz._audio.currentTime = 0;
+    const p = playBuzz._audio.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
   } catch (e) {}
-}
-
-function endGame() {
-  if (gameEnded) return;
-  gameEnded = true;
-
-  if (chess_data.timeRemaining <= 0) playBuzz();
-
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
 }
 
 // -----------------------------------------------------------
@@ -647,7 +631,7 @@ function startNewGame() {
       .then(buf => { playBuzz._buffer = buf; });
   }
 } catch (e) {}
-
+}
 // ----------------------------------------------------------
 // Submit answers
 
