@@ -296,23 +296,43 @@ function revealAnswers() {
 function playBuzz() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
     const o = ctx.createOscillator();
     const g = ctx.createGain();
 
-    o.type = "square";
-    o.frequency.value = 140;
+    // Son de canard : forme riche
+    o.type = "sawtooth";
 
-    g.gain.value = 0.0001;
-    g.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+    // Fréquence qui chute (QUAAACK)
+    o.frequency.setValueAtTime(520, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 0.18);
+
+    // Enveloppe courte et nerveuse
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.25);
+
+    // Léger vibrato (instabilité du canard)
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+    lfo.type = "sine";
+    lfo.frequency.value = 14;
+    lfoGain.gain.value = 25;
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(o.frequency);
 
     o.connect(g);
     g.connect(ctx.destination);
 
+    lfo.start();
     o.start();
-    o.stop(ctx.currentTime + 0.23);
+    o.stop(ctx.currentTime + 0.26);
 
-    o.onended = () => ctx.close();
+    o.onended = () => {
+      lfo.stop();
+      ctx.close();
+    };
   } catch (e) {}
 }
 
