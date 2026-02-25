@@ -490,3 +490,20 @@ input[type="number"]{ -moz-appearance: textfield; }
   --pm-solid: rgba(0, 0, 0, 0.58);
   --pm-big: rgba(0, 0, 0, 0.16);
 }
+
+.legend-example{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-swatch.solid-demo{
+  --pm-border: rgba(120,120,120,0.85);
+  --pm-hatch: rgba(120,120,120,0.45);
+  --pm-fill: rgba(160,160,160,0.35);
+  --pm-solid: rgba(160,160,160,0.75);
+}
+
+.legend-swatch.solid-demo.solid{
+  background-image: none;
+}
