@@ -295,10 +295,18 @@ function revealAnswers() {
 
 function playBuzz() {
   try {
-    const a = playBuzz._audio || (playBuzz._audio = new Audio("duck.mp3"));
-    a.currentTime = 0;
-    const p = a.play();
-    if (p && typeof p.catch === "function") p.catch(() => {});
+    if (!playBuzz._ctx || !playBuzz._buffer) return;
+
+    const src = playBuzz._ctx.createBufferSource();
+    src.buffer = playBuzz._buffer;
+
+    const gain = playBuzz._ctx.createGain();
+    gain.gain.value = 1.8; // PLUS FORT
+
+    src.connect(gain);
+    gain.connect(playBuzz._ctx.destination);
+
+    src.start(0);
   } catch (e) {}
 }
 
@@ -629,36 +637,16 @@ function startNewGame() {
   resetScore();
   loadNewPuzzle();
 
-  try {
-    if (!playBuzz._audio) {
-      playBuzz._audio = new Audio("duck.mp3");
-      playBuzz._audio.preload = "auto";
-      playBuzz._audio.load();
-    }
+ try {
+  if (!playBuzz._ctx) {
+    playBuzz._ctx = new (window.AudioContext || window.webkitAudioContext)();
 
-    const a = playBuzz._audio;
-    const v = a.volume;
-    a.volume = 0;
-
-    const p = a.play();
-    if (p && typeof p.then === "function") {
-      p.then(() => {
-        a.pause();
-        a.currentTime = 0;
-        a.volume = v;
-      }).catch(() => {
-        a.volume = v;
-      });
-    } else {
-      a.pause();
-      a.currentTime = 0;
-      a.volume = v;
-    }
-  } catch (e) {}
-
-  startTimer();
-  initTimer();
-}
+    fetch("duck.mp3")
+      .then(r => r.arrayBuffer())
+      .then(b => playBuzz._ctx.decodeAudioData(b))
+      .then(buf => { playBuzz._buffer = buf; });
+  }
+} catch (e) {}
 
 // ----------------------------------------------------------
 // Submit answers
