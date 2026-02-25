@@ -926,6 +926,13 @@ document.addEventListener("DOMContentLoaded", () => {
     startBtn.addEventListener("click", startNewGame);
   }
 
+  // Duck sound on press + release
+  const timerEl = document.getElementById("timer");
+  if (timerEl) {
+    timerEl.addEventListener("pointerdown", playBuzz);
+    timerEl.addEventListener("pointerup", playBuzz);
+  }
+
   // Show Answers button wiring
   const btn = document.getElementById("showMovesButton");
   if (btn) {
