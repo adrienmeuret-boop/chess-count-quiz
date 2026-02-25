@@ -175,7 +175,8 @@ h2{
   font-size: 0.80em;
 }
 
-#remainingMoves .moves-table td{ padding: 2px 1px; vertical-align: top; text-align: left; white-space: nowrap; }
+#remainingMoves .moves-table td{ padding: 2px 0; vertical-align: top; text-align: left; white-space: nowrap; }
+#remainingMoves .moves-table{ border-collapse: separate; border-spacing: 4ch 0; }
 
 #remainingMoves .moves-table .turn{
   width: 4.0ch;
