@@ -37,7 +37,7 @@ body{
 }
 
 .footer-block{
-  margin-top: 48px; /* espace clair sous la grille */
+  margin-top: 12px; /* espace clair sous la grille */
 }
 
 .footer-block p{
@@ -175,12 +175,7 @@ h2{
   font-size: 0.80em;
 }
 
-#remainingMoves .moves-table td{
-  padding: 2px 3px;
-  vertical-align: top;
-  text-align: left;
-  white-space: nowrap;
-}
+#remainingMoves .moves-table td{ padding: 2px 2px; vertical-align: top; text-align: left; white-space: nowrap; }
 
 #remainingMoves .moves-table .turn{
   width: 4.0ch;
@@ -353,20 +348,11 @@ h2{
   width: 100%;
   max-width: 100%;
   margin-left: 0;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
   font-size: var(--base-font);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-.movesRow{
-  display: grid;
-  grid-template-columns: var(--label-w) 1fr;
-  column-gap: 14px;
-  padding: 6px 0;
-  align-items: start;
-}
+.movesRow{ display: grid; grid-template-columns: var(--label-w) 1fr; column-gap: 8px; padding: 6px 0; align-items: start; }
 
 .movesLabel{
   white-space: pre-line;
