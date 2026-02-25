@@ -295,9 +295,10 @@ function revealAnswers() {
 
 function playBuzz() {
   try {
-    if (!playBuzz._audio) playBuzz._audio = new Audio("duck.mp3");
-    playBuzz._audio.currentTime = 0;
-    playBuzz._audio.play();
+    const a = playBuzz._audio || (playBuzz._audio = new Audio("duck.mp3"));
+    a.currentTime = 0;
+    const p = a.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
   } catch (e) {}
 }
 
@@ -627,6 +628,15 @@ function startNewGame() {
   gameEnded = false;
   resetScore();
   loadNewPuzzle();
+
+  try {
+    if (!playBuzz._audio) {
+      playBuzz._audio = new Audio("duck.mp3");
+      playBuzz._audio.preload = "auto";
+      playBuzz._audio.load();
+    }
+  } catch (e) {}
+
   startTimer();
   initTimer();
 }
