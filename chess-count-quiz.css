@@ -508,6 +508,4 @@ input[type="number"]{ -moz-appearance: textfield; }
   --pm-solid: rgba(160,160,160,0.75);
 }
 
-.legend-swatch.solid-demo.solid{
-  background-image: none;
-}
+.legend-swatch.solid-demo.solid{ background-image: none; background: var(--pm-solid); }
