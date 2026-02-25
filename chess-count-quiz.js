@@ -876,7 +876,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // Settings modal wiring
   setupSettingsModal();
 
-  // Show Moves button wiring (single, no duplicate)
+  const startBtn = document.getElementById("startButton");
+  if (startBtn) {
+    startBtn.type = "button";
+    startBtn.addEventListener("click", startNewGame);
+  }
+
+  // Show Answers button wiring
   const btn = document.getElementById("showMovesButton");
   if (btn) {
     btn.type = "button";
@@ -886,5 +892,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
 (async () => {
   await loadSettings();
-  startNewGame();
 })();
