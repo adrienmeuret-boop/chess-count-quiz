@@ -99,11 +99,20 @@ h2{
 }
 
 /* ===== Colonne timer (à droite) ===== */
-/* ===== Colonne timer (à droite) ===== */
 .timer-col{
   display: flex;
   flex-direction: column;  /* empile timer puis bouton */
   align-items: flex-start;
+  height: var(--board-size);
+  min-height: 0;
+}
+
+.timer-col #remainingMoves{
+  width: 100%;
+  margin: 18px 0 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 
 #timerSection{
