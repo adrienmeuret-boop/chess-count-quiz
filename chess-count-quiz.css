@@ -98,7 +98,7 @@ h2{
   gap: 12px;
   min-width: 520px;
   max-height: var(--board-size);
-  overflow: auto;
+  overflow: hidden;
 }
 
 /* ===== Colonne timer (à droite) ===== */
@@ -107,7 +107,7 @@ h2{
   flex-direction: column;
   align-items: flex-start;
   max-height: var(--board-size);
-  overflow: auto;
+  overflow: hidden;
 }
 
 .timer-col #remainingMoves{
@@ -115,7 +115,7 @@ h2{
   margin: 18px 0 0;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
 }
 
 #timerSection{
