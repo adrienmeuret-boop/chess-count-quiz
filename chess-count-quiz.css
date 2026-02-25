@@ -176,7 +176,7 @@ h2{
 }
 
 #remainingMoves .moves-table td{
-  padding: 2px 6px;
+  padding: 2px 3px;
   vertical-align: top;
   text-align: left;
   white-space: nowrap;
@@ -187,11 +187,11 @@ h2{
 }
 
 #remainingMoves .moves-table .w{
-  width: 50%;
+  width: auto;
 }
 
 #remainingMoves .moves-table .b{
-  width: 50%;
+  width: auto;
 }
 
 /* ===== Formulaire ===== */
