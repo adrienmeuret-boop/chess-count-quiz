@@ -635,6 +635,25 @@ function startNewGame() {
       playBuzz._audio.preload = "auto";
       playBuzz._audio.load();
     }
+
+    const a = playBuzz._audio;
+    const v = a.volume;
+    a.volume = 0;
+
+    const p = a.play();
+    if (p && typeof p.then === "function") {
+      p.then(() => {
+        a.pause();
+        a.currentTime = 0;
+        a.volume = v;
+      }).catch(() => {
+        a.volume = v;
+      });
+    } else {
+      a.pause();
+      a.currentTime = 0;
+      a.volume = v;
+    }
   } catch (e) {}
 
   startTimer();
