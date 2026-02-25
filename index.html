@@ -18,7 +18,6 @@
 </head>
 
 <body>
-  <h2>Chess Move Count Quiz</h2>
 
   <!-- Settings Modal -->
   <div id="settingsModal" class="modal">
@@ -75,9 +74,21 @@
   </div>
 
   <div class="container">
+    
     <!-- LEFT COLUMN -->
     <div class="board-col">
+      <h2>Chess Move Count Quiz</h2>
+
       <div id="board"></div>
+
+      <div class="footer-block">
+        <button id="settingsButton" type="button" class="action-button">
+          Settings
+        </button>
+
+        <p>Positions from the <a href="https://database.lichess.org/">Lichess puzzle database</a></p>
+<p>See <a href="https://github.com/adrienmeuret-boop/chess-count-quiz">https://github.com/adrienmeuret-boop/chess-count-quiz</a> for source code</p>
+      </div>
     </div>
 
     <!-- MIDDLE COLUMN -->
@@ -157,15 +168,6 @@
     </div>
   </div>
   
-  <div class="footer-block">
-    <button id="settingsButton" type="button" class="action-button">
-      Settings
-    </button>
-
-    <p>Positions from the <a href="https://database.lichess.org/">Lichess puzzle database</a></p>
-<p>See <a href="https://github.com/adrienmeuret-boop/chess-count-quiz">https://github.com/adrienmeuret-boop/chess-count-quiz</a> for source code</p>
-  </div>
-
   <script src="chess-count-quiz.js"></script>
 </body>
 </html>
