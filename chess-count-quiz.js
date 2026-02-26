@@ -640,6 +640,8 @@ function startNewGame() {
 function submitAnswers(event) {
   event.preventDefault();
 
+  const prevTime = chess_data.timeRemaining;
+  
   getFixedDisplayQuestionTypes().forEach((id) => {
     const input = document.getElementById(id);
     if (!input) return;
@@ -663,6 +665,7 @@ function submitAnswers(event) {
 
   if (gameEnded) return;
 
+if (prevTime > 0 && chess_data.timeRemaining === 0) playBuzz();
 if (chess_data.timeRemaining <= 0) {   gameEnded = true;   endGame();   return; }
 
 const all_correct = Object.values(chess_data.is_correct).reduce((acc, cur) => acc && cur, true);
