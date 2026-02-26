@@ -206,7 +206,7 @@ function initTimer() {
     chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 1);
     updateTimerDisplay();
 
-    if (chess_data.timeRemaining <= 0) {   gameEnded = true;   playBuzz();   endGame(); }
+    if (chess_data.timeRemaining === 0) {   gameEnded = true;   playBuzz();   endGame(); }
   }, 1000);
 }
 
@@ -221,7 +221,6 @@ function startTimer() {
 function penalizeTime() {
   chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 10);
   updateTimerDisplay();
-  if (chess_data.timeRemaining <= 0) {   gameEnded = true;   playBuzz();   endGame(); }
 }
 
 // -----------------------------------------------------------
@@ -664,8 +663,10 @@ function submitAnswers(event) {
 
   if (gameEnded) return;
 
-  const all_correct = Object.values(chess_data.is_correct).reduce((acc, cur) => acc && cur, true);
-  if (all_correct) loadNewPuzzle();
+if (chess_data.timeRemaining <= 0) {   gameEnded = true;   endGame();   return; }
+
+const all_correct = Object.values(chess_data.is_correct).reduce((acc, cur) => acc && cur, true);
+if (all_correct) loadNewPuzzle();
 }
 
 // ----------------------------------------------------------
