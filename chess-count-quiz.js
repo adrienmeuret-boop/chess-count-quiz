@@ -705,6 +705,13 @@ async function saveSettings() {
   localStorage.setItem("showTimer", showTimer);
   setTimerVisibility(showTimer);
 
+  const defaultTimeMinutesEl = document.getElementById("defaultTimeMinutes");
+  if (defaultTimeMinutesEl) {
+    const minutes = parseInt(defaultTimeMinutesEl.value, 10);
+    chess_data.defaultTimeRemaining = (isNaN(minutes) ? 3 : minutes) * 60;
+    localStorage.setItem("defaultTimeRemaining", chess_data.defaultTimeRemaining);
+  }
+
   const selectedToMove = document.querySelector('input[name="playerToMove"]:checked');
   localStorage.setItem("selectedToMove", selectedToMove.value);
   setPlayerToMove(selectedToMove.value);
@@ -763,6 +770,12 @@ async function loadSettings() {
   const showTimerEl = document.getElementById("showTimer");
   if (showTimerEl) showTimerEl.checked = chess_data.showTimer;
   setTimerVisibility(chess_data.showTimer);
+
+    const savedDefaultTimeRemaining = localStorage.getItem("defaultTimeRemaining");
+  chess_data.defaultTimeRemaining = savedDefaultTimeRemaining ? parseInt(savedDefaultTimeRemaining, 10) : chess_data.defaultTimeRemaining;
+
+  const defaultTimeMinutesEl = document.getElementById("defaultTimeMinutes");
+  if (defaultTimeMinutesEl) defaultTimeMinutesEl.value = Math.max(1, Math.round(chess_data.defaultTimeRemaining / 60));
 
   const selectedToMoveStored = localStorage.getItem("selectedToMove") || "Random";
   const radio = document.querySelector(`input[value="${selectedToMoveStored}"]`);
