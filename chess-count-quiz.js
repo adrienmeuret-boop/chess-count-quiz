@@ -502,8 +502,8 @@ function createMovesTableHtml(movesList, isBlackToMove) {
     tableHtml += `
             <tr>
                 <td class="turn">1.</td>
-                <td class="w">${blackMove ? `...` : ""}</td>
-                <td class="b">${blackMove ? `${blackMove}` : ""}</td>
+                <td class="w">...</td>
+                <td class="b">${blackMove}</td>
             </tr>`;
     idx = 1;
   }
