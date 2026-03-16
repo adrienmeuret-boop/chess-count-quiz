@@ -553,7 +553,9 @@ function updateMovesDisplay() {
   const prevPlyIndex = fullHistory.length - chess_data.plyAhead;
   const movesList = fullHistory.slice(prevPlyIndex);
   const boardGame = new Chess();
+  if (chess_data.board) {
   boardGame.load(chess_data.board.fen());
+  }
   const isBlackToMove = boardGame.turn() === "b";
   movesDisplay.innerHTML = createMovesTableHtml(movesList, isBlackToMove);
 }
@@ -630,28 +632,35 @@ function loadNewPuzzle() {
 }
 
 function startNewGame() {
-
+  // Sélection du joueur à jouer
   const selected = document.querySelector('input[name="playerToMove"]:checked').value;
   setPlayerToMove(selected);
   setPlayerToMoveAfter();
+
+  // Initialisation du board
   setBoard();
-  
+
+  // Réinitialisation du jeu
   gameEnded = false;
   resetScore();
   loadNewPuzzle();
   startTimer();
   initTimer();
 
- try {
-  if (!playBuzz._ctx) {
-    playBuzz._ctx = new (window.AudioContext || window.webkitAudioContext)();
+  // Initialisation audio pour buzzer
+  try {
+    if (!playBuzz._ctx) {
+      playBuzz._ctx = new (window.AudioContext || window.webkitAudioContext)();
 
-    fetch("duck.mp3")
-      .then(r => r.arrayBuffer())
-      .then(b => playBuzz._ctx.decodeAudioData(b))
-      .then(buf => { playBuzz._buffer = buf; });
+      fetch("duck.mp3")
+        .then(r => r.arrayBuffer())
+        .then(b => playBuzz._ctx.decodeAudioData(b))
+        .then(buf => { playBuzz._buffer = buf; })
+        .catch(e => console.warn("Audio decode failed:", e));
+    }
+  } catch (e) {
+    console.warn("AudioContext creation failed:", e);
   }
-} catch (e) {}
 }
 
 // ----------------------------------------------------------
