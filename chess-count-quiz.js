@@ -235,10 +235,16 @@ function getFixedDisplayQuestionTypes() {
   const kinds = ["AllLegal", "Checks", "Captures"];
   const out = [];
 
+  if (!chess_data.fen) return out;
+
+  const fenTurn = chess_data.fen.split(" ")[1]; // 'w' ou 'b' selon FEN
+
   ["w", "b"].forEach((color) => {
     kinds.forEach((kind) => {
-      const qt = qTypeForAbsColorAndKind(color, kind);
-      if (Array.isArray(chess_data.questionTypes) && chess_data.questionTypes.includes(qt)) out.push(qt);
+      const qt = qTypeForAbsColorAndKind(color, kind, fenTurn);
+      if (Array.isArray(chess_data.questionTypes) && chess_data.questionTypes.includes(qt)) {
+        out.push(qt);
+      }
     });
   });
 
@@ -446,14 +452,14 @@ function highlightMovesByPiece(moveList, side) {
 }
 
 function setupHighlightButtons() {
-  const byLabel = {
-    "white’s moves": { qType: qTypeForAbsColorAndKind("w", "AllLegal"), side: "w" },
-    "black’s moves": { qType: qTypeForAbsColorAndKind("b", "AllLegal"), side: "b" },
-    "white’s checks": { qType: qTypeForAbsColorAndKind("w", "Checks"), side: "w" },
-    "black’s checks": { qType: qTypeForAbsColorAndKind("b", "Checks"), side: "b" },
-    "white’s captures": { qType: qTypeForAbsColorAndKind("w", "Captures"), side: "w" },
-    "black’s captures": { qType: qTypeForAbsColorAndKind("b", "Captures"), side: "b" },
-    clear: { clear: true },
+  const labels = {
+    "white’s moves": "w",
+    "black’s moves": "b",
+    "white’s checks": "w",
+    "black’s checks": "b",
+    "white’s captures": "w",
+    "black’s captures": "b",
+    clear: null,
   };
 
   const norm = (s) =>
@@ -465,12 +471,12 @@ function setupHighlightButtons() {
 
   document.querySelectorAll("#boardHighlightsControls button").forEach((btn) => {
     const key = norm(btn.textContent);
-    const cfg = byLabel[key];
-    if (!cfg) return;
+    const side = labels[key];
 
     btn.type = "button";
     btn.onclick = () => {
-      if (cfg.clear) {
+      if (!side) {
+        // clear
         clearBoardHighlights();
         clearPieceMarkers();
         clearBigMarkers();
@@ -479,14 +485,25 @@ function setupHighlightButtons() {
 
       if (!chess_data.correct) chess_data.correct = {};
 
-      let ans = chess_data.correct[cfg.qType];
+      // Déterminer la couleur réelle à jouer
+      const fenTurn = chess_data.fen.split(" ")[1];
+
+      // Déterminer le type de question exact (p1/p2 + kind)
+      let kind;
+      if (key.includes("moves")) kind = "AllLegal";
+      else if (key.includes("checks")) kind = "Checks";
+      else if (key.includes("captures")) kind = "Captures";
+
+      const qType = qTypeForAbsColorAndKind(side, kind, fenTurn);
+
+      let ans = chess_data.correct[qType];
       if (!ans) {
-        ans = getOneCorrectAnswer(chess_data.fen, cfg.qType);
-        chess_data.correct[cfg.qType] = ans;
+        ans = getOneCorrectAnswer(chess_data.fen, qType);
+        chess_data.correct[qType] = ans;
       }
 
       if (!ans?.targets) return;
-      highlightMovesByPiece(ans.targets, cfg.side);
+      highlightMovesByPiece(ans.targets, side);
     };
   });
 }
@@ -907,7 +924,8 @@ function createDynamicInputs(questionTypes) {
 
 function createDynamicInputsLabel(questionType) {
   const isP1 = questionType.startsWith("p1");
-  const colorAbs = isP1 ? chess_data.playerToMove : chess_data.playerToMove === "w" ? "b" : "w";
+  const realTurn = chess_data.fen.split(" ")[1]; // 'w' ou 'b' selon FEN
+  const colorAbs = isP1 ? realTurn : realTurn === "w" ? "b" : "w";
   const who = colorAbs === "w" ? "White's" : "Black's";
 
   let what = "Moves";
