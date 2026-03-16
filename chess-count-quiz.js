@@ -616,6 +616,12 @@ function loadNewPuzzle() {
 }
 
 function startNewGame() {
+
+  const selected = document.querySelector('input[name="playerToMove"]:checked').value;
+  setPlayerToMove(selected);
+  setPlayerToMoveAfter();
+  setBoard();
+  
   gameEnded = false;
   resetScore();
   loadNewPuzzle();
