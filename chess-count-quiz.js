@@ -168,16 +168,6 @@ function getOneCorrectAnswer(fen, questionType) {
   throw new RangeError("Expected Checks or Captures or AllLegal");
 }
 
-  const game = new Chess();
-  game.load(modFen);
-
-  if (questionType.endsWith("Checks")) return countChecks(game);
-  if (questionType.endsWith("Captures")) return countCaptures(game);
-  if (questionType.endsWith("AllLegal")) return countAllLegal(game);
-
-  throw new RangeError("Expected Checks or Captures or AllLegal");
-}
-
 // -----------------------------------------------------------
 // Timer and score code
 
