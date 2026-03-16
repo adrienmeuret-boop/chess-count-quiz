@@ -538,11 +538,12 @@ function updateMovesDisplay() {
   const fullHistory = chess_data.game.history();
   const prevPlyIndex = fullHistory.length - chess_data.plyAhead;
   const movesList = fullHistory.slice(prevPlyIndex);
+
+  // --- CORRECTION ICI ---
   const boardGame = new Chess();
-  if (chess_data.board) {
-  boardGame.load(chess_data.board.fen());
-  }
+  boardGame.load(chess_data.fen); // utiliser le FEN réel
   const isBlackToMove = boardGame.turn() === "b";
+
   movesDisplay.innerHTML = createMovesTableHtml(movesList, isBlackToMove);
 }
 
