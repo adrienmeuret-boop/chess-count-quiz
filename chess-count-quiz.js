@@ -148,16 +148,25 @@ function getCorrectAnswers(fen, questionTypes) {
 }
 
 function getOneCorrectAnswer(fen, questionType) {
-  let modFen;
 
-  if (questionType.startsWith("p1")) {
-    modFen = switchFenSides(fen, chess_data.playerToMove);
-  } else if (questionType.startsWith("p2")) {
-    const p2Color = chess_data.playerToMove === "w" ? "b" : "w";
-    modFen = switchFenSides(fen, p2Color);
-  } else {
-    throw new RangeError("Expected p1 or p2");
-  }
+  const realTurn = fen.split(" ")[1];
+  let side;
+
+  if (questionType.startsWith("p1")) side = realTurn;
+  else if (questionType.startsWith("p2")) side = realTurn === "w" ? "b" : "w";
+  else throw new RangeError("Expected p1 or p2");
+
+  const modFen = switchFenSides(fen, side);
+
+  const game = new Chess();
+  game.load(modFen);
+
+  if (questionType.endsWith("Checks")) return countChecks(game);
+  if (questionType.endsWith("Captures")) return countCaptures(game);
+  if (questionType.endsWith("AllLegal")) return countAllLegal(game);
+
+  throw new RangeError("Expected Checks or Captures or AllLegal");
+}
 
   const game = new Chess();
   game.load(modFen);
@@ -543,7 +552,9 @@ function updateMovesDisplay() {
   const fullHistory = chess_data.game.history();
   const prevPlyIndex = fullHistory.length - chess_data.plyAhead;
   const movesList = fullHistory.slice(prevPlyIndex);
-  const isBlackToMove = chess_data.playerToMove === "b";
+  const boardGame = new Chess();
+  boardGame.load(chess_data.board.fen());
+  const isBlackToMove = boardGame.turn() === "b";
   movesDisplay.innerHTML = createMovesTableHtml(movesList, isBlackToMove);
 }
 
@@ -551,6 +562,9 @@ function updateMovesDisplay() {
 // Game load / puzzle
 
 function loadNewPuzzle() {
+
+  setPlayerToMoveAfter(); 
+  
   clearBoardHighlights();
 
   const game_and_ply = getRandomPosNumber(chess_data.game_weights, chess_data.playerToMoveAfter === "w");
