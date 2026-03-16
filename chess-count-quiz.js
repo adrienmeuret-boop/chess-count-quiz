@@ -539,10 +539,11 @@ function updateMovesDisplay() {
   const prevPlyIndex = fullHistory.length - chess_data.plyAhead;
   const movesList = fullHistory.slice(prevPlyIndex);
 
-  // --- CORRECTION ICI ---
-  const boardGame = new Chess();
-  boardGame.load(chess_data.fen); // utiliser le FEN réel
-  const isBlackToMove = boardGame.turn() === "b";
+  // Déterminer qui joue le premier coup de movesList
+  const tempGame = new Chess(chess_data.game.fen()); // état complet
+  tempGame.reset();
+  for (let i = 0; i < prevPlyIndex; i++) tempGame.move(fullHistory[i]);
+  const isBlackToMove = tempGame.turn() === "b";
 
   movesDisplay.innerHTML = createMovesTableHtml(movesList, isBlackToMove);
 }
