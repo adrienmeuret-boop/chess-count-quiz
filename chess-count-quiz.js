@@ -312,5 +312,630 @@ function highlightSquares(squares) {
   });
 }
 
+
 // -----------------------------------------------------------
-// (Le reste du code continue comme avant, inchangé)
+// Piece markers (6 zones)
+
+function ensurePieceMarkers() {
+  const boardEl = document.getElementById("board");
+  if (!boardEl) return;
+
+  const squares = boardEl.querySelectorAll(".square-55d63");
+
+  squares.forEach((sqEl) => {
+    if (!sqEl.querySelector(":scope > .pmBig")) {
+      const big = document.createElement("div");
+      big.className = "pmBig";
+      sqEl.appendChild(big);
+    }
+
+    if (sqEl.querySelector(":scope > .pm6")) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "pm6";
+
+    ["p", "n", "b", "r", "q", "k"].forEach((piece) => {
+      const d = document.createElement("div");
+      d.className = `pm ${piece}`;
+      wrap.appendChild(d);
+    });
+
+    sqEl.appendChild(wrap);
+  });
+}
+
+function clearPieceMarkers() {
+  const boardEl = document.getElementById("board");
+  if (!boardEl) return;
+
+  boardEl.querySelectorAll(".pm6 .pm.on, .pm6 .pm.solid").forEach((el) => el.classList.remove("on", "solid"));
+}
+
+function clearBigMarkers() {
+  const boardEl = document.getElementById("board");
+  if (!boardEl) return;
+
+  boardEl.querySelectorAll(".pmBig").forEach((el) => {
+    el.classList.remove("on", "side-w", "side-b");
+    el.classList.remove("piece-p", "piece-n", "piece-b", "piece-r", "piece-q", "piece-k");
+  });
+}
+
+function markSquarePiece(square, piece) {
+  const boardEl = document.getElementById("board");
+  if (!boardEl) return;
+
+  const sqEl = boardEl.querySelector(`[data-square="${square}"]`) || boardEl.querySelector(`.square-${square}`);
+  if (!sqEl) return;
+
+  if (!sqEl.querySelector(":scope > .pm6")) ensurePieceMarkers();
+
+  const marker = sqEl.querySelector(`:scope > .pm6 .pm.${piece}`);
+  if (marker) marker.classList.add("on");
+}
+
+function highlightMovesByPiece(moveList, side) {
+  clearPieceMarkers();
+  clearBigMarkers();
+  ensurePieceMarkers();
+
+  if (!Array.isArray(moveList)) return;
+
+  const map = new Map();
+
+  moveList.forEach((m) => {
+    if (!m?.to || !m?.piece) return;
+    if (!map.has(m.to)) map.set(m.to, new Map());
+    const counts = map.get(m.to);
+    counts.set(m.piece, (counts.get(m.piece) || 0) + 1);
+  });
+
+  const boardEl = document.getElementById("board");
+
+  for (const [sq, counts] of map.entries()) {
+    const piecesDistinct = Array.from(counts.keys());
+
+    piecesDistinct.forEach((p) => markSquarePiece(sq, p));
+
+    const sqEl = boardEl.querySelector(`[data-square="${sq}"]`) || boardEl.querySelector(`.square-${sq}`);
+    if (!sqEl) continue;
+
+    const pm6 = sqEl.querySelector(":scope > .pm6");
+    if (!pm6) continue;
+
+    for (const p of piecesDistinct) {
+      if ((counts.get(p) || 0) >= 2) {
+        const mini = pm6.querySelector(`.pm.${p}`);
+        if (mini) mini.classList.add("solid");
+      }
+    }
+
+    const big = sqEl.querySelector(":scope > .pmBig");
+    if (!big) continue;
+
+    big.classList.add("on");
+    big.classList.remove(
+      "piece-p",
+      "piece-n",
+      "piece-b",
+      "piece-r",
+      "piece-q",
+      "piece-k",
+      "side-w",
+      "side-b"
+    );
+
+    if (piecesDistinct.length === 1) big.classList.add(`piece-${piecesDistinct[0]}`);
+    else big.classList.add(side === "w" ? "side-w" : "side-b");
+  }
+}
+
+function setupHighlightButtons() {
+  const labels = {
+    "white’s moves": "w",
+    "black’s moves": "b",
+    "white’s checks": "w",
+    "black’s checks": "b",
+    "white’s captures": "w",
+    "black’s captures": "b",
+    clear: null,
+  };
+
+  const norm = (s) =>
+    (s || "")
+      .trim()
+      .toLowerCase()
+      .replaceAll("'", "’")
+      .replace(/\s+/g, " ");
+
+  document.querySelectorAll("#boardHighlightsControls button").forEach((btn) => {
+    const key = norm(btn.textContent);
+    const side = labels[key];
+
+    btn.type = "button";
+    btn.onclick = () => {
+      if (!side) {
+        // clear
+        clearBoardHighlights();
+        clearPieceMarkers();
+        clearBigMarkers();
+        return;
+      }
+
+      if (!chess_data.correct) chess_data.correct = {};
+
+      // Déterminer la couleur réelle à jouer
+      const fenTurn = chess_data.fen.split(" ")[1];
+
+      // Déterminer le type de question exact (p1/p2 + kind)
+      let kind;
+      if (key.includes("moves")) kind = "AllLegal";
+      else if (key.includes("checks")) kind = "Checks";
+      else if (key.includes("captures")) kind = "Captures";
+
+      const qType = qTypeForAbsColorAndKind(side, kind, fenTurn);
+
+      let ans = chess_data.correct[qType];
+      if (!ans) {
+        ans = getOneCorrectAnswer(chess_data.fen, qType);
+        chess_data.correct[qType] = ans;
+      }
+
+      if (!ans?.targets) return;
+      highlightMovesByPiece(ans.targets, side);
+    };
+  });
+}
+
+// ----------------------------------------------------------
+// Moves table (remainingMoves)
+
+function createMovesTableHtml(movesList, isBlackToMove) {
+  let tableHtml = `
+        <h3>Compute counts after these moves:</h3>
+        <table class="moves-table">`;
+
+  let idx = 0;
+
+  if (isBlackToMove) {
+    const blackMove = movesList[0] || "";
+    tableHtml += `
+            <tr>
+                <td class="turn">1.</td>
+                <td class="w">${blackMove ? `...` : ""}</td>
+                <td class="b">${blackMove ? `${blackMove}` : ""}</td>
+            </tr>`;
+    idx = 1;
+  }
+
+  let turn = isBlackToMove ? 2 : 1;
+
+  for (let i = idx; i < movesList.length; i += 2) {
+    const whiteMove = movesList[i] || "";
+    const blackMove = i + 1 < movesList.length ? movesList[i + 1] : "";
+    tableHtml += `
+            <tr>
+                <td class="turn">${turn}.</td>
+                <td class="w">${whiteMove}</td>
+                <td class="b">${blackMove}</td>
+            </tr>`;
+    turn++;
+  }
+
+  tableHtml += "</table>";
+  return tableHtml;
+}
+
+function updateMovesDisplay() {
+  const movesDisplay = document.getElementById("remainingMoves");
+  if (!movesDisplay) return;
+
+  if (chess_data.plyAhead === 0) {
+    movesDisplay.innerHTML = "";
+    return;
+  }
+
+  const fullHistory = chess_data.game.history();
+  const prevPlyIndex = fullHistory.length - chess_data.plyAhead;
+  const movesList = fullHistory.slice(prevPlyIndex);
+  const boardGame = new Chess();
+  if (chess_data.board) {
+  boardGame.load(chess_data.board.fen());
+  }
+  const isBlackToMove = boardGame.turn() === "b";
+  movesDisplay.innerHTML = createMovesTableHtml(movesList, isBlackToMove);
+}
+
+// ----------------------------------------------------------
+// Game load / puzzle
+
+function loadNewPuzzle() {
+
+  setPlayerToMoveAfter(); 
+  
+  clearBoardHighlights();
+
+  const game_and_ply = getRandomPosNumber(chess_data.game_weights, chess_data.playerToMoveAfter === "w");
+  chess_data.game_index = game_and_ply.game;
+  chess_data.ply = game_and_ply.ply;
+
+  chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
+  chess_data.fen = chess_data.game.fen();
+
+  const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
+  chess_data.board.position(prior_game.fen());
+
+  ensurePieceMarkers();
+  clearPieceMarkers();
+  updateMovesDisplay();
+
+  chess_data.correct = getCorrectAnswers(chess_data.fen, chess_data.questionTypes);
+
+  // Pre-calc AllLegal for highlight buttons (useful even if not asked)
+  [qTypeForAbsColorAndKind("w", "AllLegal"), qTypeForAbsColorAndKind("b", "AllLegal")].forEach((qType) => {
+    if (!chess_data.correct[qType]) chess_data.correct[qType] = getOneCorrectAnswer(chess_data.fen, qType);
+  });
+
+  chess_data.is_correct = Object.fromEntries(getFixedDisplayQuestionTypes().map((name) => [name, false]));
+
+  getFixedDisplayQuestionTypes().forEach((id) => {
+    const input = document.getElementById(id);
+    if (input) input.value = 0;
+
+    const feedbackIcon = document.getElementById(id + "FeedbackIcon");
+    if (feedbackIcon) {
+      feedbackIcon.textContent = "";
+      feedbackIcon.className = "feedbackIcon";
+    }
+
+    const shownMovesLabel = document.getElementById(id + "ShownMoves");
+    if (shownMovesLabel) shownMovesLabel.textContent = "";
+  });
+
+  // Clear movesList (bottom) when new puzzle loads
+  const movesList = document.getElementById("movesList");
+  if (movesList) {
+    movesList.innerHTML = "";
+    movesList.style.display = "none";
+  }
+
+  if (window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints)) {
+    const first = chess_data.questionTypes?.[0];
+    if (first) {
+      const el = document.getElementById(first);
+      if (el) el.focus();
+    }
+  }
+
+  const showMovesButton = document.getElementById("showMovesButton");
+  if (showMovesButton) {
+    showMovesButton.disabled = false;
+    showMovesButton.style.backgroundColor = "";
+  }
+
+  const form = document.getElementById("chessCountForm");
+  if (form) form.onsubmit = submitAnswers;
+}
+
+function startNewGame() {
+  // Sélection du joueur à jouer
+  const selected = document.querySelector('input[name="playerToMove"]:checked').value;
+  setPlayerToMove(selected);
+  setPlayerToMoveAfter();
+
+  // Initialisation du board
+  setBoard();
+
+  // Réinitialisation du jeu
+  gameEnded = false;
+  resetScore();
+  loadNewPuzzle();
+  startTimer();
+  initTimer();
+
+  // Initialisation audio pour buzzer
+  try {
+    if (!playBuzz._ctx) {
+      playBuzz._ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+      fetch("duck.mp3")
+        .then(r => r.arrayBuffer())
+        .then(b => playBuzz._ctx.decodeAudioData(b))
+        .then(buf => { playBuzz._buffer = buf; })
+        .catch(e => console.warn("Audio decode failed:", e));
+    }
+  } catch (e) {
+    console.warn("AudioContext creation failed:", e);
+  }
+}
+
+// ----------------------------------------------------------
+// Submit answers
+
+function submitAnswers(event) {
+  event.preventDefault();
+
+  const prevTime = chess_data.timeRemaining;
+  
+  getFixedDisplayQuestionTypes().forEach((id) => {
+    const input = document.getElementById(id);
+    if (!input) return;
+
+    const inputValue = parseInt(input.value, 10);
+    const isCorrect = inputValue === chess_data.correct[id].count;
+
+    const feedbackIcon = document.getElementById(id + "FeedbackIcon");
+    if (feedbackIcon) {
+      feedbackIcon.textContent = isCorrect ? "✓" : "✗";
+      feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
+    }
+
+    if (!chess_data.is_correct[id] && isCorrect) {
+      chess_data.is_correct[id] = true;
+      incrementScore();
+    }
+
+    if (!isCorrect) penalizeTime();
+  });
+
+  if (gameEnded) return;
+
+if (prevTime > 0 && chess_data.timeRemaining === 0) playBuzz();
+if (chess_data.timeRemaining <= 0) {   gameEnded = true;   endGame();   return; }
+
+const all_correct = Object.values(chess_data.is_correct).reduce((acc, cur) => acc && cur, true);
+if (all_correct) loadNewPuzzle();
+}
+
+// ----------------------------------------------------------
+// Settings dialog box
+
+function setupSettingsModal() {
+  const settings = document.getElementById("settingsModal");
+  const settingsBtn = document.getElementById("settingsButton");
+  const closeBtn = document.querySelector("#settingsModal .close-button");
+
+  if (!settings) return;
+
+  // Force closed on load (even if CSS modal is broken)
+  settings.style.display = "none";
+
+  if (settingsBtn) {
+    settingsBtn.type = "button";
+    settingsBtn.onclick = () => (settings.style.display = "block");
+  }
+
+  if (closeBtn) {
+    closeBtn.onclick = () => (settings.style.display = "none");
+  }
+
+  window.addEventListener("click", (event) => {
+    if (event.target === settings) settings.style.display = "none";
+  });
+}
+
+async function saveSettings() {
+  const showTimer = document.getElementById("showTimer").checked;
+  chess_data.showTimer = showTimer;
+  localStorage.setItem("showTimer", showTimer);
+  setTimerVisibility(showTimer);
+
+  const defaultTimeMinutesEl = document.getElementById("defaultTimeMinutes");
+  if (defaultTimeMinutesEl) {
+    const minutes = parseInt(defaultTimeMinutesEl.value, 10);
+    chess_data.defaultTimeRemaining = (isNaN(minutes) ? 3 : minutes) * 60;
+    localStorage.setItem("defaultTimeRemaining", chess_data.defaultTimeRemaining);
+  }
+
+  const selectedToMove = document.querySelector('input[name="playerToMove"]:checked');
+  localStorage.setItem("selectedToMove", selectedToMove.value);
+  setPlayerToMove(selectedToMove.value);
+
+  chess_data.games = await getGames();
+  chess_data.game_weights = await getWeights();
+  setBoard();
+
+  const questionCheckboxes = document.querySelectorAll('input[name="quizOption"]:checked');
+  chess_data.questionTypes = Array.from(questionCheckboxes).map((opt) => opt.value);
+  localStorage.setItem("questionTypes", JSON.stringify(chess_data.questionTypes));
+
+  createDynamicInputs(getFixedDisplayQuestionTypes());
+  setupHighlightButtons();
+
+  const plyAhead = parseInt(document.getElementById("plyAhead").value, 10);
+  chess_data.plyAhead = plyAhead;
+  localStorage.setItem("plyAhead", plyAhead);
+
+  setPlayerToMoveAfter();
+
+  const settings = document.getElementById("settingsModal");
+  if (settings) settings.style.display = "none";
+
+  startNewGame();
+}
+
+function setTimerVisibility(visible) {
+  const timerSection = document.getElementById("timerSection");
+  if (!timerSection) return;
+  timerSection.style.display = visible ? "block" : "none";
+}
+
+// ----------------------------------------------------------
+// Load settings
+
+async function loadSettings() {
+  chess_data = {
+    showTimer: true,
+    fen: null,
+    correct: null,
+    defaultTimeRemaining: 180,
+    timeRemaining: 999,
+    score: 0,
+    is_correct: null,
+    games: null,
+    game_weights: null,
+    board: null,
+    questionTypes: null,
+    plyAhead: 0,
+    playerToMove: "w",
+    playerToMoveAfter: "w",
+  };
+
+  chess_data.showTimer = localStorage.getItem("showTimer") === "false" ? false : true;
+  const showTimerEl = document.getElementById("showTimer");
+  if (showTimerEl) showTimerEl.checked = chess_data.showTimer;
+  setTimerVisibility(chess_data.showTimer);
+
+    const savedDefaultTimeRemaining = localStorage.getItem("defaultTimeRemaining");
+  chess_data.defaultTimeRemaining = savedDefaultTimeRemaining ? parseInt(savedDefaultTimeRemaining, 10) : chess_data.defaultTimeRemaining;
+
+  const defaultTimeMinutesEl = document.getElementById("defaultTimeMinutes");
+  if (defaultTimeMinutesEl) defaultTimeMinutesEl.value = Math.max(1, Math.round(chess_data.defaultTimeRemaining / 60));
+
+  const selectedToMoveStored = localStorage.getItem("selectedToMove") || "Random";
+  const radio = document.querySelector(`input[value="${selectedToMoveStored}"]`);
+  if (radio) radio.checked = true;
+  setPlayerToMove(selectedToMoveStored);
+
+  const savedPlyAhead = localStorage.getItem("plyAhead");
+  chess_data.plyAhead = savedPlyAhead ? parseInt(savedPlyAhead, 10) : 0;
+  const plyAheadEl = document.getElementById("plyAhead");
+  if (plyAheadEl) plyAheadEl.value = chess_data.plyAhead;
+
+  setPlayerToMoveAfter();
+
+  chess_data.games = await getGames();
+  chess_data.game_weights = await getWeights();
+  setBoard();
+
+  const storedTypes = localStorage.getItem("questionTypes");
+  if (storedTypes) chess_data.questionTypes = JSON.parse(storedTypes);
+  else chess_data.questionTypes = ["p1Checks", "p1Captures", "p2Checks", "p2Captures"];
+
+  document.querySelectorAll('input[name="quizOption"]').forEach((option) => (option.checked = false));
+  chess_data.questionTypes.forEach((questionType) => {
+    const el = document.querySelector(`input[value="${questionType}"]`);
+    if (el) el.checked = true;
+  });
+
+  createDynamicInputs(getFixedDisplayQuestionTypes());
+  setupHighlightButtons();
+}
+
+function setPlayerToMove(selected) {
+  const el = document.querySelector(`input[value="${selected}"]`);
+  if (el) el.checked = true;
+
+  if (selected === "White") chess_data.playerToMove = "w";
+  else if (selected === "Black") chess_data.playerToMove = "b";
+  else chess_data.playerToMove = Math.random() < 0.5 ? "w" : "b";
+}
+
+function setPlayerToMoveAfter() {
+  chess_data.playerToMoveAfter =
+    chess_data.plyAhead % 2 === 0 ? chess_data.playerToMove : chess_data.playerToMove === "w" ? "b" : "w";
+}
+
+function setBoard() {
+  chess_data.board = Chessboard("board", "start");
+  if (chess_data.playerToMove === "b") chess_data.board.flip();
+  ensurePieceMarkers();
+}
+
+// ----------------------------------------------------------
+// Dynamic inputs
+
+function createDynamicInputs(questionTypes) {
+  const elem = document.getElementById("count-inputs");
+  if (!elem) return;
+
+  elem.innerHTML = "";
+
+  questionTypes.forEach((questionType) => {
+    const div = document.createElement("div");
+    div.className = "input-group";
+
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    const decrementButton = document.createElement("button");
+    const incrementButton = document.createElement("button");
+    const feedbackIcon = document.createElement("span");
+    const shownMoves = document.createElement("label");
+
+    label.textContent = createDynamicInputsLabel(questionType);
+
+    input.type = "number";
+    input.id = questionType;
+    input.name = questionType;
+    input.min = "0";
+    input.required = true;
+
+    decrementButton.textContent = "←";
+    decrementButton.type = "button";
+    decrementButton.onclick = () => {
+      if (parseInt(input.value || "0", 10) > 0) input.value = parseInt(input.value || "0", 10) - 1;
+    };
+    decrementButton.className = "decrement";
+
+    incrementButton.textContent = "→";
+    incrementButton.type = "button";
+    incrementButton.onclick = () => {
+      input.value = parseInt(input.value || "0", 10) + 1;
+    };
+    incrementButton.className = "increment";
+
+    feedbackIcon.className = "feedbackIcon";
+    feedbackIcon.id = `${questionType}FeedbackIcon`;
+
+    shownMoves.className = "shownMoves";
+    shownMoves.id = `${questionType}ShownMoves`;
+
+    div.appendChild(label);
+    div.appendChild(decrementButton);
+    div.appendChild(input);
+    div.appendChild(incrementButton);
+    div.appendChild(feedbackIcon);
+    div.appendChild(shownMoves);
+
+    elem.appendChild(div);
+  });
+}
+
+function createDynamicInputsLabel(questionType) {
+  const isP1 = questionType.startsWith("p1");
+  const realTurn = chess_data.fen.split(" ")[1]; // 'w' ou 'b' selon FEN
+  const colorAbs = isP1 ? realTurn : realTurn === "w" ? "b" : "w";
+  const who = colorAbs === "w" ? "White's" : "Black's";
+
+  let what = "Moves";
+  if (questionType.endsWith("Checks")) what = "Checks";
+  if (questionType.endsWith("Captures")) what = "Captures";
+  if (questionType.endsWith("AllLegal")) what = "Moves";
+
+  return `${who}\n${what}:`;
+}
+
+// -----------------------------------------------------------
+// Main boot
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Settings modal wiring
+  setupSettingsModal();
+
+  const startBtn = document.getElementById("startButton");
+  if (startBtn) {
+    startBtn.type = "button";
+    startBtn.addEventListener("click", startNewGame);
+  }
+
+  // Show Answers button wiring
+  const btn = document.getElementById("showMovesButton");
+  if (btn) {
+    btn.type = "button";
+    btn.addEventListener("click", revealAnswers);
+  }
+});
+
+(async () => {
+  await loadSettings();
+})();
