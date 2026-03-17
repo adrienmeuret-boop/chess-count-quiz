@@ -905,7 +905,9 @@ function createDynamicInputs(questionTypes) {
 
 function createDynamicInputsLabel(questionType) {
   const isP1 = questionType.startsWith("p1");
-  const realTurn = chess_data.fen.split(" ")[1]; // 'w' ou 'b' selon FEN
+
+  const realTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
+
   const colorAbs = isP1 ? realTurn : realTurn === "w" ? "b" : "w";
   const who = colorAbs === "w" ? "White's" : "Black's";
 
