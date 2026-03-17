@@ -562,6 +562,8 @@ function loadNewPuzzle() {
 
   const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
   chess_data.board.position(prior_game.fen());
+  const fenTurn = prior_game.fen().split(" ")[1];
+  if (fenTurn === "b") chess_data.board.flip();
 
   ensurePieceMarkers();
   clearPieceMarkers();
@@ -837,8 +839,6 @@ function setPlayerToMoveAfter() {
 
 function setBoard() {
   chess_data.board = Chessboard("board", "start");
-  const fenTurn = chess_data.fen.split(" ")[1];
-  if (fenTurn === "b") chess_data.board.flip();
   ensurePieceMarkers();
 }
 
