@@ -227,21 +227,17 @@ function qTypeForAbsColorAndKind(color, kind, fenTurn) {
 }
 
 function getFixedDisplayQuestionTypes() {
-  const kinds = ["AllLegal", "Checks", "Captures"];
-  const out = [];
-
   const fenTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
 
-  ["w", "b"].forEach((color) => {
-    kinds.forEach((kind) => {
-      const qt = qTypeForAbsColorAndKind(color, kind, fenTurn);
-      if (Array.isArray(chess_data.questionTypes) && chess_data.questionTypes.includes(qt)) {
-        out.push(qt);
-      }
-    });
-  });
+  return [
+    qTypeForAbsColorAndKind("w", "AllLegal", fenTurn),
+    qTypeForAbsColorAndKind("w", "Checks", fenTurn),
+    qTypeForAbsColorAndKind("w", "Captures", fenTurn),
 
-  return out;
+    qTypeForAbsColorAndKind("b", "AllLegal", fenTurn),
+    qTypeForAbsColorAndKind("b", "Checks", fenTurn),
+    qTypeForAbsColorAndKind("b", "Captures", fenTurn),
+  ];
 }
 
 // -----------------------------------------------------------
@@ -571,7 +567,8 @@ function loadNewPuzzle() {
   clearPieceMarkers();
   updateMovesDisplay();
 
-  chess_data.correct = getCorrectAnswers(chess_data.fen, chess_data.questionTypes);
+const allTypes = getFixedDisplayQuestionTypes();
+chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
 
   // Pre-calc AllLegal for highlight buttons (useful even if not asked)
   [qTypeForAbsColorAndKind("w", "AllLegal"), qTypeForAbsColorAndKind("b", "AllLegal")].forEach((qType) => {
@@ -840,7 +837,8 @@ function setPlayerToMoveAfter() {
 
 function setBoard() {
   chess_data.board = Chessboard("board", "start");
-  if (chess_data.playerToMove === "b") chess_data.board.flip();
+  const fenTurn = chess_data.fen.split(" ")[1];
+  if (fenTurn === "b") chess_data.board.flip();
   ensurePieceMarkers();
 }
 
