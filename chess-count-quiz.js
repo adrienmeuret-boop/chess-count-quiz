@@ -229,9 +229,9 @@ function qTypeForAbsColorAndKind(color, kind, fenTurn) {
 function getFixedDisplayQuestionTypes() {
   const kinds = ["AllLegal", "Checks", "Captures"];
   const out = [];
-  if (!chess_data.fen) return out;
 
-  const fenTurn = chess_data.fen.split(" ")[1]; // 'w' ou 'b' selon FEN
+  const fenTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
+
   ["w", "b"].forEach((color) => {
     kinds.forEach((kind) => {
       const qt = qTypeForAbsColorAndKind(color, kind, fenTurn);
