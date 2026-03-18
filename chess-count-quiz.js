@@ -483,6 +483,9 @@ if (!ans) {
   });
 }
 
+// -----------------------------------------------------------
+// Moves display
+
 function updateMovesDisplay() {
   const movesDisplay = document.getElementById("remainingMoves");
   if (!movesDisplay || chess_data.plyAhead === 0) {
@@ -495,6 +498,7 @@ function updateMovesDisplay() {
   const plyAhead = chess_data.plyAhead;
   const fenTurn = chess_data.playerToMoveAfter;
 
+  // On prend les derniers coups selon plyAhead
   const startIndex = Math.max(0, fullHistory.length - plyAhead);
   const movesList = fullHistory.slice(startIndex);
 
@@ -514,10 +518,12 @@ function createMovesTableHtml(movesList, fenTurn, startIndex = 0) {
     let blackMove = "";
 
     if (i === 0) {
+      // Premier coup selon le trait
       if (traitIsWhite) whiteMove = movesList[i++] || "";
       else blackMove = movesList[i++] || "...";
     }
 
+    // Ensuite on alterne les coups
     if (i < movesList.length) {
       if (traitIsWhite) blackMove = movesList[i++] || "";
       else whiteMove = movesList[i++] || "";
