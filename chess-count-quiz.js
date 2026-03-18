@@ -575,11 +575,7 @@ chess_data.fen = chess_data.game.fen();
 // recalculer joueur à jouer **après la création du jeu**
 setPlayerToMoveAfter();
 
-const movesId = getMovesInputIdForPlayerToMove();
-createDynamicInputs(getFixedDisplayQuestionTypes(), movesId, true); // <-- PASSER true pour focus
-
-// focus avec micro-délai plus fiable
-setTimeout(() => focusInputForPlayerToMove(), 10);
+createDynamicInputs(getFixedDisplayQuestionTypes());
 
 const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
 chess_data.board.position(prior_game.fen());
@@ -905,8 +901,11 @@ function createDynamicInputs(questionTypes, focusId, doFocus = false) {
 
 elem.appendChild(div);
 });
-    if (doFocus && focusId) {
-    const el = document.getElementById(focusId);
+if (doFocus) {
+  // Focus automatiquement sur p1 = joueur ayant le trait
+  const p1Input = questionTypes.find(q => q.startsWith("p1"));
+  if (p1Input) {
+    const el = document.getElementById(p1Input);
     if (el) el.focus();
   }
 }
