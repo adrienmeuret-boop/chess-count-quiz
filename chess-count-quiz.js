@@ -577,7 +577,9 @@ setPlayerToMoveAfter(); // calculer le joueur à jouer après plyAhead
 
 const movesId = getMovesInputIdForPlayerToMove();
 createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
-  focusInputForPlayerToMove();
+
+// focus avec délai pour être sûr que l'input existe
+setTimeout(() => focusInputForPlayerToMove(), 0);
 
 const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
 chess_data.board.position(prior_game.fen());
@@ -682,7 +684,8 @@ if (chess_data.timeRemaining <= 0) {   gameEnded = true;   endGame();   return; 
 const all_correct = chess_data.questionTypes.every((id) => chess_data.is_correct[id]);
 if (all_correct) {
   loadNewPuzzle();
-  focusInputForPlayerToMove(); // <-- ajouter cette ligne
+  // focus avec délai pour éviter les problèmes de timing
+  setTimeout(() => focusInputForPlayerToMove(), 0);
 }
 }
 
