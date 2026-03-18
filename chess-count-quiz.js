@@ -651,12 +651,12 @@ function submitAnswers(event) {
 
   const prevTime = chess_data.timeRemaining;
 
-  // Parcours de toutes les inputs affichées
+  // On ne touche qu'aux inputs affichées (fixes p1/p2)
   chess_data.questionTypes.forEach((id) => {
     const input = document.getElementById(id);
     if (!input) return;
 
-    // On prend toujours l'ID exact pour récupérer le correct count
+    // On prend directement le correct count correspondant à cet input
     const correct = chess_data.correct[id];
     if (!correct) return;
 
@@ -676,6 +676,7 @@ function submitAnswers(event) {
       incrementScore();
     }
 
+    // Pénalisation temps si incorrect
     if (!isCorrect) penalizeTime();
   });
 
@@ -693,6 +694,8 @@ function submitAnswers(event) {
   const all_correct = chess_data.questionTypes.every(id => chess_data.is_correct[id]);
   if (all_correct) {
     loadNewPuzzle();
+
+    // Focus après puzzle chargé
     setTimeout(() => focusInputForPlayerToMove(), 0);
   }
 }
