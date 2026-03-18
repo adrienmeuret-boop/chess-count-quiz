@@ -658,21 +658,12 @@ function submitAnswers(event) {
 
   const prevTime = chess_data.timeRemaining;
 
+  // Vérifie uniquement les inputs cochés dans le settings
   chess_data.questionTypes.forEach((id) => {
     const input = document.getElementById(id);
     if (!input) return;
 
-    // Couleur réelle du joueur pour cet ID
-    const playerColor = id.startsWith("p1") 
-                        ? chess_data.playerToMoveAfter 
-                        : chess_data.playerToMoveAfter === "w" ? "b" : "w";
-
-    // Type de question
-    const kind = id.endsWith("Checks") ? "Checks" :
-                 id.endsWith("Captures") ? "Captures" : "AllLegal";
-
-    const qType = qTypeForAbsColorAndKind(playerColor, kind, chess_data.playerToMoveAfter);
-    const correct = chess_data.correct[qType];
+    const correct = chess_data.correct[id];
     if (!correct) return;
 
     const inputValue = parseInt(input.value, 10);
@@ -685,14 +676,13 @@ function submitAnswers(event) {
       feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
     }
 
-    // Score uniquement pour p1 (joueur ayant le trait)
-    if (id.startsWith("p1") && !chess_data.is_correct[qType] && isCorrect) {
-      chess_data.is_correct[qType] = true;
+    // Score et pénalisation pour ce joueur
+    if (!chess_data.is_correct[id] && isCorrect) {
+      chess_data.is_correct[id] = true;
       incrementScore();
     }
 
-    // Penalisation uniquement si p1 ou p2 réel
-    if (!isCorrect && id.startsWith("p1")) penalizeTime();
+    if (!isCorrect) penalizeTime();
   });
 
   if (gameEnded) return;
@@ -704,16 +694,8 @@ function submitAnswers(event) {
     return;
   }
 
-  // Si toutes les cases p1 sont correctes → nouveau puzzle
-  const allCorrect = chess_data.questionTypes
-                     .filter(id => id.startsWith("p1"))
-                     .every(id => {
-                       const playerColor = chess_data.playerToMoveAfter;
-                       const kind = id.endsWith("Checks") ? "Checks" :
-                                    id.endsWith("Captures") ? "Captures" : "AllLegal";
-                       const qType = qTypeForAbsColorAndKind(playerColor, kind, chess_data.playerToMoveAfter);
-                       return chess_data.is_correct[qType];
-                     });
+  // Vérifie si toutes les cases cochées sont correctes
+  const allCorrect = chess_data.questionTypes.every((id) => chess_data.is_correct[id]);
 
   if (allCorrect) {
     loadNewPuzzle();
