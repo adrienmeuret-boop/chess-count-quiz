@@ -684,6 +684,7 @@ if (all_correct) {
   loadNewPuzzle();
   focusInputForPlayerToMove(); // <-- ajouter cette ligne
 }
+}
 
 // ----------------------------------------------------------
 // Settings dialog box
