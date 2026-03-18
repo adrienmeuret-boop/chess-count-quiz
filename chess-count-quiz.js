@@ -920,7 +920,6 @@ if (focusId) {
   const el = document.getElementById(focusId);
   if (el) setTimeout(() => el.focus(), 50);
 }
-  });
 }
 
 function createDynamicInputsLabel(questionType) {
