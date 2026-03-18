@@ -506,32 +506,38 @@ let tableHtml = `<h3>Compute counts after these moves:</h3>
     let whiteMove = "";
     let blackMove = "";
 
-    if (i === 0) {
-      // premier demi-coup = couleur du trait
-      if (traitIsWhite) {
-        whiteMove = movesList[i] || "";
-        i++;
-        if (i < totalMoves) blackMove = movesList[i] || "";
-        i++;
-      } else {
-        blackMove = movesList[i] || "";
-        i++;
-        if (i < totalMoves) whiteMove = "..."; // remplissage pour white
-      }
-    } else {
-      // lignes suivantes = alternance normale
-      if (traitIsWhite) {
-        whiteMove = movesList[i] || "";
-        i++;
-        if (i < totalMoves) blackMove = movesList[i] || "";
-        i++;
-      } else {
-        if (i < totalMoves) whiteMove = movesList[i] || "";
-        i++;
-        if (i < totalMoves) blackMove = movesList[i] || "";
-        i++;
-      }
+if (i === 0) {
+  if (traitIsWhite) {
+    whiteMove = movesList[i] || "";
+    i++;
+    if (i < totalMoves) {
+      blackMove = movesList[i] || "";
+      i++;
     }
+  } else {
+    whiteMove = "...";
+    blackMove = movesList[i] || "";
+    i++;
+  }
+} else {
+  if (traitIsWhite) {
+    whiteMove = movesList[i] || "";
+    i++;
+    if (i < totalMoves) {
+      blackMove = movesList[i] || "";
+      i++;
+    }
+  } else {
+    if (i < totalMoves) {
+      whiteMove = movesList[i] || "";
+      i++;
+    }
+    if (i < totalMoves) {
+      blackMove = movesList[i] || "";
+      i++;
+    }
+  }
+}
 
     tableHtml += `
     <tr>
