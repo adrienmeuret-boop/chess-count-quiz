@@ -486,13 +486,37 @@ if (!ans) {
 // ----------------------------------------------------------
 // Moves table (remainingMoves)
 
+// ----------------------------------------------------------
+// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 function createMovesTableHtml(movesList, fenTurn) {
   let tableHtml = `<h3>Compute counts after these moves:</h3>
         <table class="moves-table">`;
 
   let turnNumber = 1;
+  let i = 0;
 
-  for (let i = 0; i < movesList.length; i += 2) {
+  // Si le premier coup est de la couleur adverse du trait, on met "..." pour le trait
+  if (movesList.length > 0) {
+    if (fenTurn === "w") {
+      tableHtml += `
+        <tr>
+          <td class="turn">1.</td>
+          <td class="w">${movesList[i++] || ""}</td>
+          <td class="b">...</td>
+        </tr>`;
+    } else {
+      tableHtml += `
+        <tr>
+          <td class="turn">1.</td>
+          <td class="w">...</td>
+          <td class="b">${movesList[i++] || ""}</td>
+        </tr>`;
+    }
+    turnNumber++;
+  }
+
+  // Ensuite on affiche le reste par paires
+  for (; i < movesList.length; i += 2) {
     let whiteMove = "";
     let blackMove = "";
 
