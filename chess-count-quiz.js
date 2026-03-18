@@ -575,7 +575,8 @@ chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
 chess_data.fen = chess_data.game.fen();
 setPlayerToMoveAfter(); // calculer le joueur à jouer après plyAhead
 // Déterminer l'input correspondant au joueur ayant le trait
-const fenTurnAfterPlyAhead = chess_data.playerToMoveAfter;
+// Déterminer le joueur ayant le trait dans le FEN du puzzle
+const fenTurnAfterPlyAhead = chess_data.fen.split(" ")[1];
 const movesId = qTypeForAbsColorAndKind(fenTurnAfterPlyAhead, "AllLegal", fenTurnAfterPlyAhead);
 
 // Créer les inputs et mettre le focus sur le bon input
