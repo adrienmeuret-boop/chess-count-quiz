@@ -651,38 +651,38 @@ function submitAnswers(event) {
 
   const prevTime = chess_data.timeRemaining;
 
-  // On ne touche qu'aux inputs affichées (fixes p1/p2)
-  chess_data.questionTypes.forEach((id) => {
+  // Identifier le joueur ayant le trait (p1)
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+
+  // IDs de la colonne du joueur à jouer
+  const relevantIds = chess_data.questionTypes.filter(id => id.startsWith("p1"));
+
+  relevantIds.forEach((id) => {
     const input = document.getElementById(id);
     if (!input) return;
 
-    // On prend directement le correct count correspondant à cet input
     const correct = chess_data.correct[id];
     if (!correct) return;
 
     const inputValue = parseInt(input.value, 10);
     const isCorrect = inputValue === correct.count;
 
-    // Feedback visuel
     const feedbackIcon = document.getElementById(id + "FeedbackIcon");
     if (feedbackIcon) {
       feedbackIcon.textContent = isCorrect ? "✓" : "✗";
       feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
     }
 
-    // Score uniquement si jamais marqué correct
     if (!chess_data.is_correct[id] && isCorrect) {
       chess_data.is_correct[id] = true;
       incrementScore();
     }
 
-    // Pénalisation temps si incorrect
     if (!isCorrect) penalizeTime();
   });
 
   if (gameEnded) return;
 
-  // Gestion du temps
   if (prevTime > 0 && chess_data.timeRemaining === 0) playBuzz();
   if (chess_data.timeRemaining <= 0) {
     gameEnded = true;
@@ -690,12 +690,10 @@ function submitAnswers(event) {
     return;
   }
 
-  // Vérifie si toutes les cases affichées sont correctes
-  const all_correct = chess_data.questionTypes.every(id => chess_data.is_correct[id]);
+  // Vérifie si toutes les cases p1 sont correctes
+  const all_correct = relevantIds.every(id => chess_data.is_correct[id]);
   if (all_correct) {
     loadNewPuzzle();
-
-    // Focus après puzzle chargé
     setTimeout(() => focusInputForPlayerToMove(), 0);
   }
 }
