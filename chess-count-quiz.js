@@ -535,13 +535,16 @@ function updateMovesDisplay() {
   const prevPlyIndex = fullHistory.length - chess_data.plyAhead;
   const movesList = fullHistory.slice(prevPlyIndex);
 
-  // Déterminer qui joue le premier coup de movesList
-  const tempGame = new Chess(chess_data.game.fen()); // état complet
-  tempGame.reset();
-  for (let i = 0; i < prevPlyIndex; i++) tempGame.move(fullHistory[i]);
-  const isBlackToMove = tempGame.turn() === "b";
+// Déterminer qui joue le premier coup de movesList
+const tempGame = new Chess();
+tempGame.load(chess_data.fen);
+for (let i = 0; i < prevPlyIndex; i++) tempGame.move(fullHistory[i]);
 
-  movesDisplay.innerHTML = createMovesTableHtml(movesList, isBlackToMove);
+// Le vrai joueur à jouer après prevPlyIndex coups
+const fenTurnAfterPlyAhead = tempGame.turn();
+const isBlackToMove = fenTurnAfterPlyAhead === "b";
+
+movesDisplay.innerHTML = createMovesTableHtml(movesList, isBlackToMove);
 }
 
 function getMovesInputIdForPlayerToMove() {
