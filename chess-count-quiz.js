@@ -227,7 +227,8 @@ function qTypeForAbsColorAndKind(color, kind, fenTurn) {
 }
 
 function getFixedDisplayQuestionTypes() {
-  const fenTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
+  // fenTurn = vrai joueur à jouer maintenant
+  const fenTurn = chess_data.playerToMoveAfter || "w";
 
   return [
     qTypeForAbsColorAndKind("w", "AllLegal", fenTurn),
@@ -546,8 +547,7 @@ function updateMovesDisplay() {
 
 function getMovesInputIdForPlayerToMove() {
   // vrai joueur à jouer maintenant
-  const fenTurn = chess_data.playerToMoveAfter; 
-  // Moves = AllLegal
+  const fenTurn = chess_data.playerToMoveAfter || "w";
   return qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
 }
 
@@ -918,9 +918,10 @@ function createDynamicInputs(questionTypes, focusId) {
 elem.appendChild(div);
 });
 
-// ---------- Focus automatique après que tout soit rendu ----------
-if (focusId) {
-  const el = document.getElementById(focusId);
+// Focus automatique sur l'input correspondant au trait
+const movesId = focusId || getMovesInputIdForPlayerToMove();
+if (movesId) {
+  const el = document.getElementById(movesId);
   if (el) setTimeout(() => el.focus(), 50);
 }
 }
