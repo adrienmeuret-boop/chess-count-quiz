@@ -490,53 +490,16 @@ function updateMovesDisplay() {
     return;
   }
 
-  // Créer un objet Chess avec la position courante
   const game = new Chess(chess_data.fen);
   const fullHistory = game.history({ verbose: false });
   const plyAhead = chess_data.plyAhead;
   const fenTurn = chess_data.playerToMoveAfter;
 
-  // On récupère les derniers plyAhead coups avant le ply actuel
+  // On prend les derniers plyAhead coups avant le ply courant
   const startIndex = Math.max(0, fullHistory.length - plyAhead);
   const movesList = fullHistory.slice(startIndex);
 
-  // Création de la table HTML
-  let tableHtml = `<table class="moves-table">
-      <tr><th>#</th><th>White</th><th>Black</th></tr>`;
-
-  let turnNumber = Math.floor(startIndex / 2) + 1;
-  let i = 0;
-
-  const traitIsWhite = fenTurn === "w";
-
-  while (i < movesList.length) {
-    let whiteMove = "";
-    let blackMove = "";
-
-    // Premier demi-coup
-    if (i === 0) {
-      if (traitIsWhite) whiteMove = movesList[i++] || "";
-      else blackMove = movesList[i++] || "...";
-    }
-
-    // Demi-coup suivant si existant
-    if (i < movesList.length) {
-      if (traitIsWhite) blackMove = movesList[i++] || "";
-      else whiteMove = movesList[i++] || "";
-    }
-
-    tableHtml += `<tr>
-        <td>${turnNumber}</td>
-        <td>${whiteMove}</td>
-        <td>${blackMove}</td>
-      </tr>`;
-    turnNumber++;
-  }
-
-  tableHtml += "</table>";
-
-  // Mise à jour du DOM
-  movesDisplay.innerHTML = tableHtml;
+  movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurn, startIndex);
 }
 
 function createMovesTableHtml(movesList, fenTurn, startIndex = 0) {
@@ -551,13 +514,11 @@ function createMovesTableHtml(movesList, fenTurn, startIndex = 0) {
     let whiteMove = "";
     let blackMove = "";
 
-    // Premier demi-coup
     if (i === 0) {
       if (traitIsWhite) whiteMove = movesList[i++] || "";
       else blackMove = movesList[i++] || "...";
     }
 
-    // Demi-coup suivant si existant
     if (i < movesList.length) {
       if (traitIsWhite) blackMove = movesList[i++] || "";
       else whiteMove = movesList[i++] || "";
