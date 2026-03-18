@@ -492,25 +492,26 @@ if (!ans) {
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 // ----------------------------------------------------------
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
+// ----------------------------------------------------------
+// Moves table (remainingMoves) corrigée
 function createMovesTableHtml(movesList, fenTurn) {
-let tableHtml = `<h3>Compute counts after these moves:</h3>
+  let tableHtml = `<h3>Compute counts after these moves:</h3>
 <table class="moves-table">`;
 
   const totalMoves = movesList.length;
-
   let turnNumber = 1;
+
+  // Déterminer la couleur du premier coup réel dans le slice
+  // vrai = blanc, faux = noir
+  let currentIsWhite = fenTurn === "w";
+
   let i = 0;
-
-  // couleur qui doit jouer le prochain coup
-  let currentIsWhite = (fenTurn === "w");
-
   while (i < totalMoves) {
-
     let whiteMove = "";
     let blackMove = "";
 
-    // si c'est blanc qui joue
     if (currentIsWhite) {
+      // Premier coup à jouer = blanc
       whiteMove = movesList[i] || "";
       i++;
       currentIsWhite = false;
@@ -520,10 +521,8 @@ let tableHtml = `<h3>Compute counts after these moves:</h3>
         i++;
         currentIsWhite = true;
       }
-    }
-
-    // si c'est noir qui joue
-    else {
+    } else {
+      // Premier coup à jouer = noir → colonne blanche vide = "..."
       whiteMove = "...";
       blackMove = movesList[i] || "";
       i++;
@@ -555,9 +554,11 @@ function updateMovesDisplay() {
   const startIndex = fullHistory.length - chess_data.plyAhead;
   const movesList = fullHistory.slice(startIndex);
 
-  // Générer le tableau avec le trait correct
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer après plyAhead
-  movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurn);
+  // Déterminer le joueur à jouer pour le premier coup affiché
+  const firstMoveIsWhite = (startIndex % 2 === 0); // vrai si premier coup slice = blanc
+  const fenTurnAfterPlyAhead = firstMoveIsWhite ? "w" : "b";
+
+  movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurnAfterPlyAhead);
 }
 
 function getMovesInputIdForPlayerToMove() {
