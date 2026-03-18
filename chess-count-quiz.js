@@ -594,40 +594,48 @@ function getMovesInputIdForPlayerToMove() {
 // Game load / puzzle
 
 function loadNewPuzzle() {
-
+  // Déterminer le joueur à jouer après le ply courant
   setPlayerToMoveAfter(); 
-  
+
+  // Nettoyer les surlignages
   clearBoardHighlights();
 
+  // Sélection aléatoire du puzzle et du ply
   const game_and_ply = getRandomPosNumber(chess_data.game_weights, chess_data.playerToMoveAfter === "w");
   chess_data.game_index = game_and_ply.game;
   chess_data.ply = game_and_ply.ply;
 
-chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
-chess_data.fen = chess_data.game.fen();
-setPlayerToMoveAfter(); // calculer le joueur à jouer après plyAhead
-const fenTurnAfterPlyAhead = chess_data.playerToMoveAfter;
-const movesId = qTypeForAbsColorAndKind(fenTurnAfterPlyAhead, "AllLegal", fenTurnAfterPlyAhead);
-createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
+  // Charger la position actuelle du jeu
+  chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
+  chess_data.fen = chess_data.game.fen();
+  setPlayerToMoveAfter(); // recalculer joueur à jouer après plyAhead
 
-const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
-chess_data.board.position(prior_game.fen());
-if (chess_data.playerToMoveAfter === "b") {
-  chess_data.board.flip();
-}
+  // Créer les inputs dynamiques
+  const fenTurnAfterPlyAhead = chess_data.playerToMoveAfter;
+  const movesId = qTypeForAbsColorAndKind(fenTurnAfterPlyAhead, "AllLegal", fenTurnAfterPlyAhead);
+  createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
 
+  // Afficher la position avant le plyAhead
+  const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
+  chess_data.board.position(prior_game.fen());
+  if (chess_data.playerToMoveAfter === "b") chess_data.board.flip();
+
+  // Préparer les marqueurs
   ensurePieceMarkers();
   clearPieceMarkers();
+
+  // Calculer les réponses correctes avant d’afficher les coups
+  const allTypes = getFixedDisplayQuestionTypes();
+  chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
+
+  // Afficher la table des coups
   updateMovesDisplay();
 
-const allTypes = getFixedDisplayQuestionTypes();
-chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
+  // Pré-calcul pour les boutons de surlignage
+  chess_data.is_correct = Object.fromEntries(allTypes.map((name) => [name, false]));
 
-  // Pre-calc AllLegal for highlight buttons (useful even if not asked)
-
-  chess_data.is_correct = Object.fromEntries(getFixedDisplayQuestionTypes().map((name) => [name, false]));
-
-  getFixedDisplayQuestionTypes().forEach((id) => {
+  // Réinitialiser les inputs et les labels
+  allTypes.forEach((id) => {
     const input = document.getElementById(id);
     if (input) input.value = 0;
 
@@ -641,19 +649,21 @@ chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
     if (shownMovesLabel) shownMovesLabel.textContent = "";
   });
 
-  // Clear movesList (bottom) when new puzzle loads
+  // Vider et masquer la liste de coups (bas de page)
   const movesList = document.getElementById("movesList");
   if (movesList) {
     movesList.innerHTML = "";
     movesList.style.display = "none";
   }
 
+  // Réactiver le bouton "Show Moves"
   const showMovesButton = document.getElementById("showMovesButton");
   if (showMovesButton) {
     showMovesButton.disabled = false;
     showMovesButton.style.backgroundColor = "";
   }
 
+  // Lier le formulaire à la fonction de submit
   const form = document.getElementById("chessCountForm");
   if (form) form.onsubmit = submitAnswers;
 }
