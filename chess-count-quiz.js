@@ -634,7 +634,7 @@ function startNewGame() {
   loadNewPuzzle();
 chess_data.timeRemaining = chess_data.showTimer ? chess_data.defaultTimeRemaining : 9999;
 initTimer();
-
+}
 // ----------------------------------------------------------
 // Submit answers
 
