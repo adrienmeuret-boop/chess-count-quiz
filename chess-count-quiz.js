@@ -483,43 +483,49 @@ if (!ans) {
   });
 }
 
-function createMovesTableHtml(movesList, fenTurn) {
-  // Table simplifiée, pas de mots en gras ni # en gras
-  let tableHtml = `<table class="moves-table">
-    <tr><th></th><th></th><th></th></tr>`; // Colonnes vides pour numéro et coups
+function updateMovesDisplay() {
+  const movesDisplay = document.getElementById("remainingMoves");
+  if (!movesDisplay || chess_data.plyAhead === 0) {
+    if (movesDisplay) movesDisplay.innerHTML = "";
+    return;
+  }
 
-  let turnNumber = 1;
+  const game = new Chess(chess_data.fen);
+  const fullHistory = game.history({ verbose: false });
+
+  const ply = chess_data.ply;
+  const plyAhead = chess_data.plyAhead;
+  const fenTurn = chess_data.playerToMoveAfter;
+
+  // On récupère les derniers plyAhead coups avant le ply actuel
+  const startIndex = Math.max(0, ply - plyAhead);
+  const movesList = fullHistory.slice(startIndex, ply);
+
+  movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurn);
+}
+
+function createMovesTableHtml(movesList, fenTurn) {
+  let tableHtml = `<table class="moves-table">
+    <tr><th>#</th><th>White</th><th>Black</th></tr>`;
+
+  let turnNumber = Math.floor((chess_data.ply - chess_data.plyAhead) / 2) + 1;
   let i = 0;
-  const totalMoves = movesList.length;
   const traitIsWhite = fenTurn === "w";
 
-  while (i < totalMoves) {
+  while (i < movesList.length) {
     let whiteMove = "";
     let blackMove = "";
 
+    // Premier demi-coup
     if (i === 0) {
-      // Premier demi-coup = trait
-      if (traitIsWhite) {
-        whiteMove = movesList[i] || "";
-        blackMove = "";
-      } else {
-        whiteMove = "...";
-        blackMove = movesList[i] || "";
-      }
-      i++;
-    } else {
-      // Alternance normale
-      if (traitIsWhite) {
-        whiteMove = movesList[i] || "";
-        i++;
-        blackMove = movesList[i] || "";
-        i++;
-      } else {
-        blackMove = movesList[i] || "";
-        i++;
-        whiteMove = movesList[i] || "";
-        i++;
-      }
+      if (traitIsWhite) whiteMove = movesList[i++] || "";
+      else blackMove = movesList[i++] || "...";
+    }
+
+    // Demi-coup suivant si existant
+    if (i < movesList.length) {
+      if (traitIsWhite) blackMove = movesList[i++] || "";
+      else whiteMove = movesList[i++] || "";
     }
 
     tableHtml += `<tr>
@@ -533,12 +539,6 @@ function createMovesTableHtml(movesList, fenTurn) {
   tableHtml += "</table>";
   return tableHtml;
 }
-function updateMovesDisplay() {
-  const movesDisplay = document.getElementById("remainingMoves");
-  if (!movesDisplay || chess_data.plyAhead === 0) {
-    if (movesDisplay) movesDisplay.innerHTML = "";
-    return;
-  }
 
   const game = new Chess(chess_data.fen);
   const fullHistory = game.history({ verbose: false });
