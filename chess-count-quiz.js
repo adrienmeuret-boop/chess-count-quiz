@@ -490,50 +490,55 @@ if (!ans) {
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 // ----------------------------------------------------------
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
+// ----------------------------------------------------------
+// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 function createMovesTableHtml(movesList, fenTurn) {
-  let tableHtml = `<h3>Compute counts after these moves:</h3>
-    <table class="moves-table">`;
+  let tableHtml = `<table class="moves-table">
+  <tr><th>#</th><th>White</th><th>Black</th></tr>`;
 
+  const totalMoves = movesList.length;
   let turnNumber = 1;
+  let i = 0;
 
-  for (let i = 0; i < movesList.length; i += 2) {
-    // Calculer quelle couleur joue ce coup
-for (let i = 0; i < movesList.length; i += 2) {
-  let whiteMove = "";
-  let blackMove = "";
+  const traitIsWhite = fenTurn === "w";
 
-  // Si c’est le trait au blanc, le premier coup de la liste est blanc
-  if (i === 0 && fenTurn === "b") {
-    // Premier coup pour noir → afficher "..." en blanc
-    whiteMove = "...";
-    blackMove = movesList[i] || "";
-  } else {
-    whiteMove = movesList[i] || "";
-    blackMove = movesList[i + 1] || "";
-  }
+  while (i < totalMoves) {
+    let whiteMove = "";
+    let blackMove = "";
 
-  // Si c’est le trait au noir et qu’on a déjà décalé, inverser les couleurs
-  if (fenTurn === "b") {
-    [whiteMove, blackMove] = [blackMove, whiteMove];
-  }
+    if (i === 0) {
+      // premier demi-coup = couleur du trait
+      if (traitIsWhite) {
+        whiteMove = movesList[i] || "";
+        i++;
+        if (i < totalMoves) blackMove = movesList[i] || "";
+        i++;
+      } else {
+        blackMove = movesList[i] || "";
+        i++;
+        if (i < totalMoves) whiteMove = "..."; // remplissage pour white
+      }
+    } else {
+      // lignes suivantes = alternance normale
+      if (traitIsWhite) {
+        whiteMove = movesList[i] || "";
+        i++;
+        if (i < totalMoves) blackMove = movesList[i] || "";
+        i++;
+      } else {
+        if (i < totalMoves) whiteMove = movesList[i] || "";
+        i++;
+        if (i < totalMoves) blackMove = movesList[i] || "";
+        i++;
+      }
+    }
 
-  tableHtml += `
+    tableHtml += `
     <tr>
       <td class="turn">${turnNumber}.</td>
       <td class="w">${whiteMove}</td>
       <td class="b">${blackMove}</td>
     </tr>`;
-
-  turnNumber++;
-}
-
-    tableHtml += `
-      <tr>
-        <td class="turn">${turnNumber}.</td>
-        <td class="w">${whiteMove}</td>
-        <td class="b">${blackMove}</td>
-      </tr>`;
-
     turnNumber++;
   }
 
