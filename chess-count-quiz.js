@@ -461,7 +461,7 @@ function setupHighlightButtons() {
       if (!chess_data.correct) chess_data.correct = {};
 
       // Déterminer la couleur réelle à jouer
-      const fenTurn = chess_data.fen.split(" ")[1];
+const fenTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
 
       // Déterminer le type de question exact (p1/p2 + kind)
       let kind;
@@ -833,7 +833,8 @@ async function loadSettings() {
     if (el) el.checked = true;
   });
 
-  createDynamicInputs(getFixedDisplayQuestionTypes());
+const movesId = chess_data.fen ? qTypeForAbsColorAndKind(chess_data.fen.split(" ")[1], "AllLegal", chess_data.fen.split(" ")[1]) : null;
+createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
   setupHighlightButtons();
 }
 
@@ -852,14 +853,14 @@ function setPlayerToMoveAfter() {
 }
 
 function setBoard() {
-  chess_data.board = Chessboard("board", "start");
+chess_data.board = Chessboard("board", { position: "start" });
   ensurePieceMarkers();
 }
 
 // ----------------------------------------------------------
 // Dynamic inputs
 
-function createDynamicInputs(questionTypes) {
+function createDynamicInputs(questionTypes, focusId) {
   const elem = document.getElementById("count-inputs");
   if (!elem) return;
 
