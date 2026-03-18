@@ -662,11 +662,15 @@ function submitAnswers(event) {
     const input = document.getElementById(id);
     if (!input) return;
 
-    const playerColor = playerColorForInputId(id);
+    // Couleur réelle du joueur pour cet ID
+    const playerColor = id.startsWith("p1") 
+                        ? chess_data.playerToMoveAfter 
+                        : chess_data.playerToMoveAfter === "w" ? "b" : "w";
+
+    // Type de question
     const kind = id.endsWith("Checks") ? "Checks" :
                  id.endsWith("Captures") ? "Captures" : "AllLegal";
 
-    // Génère le qType exact pour récupérer la bonne réponse
     const qType = qTypeForAbsColorAndKind(playerColor, kind, chess_data.playerToMoveAfter);
     const correct = chess_data.correct[qType];
     if (!correct) return;
@@ -674,20 +678,21 @@ function submitAnswers(event) {
     const inputValue = parseInt(input.value, 10);
     const isCorrect = inputValue === correct.count;
 
-    // Feedback
+    // Affichage du feedback
     const feedbackIcon = document.getElementById(id + "FeedbackIcon");
     if (feedbackIcon) {
       feedbackIcon.textContent = isCorrect ? "✓" : "✗";
       feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
     }
 
-    // Score uniquement pour p1 (joueur à jouer)
+    // Score uniquement pour p1 (joueur ayant le trait)
     if (id.startsWith("p1") && !chess_data.is_correct[qType] && isCorrect) {
       chess_data.is_correct[qType] = true;
       incrementScore();
     }
 
-    if (!isCorrect) penalizeTime();
+    // Penalisation uniquement si p1 ou p2 réel
+    if (!isCorrect && id.startsWith("p1")) penalizeTime();
   });
 
   if (gameEnded) return;
@@ -703,7 +708,7 @@ function submitAnswers(event) {
   const allCorrect = chess_data.questionTypes
                      .filter(id => id.startsWith("p1"))
                      .every(id => {
-                       const playerColor = playerColorForInputId(id);
+                       const playerColor = chess_data.playerToMoveAfter;
                        const kind = id.endsWith("Checks") ? "Checks" :
                                     id.endsWith("Captures") ? "Captures" : "AllLegal";
                        const qType = qTypeForAbsColorAndKind(playerColor, kind, chess_data.playerToMoveAfter);
