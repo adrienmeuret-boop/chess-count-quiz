@@ -484,9 +484,9 @@ if (!ans) {
 }
 
 function createMovesTableHtml(movesList, fenTurn) {
-  // table simplifiée, pas de mots en gras
+  // Table simplifiée, pas de mots en gras ni # en gras
   let tableHtml = `<table class="moves-table">
-    <tr><th>#</th><th></th><th></th></tr>`; // colonnes vides pour White / Black
+    <tr><th></th><th></th><th></th></tr>`; // Colonnes vides pour numéro et coups
 
   let turnNumber = 1;
   let i = 0;
@@ -533,7 +533,6 @@ function createMovesTableHtml(movesList, fenTurn) {
   tableHtml += "</table>";
   return tableHtml;
 }
-
 function updateMovesDisplay() {
   const movesDisplay = document.getElementById("remainingMoves");
   if (!movesDisplay || chess_data.plyAhead === 0) {
