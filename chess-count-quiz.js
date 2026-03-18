@@ -547,7 +547,8 @@ function updateMovesDisplay() {
 
 function getMovesInputIdForPlayerToMove() {
   const fenTurn = chess_data.playerToMoveAfter || "w";
-  return `p1AllLegal${fenTurn === "w" ? "W" : "B"}`; // <-- supprimer .toLowerCase()
+  // Renvoie l'ID exact correspondant aux inputs générés dynamiquement
+  return fenTurn === chess_data.playerToMoveAfter ? "p1AllLegal" : "p2AllLegal";
 }
 
 // ----------------------------------------------------------
