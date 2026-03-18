@@ -651,30 +651,34 @@ function submitAnswers(event) {
 
   const prevTime = chess_data.timeRemaining;
   
-  chess_data.questionTypes.forEach((id) => {
+// Vérifie uniquement le joueur ayant le trait (p1)
+const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+
+chess_data.questionTypes
+  .filter(id => id.startsWith("p1"))  // <-- uniquement p1
+  .forEach((id) => {
     const input = document.getElementById(id);
     if (!input) return;
 
-// On ne veut vérifier que la colonne du joueur ayant le trait
-const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
-const correctId = qTypeForAbsColorAndKind(fenTurn, id.endsWith("Checks") ? "Checks" : id.endsWith("Captures") ? "Captures" : "AllLegal", fenTurn);
+    const kind = id.endsWith("Checks") ? "Checks" : id.endsWith("Captures") ? "Captures" : "AllLegal";
+    const correctId = qTypeForAbsColorAndKind(fenTurn, kind, fenTurn);
 
-const inputValue = parseInt(input.value, 10);
-const isCorrect = inputValue === chess_data.correct[correctId].count;
+    const inputValue = parseInt(input.value, 10);
+    const isCorrect = inputValue === chess_data.correct[correctId].count;
 
-const feedbackIcon = document.getElementById(id + "FeedbackIcon");
-if (feedbackIcon) {
-  feedbackIcon.textContent = isCorrect ? "✓" : "✗";
-  feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
-}
+    const feedbackIcon = document.getElementById(id + "FeedbackIcon");
+    if (feedbackIcon) {
+      feedbackIcon.textContent = isCorrect ? "✓" : "✗";
+      feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
+    }
 
-if (!chess_data.is_correct[correctId] && isCorrect) {
-  chess_data.is_correct[correctId] = true;
-  incrementScore();
-}
+    if (!chess_data.is_correct[correctId] && isCorrect) {
+      chess_data.is_correct[correctId] = true;
+      incrementScore();
+    }
 
-  if (!isCorrect) penalizeTime();
-});
+    if (!isCorrect) penalizeTime();
+  });
 
   if (gameEnded) return;
 
