@@ -576,7 +576,7 @@ chess_data.fen = chess_data.game.fen();
 setPlayerToMoveAfter();
 
 const movesId = getMovesInputIdForPlayerToMove();
-createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
+createDynamicInputs(getFixedDisplayQuestionTypes(), movesId, true); // <-- PASSER true pour focus
 
 // focus avec micro-délai plus fiable
 setTimeout(() => focusInputForPlayerToMove(), 10);
@@ -851,7 +851,7 @@ chess_data.board = Chessboard("board", { position: "start" });
 // ----------------------------------------------------------
 // Dynamic inputs
 
-function createDynamicInputs(questionTypes, focusId) {
+function createDynamicInputs(questionTypes, focusId, doFocus = false) {
   const elem = document.getElementById("count-inputs");
   if (!elem) return;
 
@@ -905,6 +905,10 @@ function createDynamicInputs(questionTypes, focusId) {
 
 elem.appendChild(div);
 });
+    if (doFocus && focusId) {
+    const el = document.getElementById(focusId);
+    if (el) el.focus();
+  }
 }
   
 function focusInputForPlayerToMove() {
