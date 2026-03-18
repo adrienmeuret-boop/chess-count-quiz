@@ -566,6 +566,9 @@ function loadNewPuzzle() {
 
   chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
   chess_data.fen = chess_data.game.fen();
+  // CRÉER LES INPUTS DYNAMIQUES et mettre le focus sur le joueur à jouer
+const movesId = getMovesInputIdForPlayerToMove();
+createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
 
   const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
   chess_data.board.position(prior_game.fen());
@@ -824,9 +827,7 @@ async function loadSettings() {
     if (el) el.checked = true;
   });
 
-const movesId = chess_data.fen ? qTypeForAbsColorAndKind(chess_data.fen.split(" ")[1], "AllLegal", chess_data.fen.split(" ")[1]) : null;
-createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
-  setupHighlightButtons();
+setupHighlightButtons();
 }
 
 function setPlayerToMove(selected) {
