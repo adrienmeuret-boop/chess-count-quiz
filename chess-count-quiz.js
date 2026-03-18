@@ -915,14 +915,21 @@ setTimeout(() => {
 }
 
 function createDynamicInputsLabel(questionType) {
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+  // Déterminer le trait réel dans le FEN actuel
+  const fenTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
 
+  // p1 = joueur à jouer, p2 = l'autre joueur
   let whoColor;
-  if (questionType.startsWith("p1")) whoColor = fenTurn; // joueur à jouer
-  else whoColor = fenTurn === "w" ? "b" : "w"; // l’autre
+  if (questionType.startsWith("p1")) {
+    whoColor = fenTurn;        // le vrai trait
+  } else {
+    whoColor = fenTurn === "w" ? "b" : "w"; // l’autre
+  }
 
-  let who = whoColor === "w" ? "White's" : "Black's";
+  // Nom du joueur pour le label
+  const who = whoColor === "w" ? "White's" : "Black's";
 
+  // Type de question
   let what;
   if (questionType.endsWith("Checks")) what = "Checks";
   else if (questionType.endsWith("Captures")) what = "Captures";
