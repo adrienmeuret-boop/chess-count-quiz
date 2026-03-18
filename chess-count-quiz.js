@@ -510,32 +510,8 @@ function createMovesTableHtml(movesList, fenTurn) {
     let whiteMove = "";
     let blackMove = "";
 
-    if (i === 0) {
-      // premier demi-coup = trait
-      if (traitIsWhite) {
-        whiteMove = movesList[i] || "";
-        i++;
-        blackMove = movesList[i] || "...";
-        if (blackMove !== "...") i++;
-      } else {
-        whiteMove = "...";
-        blackMove = movesList[i] || "";
-        i++;
-      }
-    } else {
-      // alternance normale
-      if (traitIsWhite) {
-        whiteMove = movesList[i] || "";
-        i++;
-        blackMove = movesList[i] || "";
-        i++;
-      } else {
-        whiteMove = movesList[i] || "";
-        i++;
-        blackMove = movesList[i] || "";
-        i++;
-      }
-    }
+    if (i < totalMoves) whiteMove = movesList[i++];
+    if (i < totalMoves) blackMove = movesList[i++];
 
     tableHtml += `
     <tr>
