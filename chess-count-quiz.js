@@ -658,7 +658,7 @@ function submitAnswers(event) {
 
   const prevTime = chess_data.timeRemaining;
   
-  getFixedDisplayQuestionTypes().forEach((id) => {
+  chess_data.questionTypes.forEach((id) => {
     const input = document.getElementById(id);
     if (!input) return;
 
@@ -684,7 +684,7 @@ function submitAnswers(event) {
 if (prevTime > 0 && chess_data.timeRemaining === 0) playBuzz();
 if (chess_data.timeRemaining <= 0) {   gameEnded = true;   endGame();   return; }
 
-const all_correct = Object.values(chess_data.is_correct).reduce((acc, cur) => acc && cur, true);
+const all_correct = chess_data.questionTypes.every((id) => chess_data.is_correct[id]);
 if (all_correct) loadNewPuzzle();
 }
 
