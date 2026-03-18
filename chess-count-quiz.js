@@ -540,22 +540,6 @@ function createMovesTableHtml(movesList, fenTurn, startIndex = 0) {
   tableHtml += "</table>";
   return tableHtml;
 }
-  const game = new Chess(chess_data.fen);
-  const fullHistory = game.history({ verbose: false });
-
-  const plyAhead = chess_data.plyAhead;
-  const fenTurn = chess_data.playerToMoveAfter;
-
-  let movesList = [];
-  let i = 0;
-
-  while (movesList.length < plyAhead && i < fullHistory.length) {
-    movesList.push(fullHistory[i]);
-    i++;
-  }
-
-  movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurn);
-}
 
 function getMovesInputIdForPlayerToMove() {
   // le vrai joueur à jouer
