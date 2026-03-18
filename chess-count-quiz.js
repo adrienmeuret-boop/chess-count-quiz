@@ -607,12 +607,6 @@ chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
     movesList.style.display = "none";
   }
 
-if (window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints)) {
-  const movesId = getMovesInputIdForPlayerToMove();
-  const el = document.getElementById(movesId);
-  if (el) setTimeout(() => el.focus(), 50);
-}
-
   const showMovesButton = document.getElementById("showMovesButton");
   if (showMovesButton) {
     showMovesButton.disabled = false;
@@ -753,12 +747,6 @@ const movesId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
 // Créer les inputs et mettre le focus sur le bon input
 createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
   setupHighlightButtons();
-
-if (window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints)) {
-  const movesId = getMovesInputIdForPlayerToMove();
-  const el = document.getElementById(movesId);
-  if (el) setTimeout(() => el.focus(), 50);
-}
   
   const plyAhead = parseInt(document.getElementById("plyAhead").value, 10);
   chess_data.plyAhead = plyAhead;
@@ -919,11 +907,13 @@ elem.appendChild(div);
 });
 
 // Focus automatique sur l'input correspondant au trait
-const movesId = focusId || getMovesInputIdForPlayerToMove();
-if (movesId) {
-  const el = document.getElementById(movesId);
-  if (el) setTimeout(() => el.focus(), 50);
-}
+setTimeout(() => {
+  const movesId = focusId || getMovesInputIdForPlayerToMove();
+  if (movesId) {
+    const el = document.getElementById(movesId);
+    if (el) el.focus();
+  }
+}, 50);
 }
 
 function createDynamicInputsLabel(questionType) {
