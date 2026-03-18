@@ -554,7 +554,7 @@ function updateMovesDisplay() {
 
 function getMovesInputIdForPlayerToMove() {
   // le vrai joueur à jouer
-  const fenTurn = chess_data.game.turn();
+  const fenTurn = chess_data.playerToMoveAfter;
   // p1 = joueur à jouer
   return qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
 }
