@@ -495,7 +495,6 @@ function updateMovesDisplay() {
   const plyAhead = chess_data.plyAhead;
   const fenTurn = chess_data.playerToMoveAfter;
 
-  // On prend les derniers plyAhead coups avant le ply courant
   const startIndex = Math.max(0, fullHistory.length - plyAhead);
   const movesList = fullHistory.slice(startIndex);
 
