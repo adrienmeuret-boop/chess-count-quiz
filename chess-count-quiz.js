@@ -875,11 +875,6 @@ function createDynamicInputs(questionTypes, focusId) {
     input.name = questionType;
     input.min = "0";
     input.required = true;
-
-   
-    if (questionType === getMovesInputIdForPlayerToMove()) {
-        input.focus();
-    }
     
     decrementButton.textContent = "←";
     decrementButton.type = "button";
