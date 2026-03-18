@@ -552,11 +552,23 @@ function updateMovesDisplay() {
   }
 
   const fullHistory = chess_data.game.history();
-  const startIndex = fullHistory.length - chess_data.plyAhead;
-  const movesList = fullHistory.slice(startIndex);
+  const plyAhead = chess_data.plyAhead;
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer après plyAhead
+
+  let movesList = [];
+
+  // Déterminer le premier demi-coup à afficher pour le joueur au trait
+  if (fenTurn === "w") {
+    // Tous les coups blancs légaux dans l'ordre
+    const whiteMoves = fullHistory.filter((_, idx) => idx % 2 === 0);
+    movesList = whiteMoves.slice(0, plyAhead); // prendre jusqu'à plyAhead demi-coups
+  } else {
+    // Tous les coups noirs légaux dans l'ordre
+    const blackMoves = fullHistory.filter((_, idx) => idx % 2 !== 0);
+    movesList = blackMoves.slice(0, plyAhead); // prendre jusqu'à plyAhead demi-coups
+  }
 
   // Générer le tableau avec le trait correct
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer après plyAhead
   movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurn);
 }
 
