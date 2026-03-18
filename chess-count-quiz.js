@@ -554,7 +554,7 @@ function updateMovesDisplay() {
 
 function getMovesInputIdForPlayerToMove() {
   // le vrai joueur à jouer
-  const fenTurn = chess_data.playerToMoveAfter; 
+  const fenTurn = chess_data.game.turn();
   // p1 = joueur à jouer
   return qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
 }
@@ -734,7 +734,7 @@ async function saveSettings() {
   localStorage.setItem("questionTypes", JSON.stringify(chess_data.questionTypes));
 
 // Déterminer le joueur à jouer : 'w' ou 'b'
-const fenTurn = chess_data.playerToMoveAfter; 
+const fenTurn = chess_data.game.turn();
 // Trouver l'ID de l'input correspondant à ce joueur
 const movesId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
 
