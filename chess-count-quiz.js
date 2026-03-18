@@ -900,15 +900,15 @@ elem.appendChild(div);
 
 // Focus automatique sur l'input correspondant au trait
 setTimeout(() => {
-  if (!focusId) return;
-  const el = document.getElementById(focusId);
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+  const p1Id = `p1AllLegal`; // ID de l'input p1
+  const el = document.getElementById(p1Id);
   if (el) el.focus();
 }, 50);
 }
 
 function createDynamicInputsLabel(questionType) {
-const fenTurn = chess_data.playerToMoveAfter;
-let whoColor = questionType.startsWith("p1") ? fenTurn : (fenTurn === "w" ? "b" : "w");
+let whoColor = questionType.startsWith("p1") ? chess_data.playerToMoveAfter : (chess_data.playerToMoveAfter === "w" ? "b" : "w");
 
   // Nom du joueur pour le label
   const who = whoColor === "w" ? "White's" : "Black's";
