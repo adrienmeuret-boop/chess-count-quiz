@@ -650,47 +650,53 @@ function submitAnswers(event) {
   event.preventDefault();
 
   const prevTime = chess_data.timeRemaining;
-  
-// Vérifie uniquement le joueur ayant le trait (p1)
-const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
 
-chess_data.questionTypes
-  .filter(id => id.startsWith("p1"))  // <-- uniquement p1
-  .forEach((id) => {
-    const input = document.getElementById(id);
-    if (!input) return;
+  // On ne vérifie que p1 (joueur ayant le trait)
+  chess_data.questionTypes
+    .filter(id => id.startsWith("p1"))
+    .forEach((id) => {
+      const input = document.getElementById(id);
+      if (!input) return;
 
-    const kind = id.endsWith("Checks") ? "Checks" : id.endsWith("Captures") ? "Captures" : "AllLegal";
-    const correctId = qTypeForAbsColorAndKind(fenTurn, kind, fenTurn);
+      const correct = chess_data.correct[id]; // <-- utilise directement l'ID existant
+      if (!correct) return;
 
-    const inputValue = parseInt(input.value, 10);
-    const isCorrect = inputValue === chess_data.correct[correctId].count;
+      const inputValue = parseInt(input.value, 10);
+      const isCorrect = inputValue === correct.count;
 
-    const feedbackIcon = document.getElementById(id + "FeedbackIcon");
-    if (feedbackIcon) {
-      feedbackIcon.textContent = isCorrect ? "✓" : "✗";
-      feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
-    }
+      const feedbackIcon = document.getElementById(id + "FeedbackIcon");
+      if (feedbackIcon) {
+        feedbackIcon.textContent = isCorrect ? "✓" : "✗";
+        feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
+      }
 
-    if (!chess_data.is_correct[correctId] && isCorrect) {
-      chess_data.is_correct[correctId] = true;
-      incrementScore();
-    }
+      if (!chess_data.is_correct[id] && isCorrect) {
+        chess_data.is_correct[id] = true;
+        incrementScore();
+      }
 
-    if (!isCorrect) penalizeTime();
-  });
+      if (!isCorrect) penalizeTime();
+    });
 
   if (gameEnded) return;
 
-if (prevTime > 0 && chess_data.timeRemaining === 0) playBuzz();
-if (chess_data.timeRemaining <= 0) {   gameEnded = true;   endGame();   return; }
+  if (prevTime > 0 && chess_data.timeRemaining === 0) playBuzz();
+  if (chess_data.timeRemaining <= 0) {   
+    gameEnded = true;   
+    endGame();   
+    return; 
+  }
 
-const all_correct = chess_data.questionTypes.every((id) => chess_data.is_correct[id]);
-if (all_correct) {
-  loadNewPuzzle();
-  // focus avec délai pour éviter les problèmes de timing
-  setTimeout(() => focusInputForPlayerToMove(), 0);
-}
+  // Vérifie si toutes les p1 sont correctes pour charger le nouveau puzzle
+  const all_correct = chess_data.questionTypes
+    .filter(id => id.startsWith("p1"))
+    .every(id => chess_data.is_correct[id]);
+
+  if (all_correct) {
+    loadNewPuzzle();
+    setTimeout(() => focusInputForPlayerToMove(), 0);
+  }
 }
 
 // ----------------------------------------------------------
