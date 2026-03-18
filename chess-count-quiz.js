@@ -483,17 +483,6 @@ if (!ans) {
   });
 }
 
-// ----------------------------------------------------------
-// Moves table (remainingMoves)
-
-// ----------------------------------------------------------
-// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
-// ----------------------------------------------------------
-// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
-// ----------------------------------------------------------
-// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
-// ----------------------------------------------------------
-// Moves table (remainingMoves) corrigée
 function createMovesTableHtml(movesList, fenTurn) {
   let tableHtml = `<h3>Compute counts after these moves:</h3>
 <table class="moves-table">`;
@@ -501,32 +490,19 @@ function createMovesTableHtml(movesList, fenTurn) {
   const totalMoves = movesList.length;
   let turnNumber = 1;
 
-  // Déterminer la couleur du premier coup réel dans le slice
-  // vrai = blanc, faux = noir
-  let currentIsWhite = fenTurn === "w";
+  // Déterminer si le premier coup affiché est blanc (true) ou noir (false)
+  let firstMoveIsWhite = fenTurn === "w";
 
-  let i = 0;
-  while (i < totalMoves) {
-    let whiteMove = "";
-    let blackMove = "";
+  for (let i = 0; i < totalMoves; i += 2) {
+    let whiteMove, blackMove;
 
-    if (currentIsWhite) {
-      // Premier coup à jouer = blanc
+    if (firstMoveIsWhite) {
       whiteMove = movesList[i] || "";
-      i++;
-      currentIsWhite = false;
-
-      if (i < totalMoves) {
-        blackMove = movesList[i] || "";
-        i++;
-        currentIsWhite = true;
-      }
+      blackMove = movesList[i + 1] || "";
     } else {
-      // Premier coup à jouer = noir → colonne blanche vide = "..."
       whiteMove = "...";
       blackMove = movesList[i] || "";
-      i++;
-      currentIsWhite = true;
+      blackMove = movesList[i + 1] || "";
     }
 
     tableHtml += `
@@ -537,6 +513,8 @@ function createMovesTableHtml(movesList, fenTurn) {
     </tr>`;
 
     turnNumber++;
+    // Après la première ligne, tous les couples suivent l’ordre normal blanc/noir
+    firstMoveIsWhite = true;
   }
 
   tableHtml += "</table>";
@@ -554,11 +532,10 @@ function updateMovesDisplay() {
   const startIndex = fullHistory.length - chess_data.plyAhead;
   const movesList = fullHistory.slice(startIndex);
 
-  // Déterminer le joueur à jouer pour le premier coup affiché
-  const firstMoveIsWhite = (startIndex % 2 === 0); // vrai si premier coup slice = blanc
-  const fenTurnAfterPlyAhead = firstMoveIsWhite ? "w" : "b";
+  // Couleur du premier coup à afficher
+  const firstMoveIsWhite = (startIndex % 2 === 0) ? "w" : "b";
 
-  movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurnAfterPlyAhead);
+  movesDisplay.innerHTML = createMovesTableHtml(movesList, firstMoveIsWhite);
 }
 
 function getMovesInputIdForPlayerToMove() {
