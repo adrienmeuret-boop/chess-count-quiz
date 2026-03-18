@@ -497,47 +497,38 @@ let tableHtml = `<h3>Compute counts after these moves:</h3>
 <table class="moves-table">`;
 
   const totalMoves = movesList.length;
+
   let turnNumber = 1;
   let i = 0;
 
-  const traitIsWhite = fenTurn === "w";
+  // couleur qui doit jouer le prochain coup
+  let currentIsWhite = (fenTurn === "w");
 
   while (i < totalMoves) {
+
     let whiteMove = "";
     let blackMove = "";
 
-if (i === 0) {
-  if (traitIsWhite) {
-    whiteMove = movesList[i] || "";
-    i++;
-    if (i < totalMoves) {
-      blackMove = movesList[i] || "";
-      i++;
-    }
-  } else {
-    whiteMove = "...";
-    blackMove = movesList[i] || "";
-    i++;
-  }
-} else {
-  if (traitIsWhite) {
-    whiteMove = movesList[i] || "";
-    i++;
-    if (i < totalMoves) {
-      blackMove = movesList[i] || "";
-      i++;
-    }
-  } else {
-    if (i < totalMoves) {
+    // si c'est blanc qui joue
+    if (currentIsWhite) {
       whiteMove = movesList[i] || "";
       i++;
+      currentIsWhite = false;
+
+      if (i < totalMoves) {
+        blackMove = movesList[i] || "";
+        i++;
+        currentIsWhite = true;
+      }
     }
-    if (i < totalMoves) {
+
+    // si c'est noir qui joue
+    else {
+      whiteMove = "...";
       blackMove = movesList[i] || "";
       i++;
+      currentIsWhite = true;
     }
-  }
-}
 
     tableHtml += `
     <tr>
@@ -545,6 +536,7 @@ if (i === 0) {
       <td class="w">${whiteMove}</td>
       <td class="b">${blackMove}</td>
     </tr>`;
+
     turnNumber++;
   }
 
