@@ -546,9 +546,10 @@ function updateMovesDisplay() {
 }
 
 function getMovesInputIdForPlayerToMove() {
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
-  const other = fenTurn === "w" ? "b" : "w";    // inverser le focus
-  return qTypeForAbsColorAndKind(other, "AllLegal", fenTurn);
+  // le vrai joueur à jouer
+  const fenTurn = chess_data.playerToMoveAfter; 
+  // p1 = joueur à jouer
+  return qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
 }
 // ----------------------------------------------------------
 // Game load / puzzle
@@ -908,8 +909,8 @@ elem.appendChild(div);
 
 // Focus automatique sur l'input correspondant au trait
 setTimeout(() => {
-  const movesId = focusId || getMovesInputIdForPlayerToMove();
-  const el = document.getElementById(movesId);
+  if (!focusId) return;
+  const el = document.getElementById(focusId);
   if (el) el.focus();
 }, 50);
 }
