@@ -906,10 +906,11 @@ if (doFocus) {
   const p1Input = questionTypes.find(q => q.startsWith("p1"));
   if (p1Input) {
     const el = document.getElementById(p1Input);
-    if (el) el.focus();
+      if (el) el.focus();
+    }
   }
 }
-  
+
 function focusInputForPlayerToMove() {
   const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
   // p1 = joueur à jouer → la colonne correcte pour le focus
