@@ -498,21 +498,34 @@ function createMovesTableHtml(movesList, fenTurn) {
 
   for (let i = 0; i < movesList.length; i += 2) {
     // Calculer quelle couleur joue ce coup
-    const isWhiteMove = (i % 2 === 0) ? (fenTurn === "w") : (fenTurn !== "w");
+for (let i = 0; i < movesList.length; i += 2) {
+  let whiteMove = "";
+  let blackMove = "";
 
-    let whiteMove = "";
-    let blackMove = "";
+  // Si c’est le trait au blanc, le premier coup de la liste est blanc
+  if (i === 0 && fenTurn === "b") {
+    // Premier coup pour noir → afficher "..." en blanc
+    whiteMove = "...";
+    blackMove = movesList[i] || "";
+  } else {
+    whiteMove = movesList[i] || "";
+    blackMove = movesList[i + 1] || "";
+  }
 
-    if (isWhiteMove) {
-      whiteMove = movesList[i] || "";
-      blackMove = movesList[i + 1] || "";
-    } else {
-      blackMove = movesList[i] || "";
-      whiteMove = movesList[i + 1] || "";
-      // ---- CORRECTION TROIS POINTS ----
-      // Si le premier coup est pour les noirs, afficher "..." pour la colonne blanche
-      if (i === 0) whiteMove = "...";
-    }
+  // Si c’est le trait au noir et qu’on a déjà décalé, inverser les couleurs
+  if (fenTurn === "b") {
+    [whiteMove, blackMove] = [blackMove, whiteMove];
+  }
+
+  tableHtml += `
+    <tr>
+      <td class="turn">${turnNumber}.</td>
+      <td class="w">${whiteMove}</td>
+      <td class="b">${blackMove}</td>
+    </tr>`;
+
+  turnNumber++;
+}
 
     tableHtml += `
       <tr>
