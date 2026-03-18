@@ -487,34 +487,28 @@ if (!ans) {
 // Moves table (remainingMoves)
 
 function createMovesTableHtml(movesList, isBlackToMove) {
-  let tableHtml = `
-        <h3>Compute counts after these moves:</h3>
-        <table class="moves-table">`;
+  let tableHtml = `<h3>Compute counts after these moves:</h3><table class="moves-table">`;
+  let turn = 1;
 
-  let idx = 0;
-
-  if (isBlackToMove) {
-    const blackMove = movesList[0] || "";
-    tableHtml += `
-            <tr>
-                <td class="turn">1.</td>
-                <td class="w">...</td>
-                <td class="b">${blackMove}</td>
-            </tr>`;
-    idx = 1;
-  }
-
-  let turn = isBlackToMove ? 2 : 1;
-
-  for (let i = idx; i < movesList.length; i += 2) {
+  for (let i = 0; i < movesList.length; i += 2) {
     const whiteMove = movesList[i] || "";
     const blackMove = i + 1 < movesList.length ? movesList[i + 1] : "";
-    tableHtml += `
-            <tr>
-                <td class="turn">${turn}.</td>
-                <td class="w">${whiteMove}</td>
-                <td class="b">${blackMove}</td>
-            </tr>`;
+
+    if (isBlackToMove && i === 0) {
+      tableHtml += `
+        <tr>
+          <td class="turn">${turn}.</td>
+          <td class="w">...</td>
+          <td class="b">${whiteMove}</td>
+        </tr>`;
+    } else {
+      tableHtml += `
+        <tr>
+          <td class="turn">${turn}.</td>
+          <td class="w">${whiteMove}</td>
+          <td class="b">${blackMove}</td>
+        </tr>`;
+    }
     turn++;
   }
 
@@ -535,23 +529,13 @@ function updateMovesDisplay() {
   const prevPlyIndex = fullHistory.length - chess_data.plyAhead;
   const movesList = fullHistory.slice(prevPlyIndex);
 
-  // Le vrai joueur à jouer après prevPlyIndex coups
   const tempGame = new Chess();
   tempGame.load(chess_data.fen);
   for (let i = 0; i < prevPlyIndex; i++) tempGame.move(fullHistory[i]);
   const fenTurnAfterPlyAhead = tempGame.turn();
   const isBlackToMove = fenTurnAfterPlyAhead === "b";
 
-  // Réordonner movesList pour que le premier coup corresponde toujours au trait
-  let orderedMoves = [];
-  if (isBlackToMove) {
-    const firstBlack = movesList[0] || "";
-    orderedMoves = ["...", firstBlack, ...movesList.slice(1)];
-  } else {
-    orderedMoves = movesList.slice();
-  }
-
-  movesDisplay.innerHTML = createMovesTableHtml(orderedMoves, isBlackToMove);
+  movesDisplay.innerHTML = createMovesTableHtml(movesList, isBlackToMove);
 }
 
 function getMovesInputIdForPlayerToMove() {
