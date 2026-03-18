@@ -577,6 +577,7 @@ setPlayerToMoveAfter(); // calculer le joueur à jouer après plyAhead
 
 const movesId = getMovesInputIdForPlayerToMove();
 createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
+  focusInputForPlayerToMove();
 
 const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
 chess_data.board.position(prior_game.fen());
@@ -639,7 +640,8 @@ function startNewGame() {
   // Réinitialisation du jeu
   gameEnded = false;
   resetScore();
-  loadNewPuzzle();
+loadNewPuzzle();
+focusInputForPlayerToMove(); // <-- ajouter cette ligne
 chess_data.timeRemaining = chess_data.showTimer ? chess_data.defaultTimeRemaining : 9999;
 initTimer();
 }
@@ -678,7 +680,9 @@ if (prevTime > 0 && chess_data.timeRemaining === 0) playBuzz();
 if (chess_data.timeRemaining <= 0) {   gameEnded = true;   endGame();   return; }
 
 const all_correct = chess_data.questionTypes.every((id) => chess_data.is_correct[id]);
-if (all_correct) loadNewPuzzle();
+if (all_correct) {
+  loadNewPuzzle();
+  focusInputForPlayerToMove(); // <-- ajouter cette ligne
 }
 
 // ----------------------------------------------------------
@@ -898,14 +902,13 @@ function createDynamicInputs(questionTypes, focusId) {
 elem.appendChild(div);
 });
 
-setTimeout(() => {
-  const fenTurn = chess_data.game.turn(); // vrai joueur à jouer
-  const focusInputId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
-  const el = document.getElementById(focusInputId);
+function focusInputForPlayerToMove() {
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+  const inputId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
+  const el = document.getElementById(inputId);
   if (el) el.focus();
-}, 50);
 }
-
+  
 function createDynamicInputsLabel(questionType) {
 let whoColor = questionType.startsWith("p1") ? chess_data.playerToMoveAfter : (chess_data.playerToMoveAfter === "w" ? "b" : "w");
 
