@@ -899,10 +899,16 @@ elem.appendChild(div);
 });
 
 // Focus automatique sur l'input correspondant au trait
+// Focus automatique sur l'input correspondant au premier coup affiché
 setTimeout(() => {
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
-  const p1Id = `p1AllLegal`; // ID de l'input p1
-  const el = document.getElementById(p1Id);
+  if (!chess_data || !chess_data.game) return;
+
+  const startIndex = chess_data.game.history().length - chess_data.plyAhead;
+  const firstMoveIsWhite = startIndex % 2 === 0; // vrai si premier coup affiché = blanc
+  const fenTurn = firstMoveIsWhite ? "w" : "b"; // joueur du premier coup affiché
+
+  const focusInputId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
+  const el = document.getElementById(focusInputId);
   if (el) el.focus();
 }, 50);
 }
