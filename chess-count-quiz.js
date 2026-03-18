@@ -601,11 +601,22 @@ chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
   }
 
   if (window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints)) {
-    const first = chess_data.questionTypes?.[0];
-    if (first) {
-      const el = document.getElementById(first);
-      if (el) el.focus();
-    }
+    const fenTurn = chess_data.fen.split(" ")[1];
+
+const priority = [
+  qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn),
+  qTypeForAbsColorAndKind(fenTurn, "Checks", fenTurn),
+  qTypeForAbsColorAndKind(fenTurn, "Captures", fenTurn),
+];
+
+let el = null;
+
+for (const id of priority) {
+  el = document.getElementById(id);
+  if (el) break;
+}
+
+if (el) el.focus();
   }
 
   const showMovesButton = document.getElementById("showMovesButton");
