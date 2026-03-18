@@ -545,9 +545,10 @@ function updateMovesDisplay() {
 }
 
 function getMovesInputIdForPlayerToMove() {
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur
-  // AllLegal pour Moves
-  return qTypeForAbsColorAndKind(fenTurn, "AllLegal", chess_data.fen ? chess_data.fen.split(" ")[1] : "w");
+  // vrai joueur à jouer maintenant
+  const fenTurn = chess_data.playerToMoveAfter; 
+  // Moves = AllLegal
+  return qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
 }
 
 // ----------------------------------------------------------
