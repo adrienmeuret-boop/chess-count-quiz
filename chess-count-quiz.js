@@ -644,6 +644,13 @@ chess_data.timeRemaining = chess_data.showTimer ? chess_data.defaultTimeRemainin
 initTimer();
 }
 // ----------------------------------------------------------
+
+// Renvoie "w" ou "b" pour un ID donné
+function playerColorForInputId(id) {
+  if (id.startsWith("p1")) return chess_data.playerToMoveAfter; // joueur ayant le trait
+  else return chess_data.playerToMoveAfter === "w" ? "b" : "w";  // l’autre joueur
+}
+
 // Submit answers
 
 function submitAnswers(event) {
@@ -651,29 +658,32 @@ function submitAnswers(event) {
 
   const prevTime = chess_data.timeRemaining;
 
-  // Récupère tous les inputs p1 (joueur ayant le trait)
-  const p1Ids = chess_data.questionTypes.filter(id => id.startsWith("p1"));
-
-  p1Ids.forEach((id) => {
+  chess_data.questionTypes.forEach((id) => {
     const input = document.getElementById(id);
     if (!input) return;
 
-    const correct = chess_data.correct[id];
+    const playerColor = playerColorForInputId(id);
+    const kind = id.endsWith("Checks") ? "Checks" :
+                 id.endsWith("Captures") ? "Captures" : "AllLegal";
+
+    // Génère le qType exact pour récupérer la bonne réponse
+    const qType = qTypeForAbsColorAndKind(playerColor, kind, chess_data.playerToMoveAfter);
+    const correct = chess_data.correct[qType];
     if (!correct) return;
 
     const inputValue = parseInt(input.value, 10);
     const isCorrect = inputValue === correct.count;
 
-    // Affiche feedback
+    // Feedback
     const feedbackIcon = document.getElementById(id + "FeedbackIcon");
     if (feedbackIcon) {
       feedbackIcon.textContent = isCorrect ? "✓" : "✗";
       feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
     }
 
-    // Score
-    if (!chess_data.is_correct[id] && isCorrect) {
-      chess_data.is_correct[id] = true;
+    // Score uniquement pour p1 (joueur à jouer)
+    if (id.startsWith("p1") && !chess_data.is_correct[qType] && isCorrect) {
+      chess_data.is_correct[qType] = true;
       incrementScore();
     }
 
@@ -689,8 +699,17 @@ function submitAnswers(event) {
     return;
   }
 
-  // Vérifie si toutes les cases p1 sont correctes
-  const allCorrect = p1Ids.every(id => chess_data.is_correct[id]);
+  // Si toutes les cases p1 sont correctes → nouveau puzzle
+  const allCorrect = chess_data.questionTypes
+                     .filter(id => id.startsWith("p1"))
+                     .every(id => {
+                       const playerColor = playerColorForInputId(id);
+                       const kind = id.endsWith("Checks") ? "Checks" :
+                                    id.endsWith("Captures") ? "Captures" : "AllLegal";
+                       const qType = qTypeForAbsColorAndKind(playerColor, kind, chess_data.playerToMoveAfter);
+                       return chess_data.is_correct[qType];
+                     });
+
   if (allCorrect) {
     loadNewPuzzle();
     setTimeout(() => focusInputForPlayerToMove(), 0);
