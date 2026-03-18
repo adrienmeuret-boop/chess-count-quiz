@@ -490,6 +490,8 @@ if (!ans) {
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 // ----------------------------------------------------------
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
+// ----------------------------------------------------------
+// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 function createMovesTableHtml(movesList, fenTurn) {
   let tableHtml = `<h3>Compute counts after these moves:</h3>
   <table class="moves-table">
@@ -499,35 +501,37 @@ function createMovesTableHtml(movesList, fenTurn) {
   let turnNumber = 1;
   let i = 0;
 
-  // Déterminer si la couleur du trait joue en premier
   const traitIsWhite = fenTurn === "w";
 
   while (i < totalMoves) {
     let whiteMove = "";
     let blackMove = "";
 
-    // Premier coup : toujours la couleur du trait
     if (i === 0) {
+      // Premier demi-coup : toujours le trait
       if (traitIsWhite) {
         whiteMove = movesList[i] || "";
-        blackMove = movesList[i + 1] || "";
+        i++;
+        // Vérifier si on a un demi-coup noir
+        blackMove = i < totalMoves ? movesList[i] || "" : "";
+        if (blackMove) i++;
       } else {
-        whiteMove = "...";            // remplissage pour White
-        blackMove = movesList[i] || ""; // premier coup noir
+        whiteMove = "...";
+        blackMove = movesList[i] || "";
+        i++;
       }
-      i++; // premier demi-coup consommé
     } else {
-      // lignes suivantes : alternance normale
+      // Alternance normale
       if (traitIsWhite) {
-        whiteMove = movesList[i] || "";
-        i++;
-        blackMove = movesList[i] || "";
-        i++;
+        whiteMove = i < totalMoves ? movesList[i] || "" : "";
+        if (whiteMove) i++;
+        blackMove = i < totalMoves ? movesList[i] || "" : "";
+        if (blackMove) i++;
       } else {
-        whiteMove = movesList[i] || "";
-        i++;
-        blackMove = movesList[i] || "";
-        i++;
+        whiteMove = i < totalMoves ? movesList[i] || "" : "";
+        if (whiteMove) i++;
+        blackMove = i < totalMoves ? movesList[i] || "" : "";
+        if (blackMove) i++;
       }
     }
 
