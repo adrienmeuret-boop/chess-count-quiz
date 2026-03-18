@@ -483,6 +483,8 @@ if (!ans) {
   });
 }
 
+// ----------------------------------------------------------
+// Moves table (remainingMoves) corrigée
 function createMovesTableHtml(movesList, fenTurn) {
   let tableHtml = `<h3>Compute counts after these moves:</h3>
 <table class="moves-table">`;
@@ -490,19 +492,32 @@ function createMovesTableHtml(movesList, fenTurn) {
   const totalMoves = movesList.length;
   let turnNumber = 1;
 
-  // Déterminer si le premier coup affiché est blanc (true) ou noir (false)
-  let firstMoveIsWhite = fenTurn === "w";
+  // Déterminer la couleur du premier coup réel dans le slice
+  // vrai = blanc, faux = noir
+  let currentIsWhite = fenTurn === "w";
 
-  for (let i = 0; i < totalMoves; i += 2) {
-    let whiteMove, blackMove;
+  let i = 0;
+  while (i < totalMoves) {
+    let whiteMove = "";
+    let blackMove = "";
 
-    if (firstMoveIsWhite) {
+    if (currentIsWhite) {
+      // Premier coup à jouer = blanc
       whiteMove = movesList[i] || "";
-      blackMove = movesList[i + 1] || "";
+      i++;
+      currentIsWhite = false;
+
+      if (i < totalMoves) {
+        blackMove = movesList[i] || "";
+        i++;
+        currentIsWhite = true;
+      }
     } else {
+      // Premier coup à jouer = noir → colonne blanche vide = "..."
       whiteMove = "...";
       blackMove = movesList[i] || "";
-      blackMove = movesList[i + 1] || "";
+      i++;
+      currentIsWhite = true;
     }
 
     tableHtml += `
@@ -513,8 +528,6 @@ function createMovesTableHtml(movesList, fenTurn) {
     </tr>`;
 
     turnNumber++;
-    // Après la première ligne, tous les couples suivent l’ordre normal blanc/noir
-    firstMoveIsWhite = true;
   }
 
   tableHtml += "</table>";
@@ -532,10 +545,11 @@ function updateMovesDisplay() {
   const startIndex = fullHistory.length - chess_data.plyAhead;
   const movesList = fullHistory.slice(startIndex);
 
-  // Couleur du premier coup à afficher
-  const firstMoveIsWhite = (startIndex % 2 === 0) ? "w" : "b";
+  // Déterminer le joueur à jouer pour le premier coup affiché
+  const firstMoveIsWhite = (startIndex % 2 === 0); // vrai si premier coup slice = blanc
+  const fenTurnAfterPlyAhead = firstMoveIsWhite ? "w" : "b";
 
-  movesDisplay.innerHTML = createMovesTableHtml(movesList, firstMoveIsWhite);
+  movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurnAfterPlyAhead);
 }
 
 function getMovesInputIdForPlayerToMove() {
