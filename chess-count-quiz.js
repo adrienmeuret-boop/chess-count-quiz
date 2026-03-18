@@ -876,7 +876,8 @@ function createDynamicInputs(questionTypes, focusId) {
     input.min = "0";
     input.required = true;
 
-    if (questionType.startsWith("p1") && questionType.endsWith("AllLegal") && chess_data.playerToMoveAfter === (questionType.startsWith("p1") ? "w" : "b")) {
+   
+    if (questionType === getMovesInputIdForPlayerToMove()) {
         input.focus();
     }
     
