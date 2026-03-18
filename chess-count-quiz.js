@@ -490,23 +490,23 @@ function updateMovesDisplay() {
     return;
   }
 
+  // Créer un objet Chess avec la position courante
   const game = new Chess(chess_data.fen);
   const fullHistory = game.history({ verbose: false });
-
-  const ply = chess_data.ply;
   const plyAhead = chess_data.plyAhead;
   const fenTurn = chess_data.playerToMoveAfter;
 
-  // 1️⃣ Récupérer les derniers plyAhead coups avant le ply actuel
-  const startIndex = Math.max(0, ply - plyAhead);
-  const movesList = fullHistory.slice(startIndex, ply);
+  // On récupère les derniers plyAhead coups avant le ply actuel
+  const startIndex = Math.max(0, fullHistory.length - plyAhead);
+  const movesList = fullHistory.slice(startIndex);
 
-  // 2️⃣ Créer la table HTML
+  // Création de la table HTML
   let tableHtml = `<table class="moves-table">
-    <tr><th>#</th><th>White</th><th>Black</th></tr>`;
+      <tr><th>#</th><th>White</th><th>Black</th></tr>`;
 
   let turnNumber = Math.floor(startIndex / 2) + 1;
   let i = 0;
+
   const traitIsWhite = fenTurn === "w";
 
   while (i < movesList.length) {
@@ -526,16 +526,16 @@ function updateMovesDisplay() {
     }
 
     tableHtml += `<tr>
-      <td>${turnNumber}</td>
-      <td>${whiteMove}</td>
-      <td>${blackMove}</td>
-    </tr>`;
+        <td>${turnNumber}</td>
+        <td>${whiteMove}</td>
+        <td>${blackMove}</td>
+      </tr>`;
     turnNumber++;
   }
 
   tableHtml += "</table>";
 
-  // 3️⃣ Mettre à jour le DOM
+  // Mise à jour du DOM
   movesDisplay.innerHTML = tableHtml;
 }
 
