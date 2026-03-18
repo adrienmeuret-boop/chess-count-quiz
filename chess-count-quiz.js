@@ -488,30 +488,30 @@ if (!ans) {
 
 // ----------------------------------------------------------
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
+// ----------------------------------------------------------
+// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 function createMovesTableHtml(movesList, fenTurn) {
   let tableHtml = `<h3>Compute counts after these moves:</h3>
     <table class="moves-table">`;
 
   let turnNumber = 1;
-  let isWhiteTurn = fenTurn === "w"; // vrai joueur à jouer au départ
 
   for (let i = 0; i < movesList.length; i += 2) {
+    // Calculer quelle couleur joue ce coup
+    const isWhiteMove = (i % 2 === 0) ? (fenTurn === "w") : (fenTurn !== "w");
+
     let whiteMove = "";
     let blackMove = "";
 
-    if (isWhiteTurn) {
+    if (isWhiteMove) {
       whiteMove = movesList[i] || "";
       blackMove = movesList[i + 1] || "";
     } else {
       blackMove = movesList[i] || "";
       whiteMove = movesList[i + 1] || "";
-    }
-
-    // ---- CORRECTION TROIS POINTS ----
-    // Si le premier coup est pour l'autre couleur (c'est à dire que les noirs ont le trait)
-    // on affiche "..." uniquement dans la colonne des blancs
-    if (i === 0 && !isWhiteTurn) {
-      whiteMove = "...";
+      // ---- CORRECTION TROIS POINTS ----
+      // Si le premier coup est pour les noirs, afficher "..." pour la colonne blanche
+      if (i === 0) whiteMove = "...";
     }
 
     tableHtml += `
@@ -522,7 +522,6 @@ function createMovesTableHtml(movesList, fenTurn) {
       </tr>`;
 
     turnNumber++;
-    isWhiteTurn = !isWhiteTurn; // alterner le trait pour la ligne suivante
   }
 
   tableHtml += "</table>";
