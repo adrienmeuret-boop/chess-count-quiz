@@ -600,24 +600,29 @@ chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
     movesList.style.display = "none";
   }
 
-  if (window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints)) {
-    const fenTurn = chess_data.fen.split(" ")[1];
+if (window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints)) {
+  const fenTurn = chess_data.fen.split(" ")[1];
 
-const priority = [
-  qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn),
-  qTypeForAbsColorAndKind(fenTurn, "Checks", fenTurn),
-  qTypeForAbsColorAndKind(fenTurn, "Captures", fenTurn),
-];
+  // ordre logique : joueur à jouer d'abord, puis l'autre
+  const colors = fenTurn === "w" ? ["w", "b"] : ["b", "w"];
 
-let el = null;
+  const priority = [];
 
-for (const id of priority) {
-  el = document.getElementById(id);
-  if (el) break;
-}
-
-if (el) el.focus();
+  for (const color of colors) {
+    priority.push(qTypeForAbsColorAndKind(color, "AllLegal", fenTurn));
+    priority.push(qTypeForAbsColorAndKind(color, "Checks", fenTurn));
+    priority.push(qTypeForAbsColorAndKind(color, "Captures", fenTurn));
   }
+
+  let el = null;
+
+  for (const id of priority) {
+    el = document.getElementById(id);
+    if (el) break;
+  }
+
+  if (el) el.focus();
+}
 
   const showMovesButton = document.getElementById("showMovesButton");
   if (showMovesButton) {
