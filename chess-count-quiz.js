@@ -484,21 +484,21 @@ if (!ans) {
 }
 
 function createMovesTableHtml(movesList, fenTurn) {
-  if (!Array.isArray(movesList)) movesList = [];
-
   let tableHtml = `<h3>Compute counts after these moves:</h3>
-  <table class="moves-table">`;
+  <table class="moves-table">
+    <tr><th>#</th><th>White</th><th>Black</th></tr>`;
 
   let turnNumber = 1;
   let i = 0;
+  const totalMoves = movesList.length;
   const traitIsWhite = fenTurn === "w";
 
-  while (i < movesList.length) {
+  while (i < totalMoves) {
     let whiteMove = "";
     let blackMove = "";
 
-    // Premier demi-coup
     if (i === 0) {
+      // Premier demi-coup = trait
       if (traitIsWhite) {
         whiteMove = movesList[i] || "";
         blackMove = "";
@@ -512,21 +512,20 @@ function createMovesTableHtml(movesList, fenTurn) {
       if (traitIsWhite) {
         whiteMove = movesList[i] || "";
         i++;
-        blackMove = i < movesList.length ? movesList[i] || "" : "";
+        blackMove = movesList[i] || "";
         i++;
       } else {
         blackMove = movesList[i] || "";
         i++;
-        whiteMove = i < movesList.length ? movesList[i] || "" : "";
+        whiteMove = movesList[i] || "";
         i++;
       }
     }
 
-    tableHtml += `
-    <tr>
-      <td class="turn">${turnNumber}.</td>
-      <td class="w">${whiteMove}</td>
-      <td class="b">${blackMove}</td>
+    tableHtml += `<tr>
+      <td>${turnNumber}</td>
+      <td>${whiteMove}</td>
+      <td>${blackMove}</td>
     </tr>`;
     turnNumber++;
   }
@@ -535,7 +534,6 @@ function createMovesTableHtml(movesList, fenTurn) {
   return tableHtml;
 }
 
-// ----------------------------------------------------------
 function updateMovesDisplay() {
   const movesDisplay = document.getElementById("remainingMoves");
   if (!movesDisplay || chess_data.plyAhead === 0) {
@@ -543,24 +541,20 @@ function updateMovesDisplay() {
     return;
   }
 
-  // Partie à partir de la position actuelle
   const game = new Chess(chess_data.fen);
   const fullHistory = game.history({ verbose: false });
 
   const plyAhead = chess_data.plyAhead;
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+  const fenTurn = chess_data.playerToMoveAfter;
 
-  const movesList = [];
-  let index = 0;
+  let movesList = [];
+  let i = 0;
 
-  // On ajoute les plyAhead coups depuis la position
-  while (movesList.length < plyAhead && index < fullHistory.length) {
-    movesList.push(fullHistory[index]);
-    index++;
+  while (movesList.length < plyAhead && i < fullHistory.length) {
+    movesList.push(fullHistory[i]);
+    i++;
   }
 
-  // Si le premier demi-coup est au noir, on insère "..." en colonne blanche
-  const traitIsWhite = fenTurn === "w";
   movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurn);
 }
 
