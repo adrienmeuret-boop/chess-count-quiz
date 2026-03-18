@@ -486,30 +486,32 @@ if (!ans) {
 // ----------------------------------------------------------
 // Moves table (remainingMoves)
 
-function createMovesTableHtml(movesList, isBlackToMove) {
-  let tableHtml = `<h3>Compute counts after these moves:</h3><table class="moves-table">`;
-  let turn = 1;
+function createMovesTableHtml(movesList, fenTurn) {
+  let tableHtml = `<h3>Compute counts after these moves:</h3>
+        <table class="moves-table">`;
+
+  let turnNumber = 1;
 
   for (let i = 0; i < movesList.length; i += 2) {
-    const whiteMove = movesList[i] || "";
-    const blackMove = i + 1 < movesList.length ? movesList[i + 1] : "";
+    let whiteMove = "";
+    let blackMove = "";
 
-    if (isBlackToMove && i === 0) {
-      tableHtml += `
-        <tr>
-          <td class="turn">${turn}.</td>
-          <td class="w">...</td>
-          <td class="b">${whiteMove}</td>
-        </tr>`;
+    if (fenTurn === "w") {
+      whiteMove = movesList[i] || "";
+      blackMove = i + 1 < movesList.length ? movesList[i + 1] : "";
     } else {
-      tableHtml += `
-        <tr>
-          <td class="turn">${turn}.</td>
-          <td class="w">${whiteMove}</td>
-          <td class="b">${blackMove}</td>
-        </tr>`;
+      blackMove = movesList[i] || "";
+      whiteMove = i + 1 < movesList.length ? movesList[i + 1] : "";
     }
-    turn++;
+
+    tableHtml += `
+      <tr>
+        <td class="turn">${turnNumber}.</td>
+        <td class="w">${whiteMove}</td>
+        <td class="b">${blackMove}</td>
+      </tr>`;
+
+    turnNumber++;
   }
 
   tableHtml += "</table>";
@@ -518,24 +520,22 @@ function createMovesTableHtml(movesList, isBlackToMove) {
 
 function updateMovesDisplay() {
   const movesDisplay = document.getElementById("remainingMoves");
-  if (!movesDisplay) return;
-
-  if (chess_data.plyAhead === 0) {
-    movesDisplay.innerHTML = "";
+  if (!movesDisplay || chess_data.plyAhead === 0) {
+    if (movesDisplay) movesDisplay.innerHTML = "";
     return;
   }
 
   const fullHistory = chess_data.game.history();
-  const prevPlyIndex = fullHistory.length - chess_data.plyAhead;
-  const movesList = fullHistory.slice(prevPlyIndex);
+  const startIndex = fullHistory.length - chess_data.plyAhead;
+  const movesList = fullHistory.slice(startIndex);
 
+  // Vrai joueur à jouer après plyAhead
   const tempGame = new Chess();
   tempGame.load(chess_data.fen);
-  for (let i = 0; i < prevPlyIndex; i++) tempGame.move(fullHistory[i]);
-  const fenTurnAfterPlyAhead = tempGame.turn();
-  const isBlackToMove = fenTurnAfterPlyAhead === "b";
+  for (let i = 0; i < startIndex; i++) tempGame.move(fullHistory[i]);
+  const fenTurnAfterPlyAhead = tempGame.turn(); // 'w' ou 'b'
 
-  movesDisplay.innerHTML = createMovesTableHtml(movesList, isBlackToMove);
+  movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurnAfterPlyAhead);
 }
 
 function getMovesInputIdForPlayerToMove() {
