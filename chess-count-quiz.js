@@ -548,7 +548,8 @@ function updateMovesDisplay() {
 function getMovesInputIdForPlayerToMove() {
   // vrai joueur à jouer maintenant
   const fenTurn = chess_data.playerToMoveAfter || "w";
-  return qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
+  // focus sur p1AllLegal du vrai joueur à jouer
+  return `p1AllLegal${fenTurn === "w" ? "W" : "B"}`.toLowerCase();
 }
 
 // ----------------------------------------------------------
@@ -910,23 +911,19 @@ elem.appendChild(div);
 // Focus automatique sur l'input correspondant au trait
 setTimeout(() => {
   const movesId = focusId || getMovesInputIdForPlayerToMove();
-  if (movesId) {
-    const el = document.getElementById(movesId);
-    if (el) el.focus();
-  }
+  const el = document.getElementById(movesId);
+  if (el) el.focus();
 }, 50);
 }
 
 function createDynamicInputsLabel(questionType) {
-  const isP1 = questionType.startsWith("p1");
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
-  const colorAbs = isP1 ? fenTurn : fenTurn === "w" ? "b" : "w";
-  const who = colorAbs === "w" ? "White's" : "Black's";
+  let color = "w";
+  if (questionType.toLowerCase().includes("b")) color = "b";
+  const who = color === "w" ? "White's" : "Black's";
 
   let what = "Moves";
   if (questionType.endsWith("Checks")) what = "Checks";
-  if (questionType.endsWith("Captures")) what = "Captures";
-  if (questionType.endsWith("AllLegal")) what = "Moves";
+  else if (questionType.endsWith("Captures")) what = "Captures";
 
   return `${who}\n${what}:`;
 }
