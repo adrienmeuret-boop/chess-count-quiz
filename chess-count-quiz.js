@@ -547,7 +547,8 @@ function updateMovesDisplay() {
 
 function getMovesInputIdForPlayerToMove() {
   const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
-  return qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
+  const other = fenTurn === "w" ? "b" : "w";    // inverser le focus
+  return qTypeForAbsColorAndKind(other, "AllLegal", fenTurn);
 }
 // ----------------------------------------------------------
 // Game load / puzzle
