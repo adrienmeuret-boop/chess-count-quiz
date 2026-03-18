@@ -483,27 +483,13 @@ if (!ans) {
   });
 }
 
-// ----------------------------------------------------------
-// Moves table (remainingMoves)
-
-// ----------------------------------------------------------
-// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
-// ----------------------------------------------------------
-// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
-// ----------------------------------------------------------
-// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
-// ----------------------------------------------------------
-// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
-// ----------------------------------------------------------
-// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 function createMovesTableHtml(movesList, fenTurn) {
   let tableHtml = `<h3>Compute counts after these moves:</h3>
   <table class="moves-table">`;
 
-  const totalMoves = movesList.length;
   let turnNumber = 1;
   let i = 0;
-
+  const totalMoves = movesList.length;
   const traitIsWhite = fenTurn === "w";
 
   while (i < totalMoves) {
@@ -511,24 +497,30 @@ function createMovesTableHtml(movesList, fenTurn) {
     let blackMove = "";
 
     if (i === 0) {
-      // premier demi-coup = trait
+      // Premier demi-coup = trait
       if (traitIsWhite) {
-        // Chercher le premier coup blanc légal dans movesList
-        whiteMove = movesList.find((_, idx) => idx % 2 === 0) || "";
+        whiteMove = movesList[i] || "";
         blackMove = ""; // colonne noire vide
-        i++; // avancer d'un demi-coup
       } else {
-        // Chercher le premier coup noir légal dans movesList
-        blackMove = movesList.find((_, idx) => idx % 2 !== 0) || "";
-        whiteMove = "..."; // colonne blanche = mise en forme
+        blackMove = movesList[i] || "";
+        whiteMove = "..."; // colonne blanche = trois points
+      }
+      i++;
+    } else {
+      // Alternance normale après le premier demi-coup
+      if (traitIsWhite) {
+        // prochain coup blanc puis noir
+        whiteMove = movesList[i] || "";
+        i++;
+        blackMove = movesList[i] || "";
+        i++;
+      } else {
+        // prochain coup noir puis blanc
+        blackMove = movesList[i] || "";
+        i++;
+        whiteMove = movesList[i] || "";
         i++;
       }
-    } else {
-      // alternance normale : prendre deux coups suivants
-      whiteMove = movesList[i] || "";
-      i++;
-      blackMove = movesList[i] || "";
-      i++;
     }
 
     tableHtml += `
@@ -544,6 +536,9 @@ function createMovesTableHtml(movesList, fenTurn) {
   return tableHtml;
 }
 
+// ----------------------------------------------------------
+// Update moves display
+// ----------------------------------------------------------
 function updateMovesDisplay() {
   const movesDisplay = document.getElementById("remainingMoves");
   if (!movesDisplay || chess_data.plyAhead === 0) {
@@ -551,24 +546,27 @@ function updateMovesDisplay() {
     return;
   }
 
-  const fullHistory = chess_data.game.history();
+  const fullHistory = chess_data.game.history({ verbose: false });
   const plyAhead = chess_data.plyAhead;
   const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer après plyAhead
 
   let movesList = [];
 
-  // Déterminer le premier demi-coup à afficher pour le joueur au trait
+  // Construire movesList en alternant correctement blanc / noir
   if (fenTurn === "w") {
-    // Tous les coups blancs légaux dans l'ordre
-    const whiteMoves = fullHistory.filter((_, idx) => idx % 2 === 0);
-    movesList = whiteMoves.slice(0, plyAhead); // prendre jusqu'à plyAhead demi-coups
+    // coups blancs puis noirs dans l'ordre
+    for (let idx = 0; idx < fullHistory.length && movesList.length < plyAhead; idx++) {
+      if (idx % 2 === 0) movesList.push(fullHistory[idx]); // blanc
+      else if (movesList.length < plyAhead) movesList.push(fullHistory[idx]); // noir
+    }
   } else {
-    // Tous les coups noirs légaux dans l'ordre
-    const blackMoves = fullHistory.filter((_, idx) => idx % 2 !== 0);
-    movesList = blackMoves.slice(0, plyAhead); // prendre jusqu'à plyAhead demi-coups
+    // coups noirs puis blancs dans l'ordre
+    for (let idx = 0; idx < fullHistory.length && movesList.length < plyAhead; idx++) {
+      if (idx % 2 !== 0) movesList.push(fullHistory[idx]); // noir
+      else if (movesList.length < plyAhead) movesList.push(fullHistory[idx]); // blanc
+    }
   }
 
-  // Générer le tableau avec le trait correct
   movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurn);
 }
 
