@@ -470,7 +470,9 @@ const fenTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
       else if (key.includes("checks")) kind = "Checks";
       else if (key.includes("captures")) kind = "Captures";
 
-      const qType = qTypeForAbsColorAndKind(side, kind, fenTurn);
+// fenTurn = vrai joueur à jouer
+const fenTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
+const qType = qTypeForAbsColorAndKind(side, kind, fenTurn);
 
       let ans = chess_data.correct[qType];
       if (!ans) {
@@ -567,7 +569,9 @@ function loadNewPuzzle() {
   chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
   chess_data.fen = chess_data.game.fen();
   // CRÉER LES INPUTS DYNAMIQUES et mettre le focus sur le joueur à jouer
-const movesId = getMovesInputIdForPlayerToMove();
+// fenTurn = joueur à jouer après avoir avancé plyAhead
+const fenTurn = chess_data.playerToMoveAfter;
+const movesId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
 createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
 
   const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
@@ -916,16 +920,11 @@ setTimeout(() => {
 }
 
 function createDynamicInputsLabel(questionType) {
-  // Déterminer le trait réel dans le FEN actuel
-  const fenTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
+// fenTurn = vrai joueur à jouer
+const fenTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
 
-  // p1 = joueur à jouer, p2 = l'autre joueur
-  let whoColor;
-  if (questionType.startsWith("p1")) {
-    whoColor = fenTurn;        // le vrai trait
-  } else {
-    whoColor = fenTurn === "w" ? "b" : "w"; // l’autre
-  }
+// p1 = joueur à jouer (celui dont c'est le trait), p2 = l'autre joueur
+let whoColor = questionType.startsWith("p1") ? fenTurn : (fenTurn === "w" ? "b" : "w");
 
   // Nom du joueur pour le label
   const who = whoColor === "w" ? "White's" : "Black's";
