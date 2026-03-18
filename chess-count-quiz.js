@@ -601,26 +601,10 @@ chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
   }
 
 if (window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints)) {
-  // Le vrai tour à jouer après plyAhead
-  const fenTurn = chess_data.playerToMoveAfter;
-
-  // p1 = joueur à jouer, p2 = l'autre
-  const priority = [
-    qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn),
-    qTypeForAbsColorAndKind(fenTurn, "Checks", fenTurn),
-    qTypeForAbsColorAndKind(fenTurn, "Captures", fenTurn),
-    qTypeForAbsColorAndKind(fenTurn === "w" ? "b" : "w", "AllLegal", fenTurn),
-    qTypeForAbsColorAndKind(fenTurn === "w" ? "b" : "w", "Checks", fenTurn),
-    qTypeForAbsColorAndKind(fenTurn === "w" ? "b" : "w", "Captures", fenTurn),
-  ];
-
-  for (const id of priority) {
-    const el = document.getElementById(id);
-    if (el) {
-      el.focus();
-      break;
-    }
-  }
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+  const qType = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn); // juste Moves
+  const el = document.getElementById(qType);
+  if (el) el.focus();
 }
 
   const showMovesButton = document.getElementById("showMovesButton");
