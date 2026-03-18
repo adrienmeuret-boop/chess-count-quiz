@@ -490,61 +490,27 @@ if (!ans) {
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 function createMovesTableHtml(movesList, fenTurn) {
   let tableHtml = `<h3>Compute counts after these moves:</h3>
-        <table class="moves-table">`;
+    <table class="moves-table">`;
 
   let turnNumber = 1;
-  let i = 0;
+  let isWhiteTurn = fenTurn === "w";
 
-  // Affiche le premier coup en tenant compte de la couleur du trait
-  if (movesList.length > 0) {
-    const firstMoveIsWhite = i % 2 === 0; // 0 = white, 1 = black dans l'ordre movesList
-    if (fenTurn === "w") {
-      if (firstMoveIsWhite) {
-        tableHtml += `
-          <tr>
-            <td class="turn">1.</td>
-            <td class="w">${movesList[i++]}</td>
-            <td class="b">${movesList[i++] || ""}</td>
-          </tr>`;
-      } else {
-        tableHtml += `
-          <tr>
-            <td class="turn">1.</td>
-            <td class="w">...</td>
-            <td class="b">${movesList[i++]}</td>
-          </tr>`;
-      }
-    } else {
-      if (!firstMoveIsWhite) {
-        tableHtml += `
-          <tr>
-            <td class="turn">1.</td>
-            <td class="w">${movesList[i++] || ""}</td>
-            <td class="b">${movesList[i++]}</td>
-          </tr>`;
-      } else {
-        tableHtml += `
-          <tr>
-            <td class="turn">1.</td>
-            <td class="w">${movesList[i++]}</td>
-            <td class="b">...</td>
-          </tr>`;
-      }
-    }
-    turnNumber++;
-  }
-
-  // Ensuite on affiche le reste par paires
-  for (; i < movesList.length; i += 2) {
+  for (let i = 0; i < movesList.length; i += 2) {
     let whiteMove = "";
     let blackMove = "";
 
-    if (fenTurn === "w") {
+    if (isWhiteTurn) {
       whiteMove = movesList[i] || "";
-      blackMove = i + 1 < movesList.length ? movesList[i + 1] : "";
+      blackMove = movesList[i + 1] || (i + 1 < movesList.length ? "" : "");
     } else {
       blackMove = movesList[i] || "";
-      whiteMove = i + 1 < movesList.length ? movesList[i + 1] : "";
+      whiteMove = movesList[i + 1] || (i + 1 < movesList.length ? "" : "");
+    }
+
+    // Si le premier coup est pour l’autre couleur, afficher "..."
+    if (i === 0) {
+      if (isWhiteTurn && !whiteMove) whiteMove = "...";
+      if (!isWhiteTurn && !blackMove) blackMove = "...";
     }
 
     tableHtml += `
@@ -555,6 +521,7 @@ function createMovesTableHtml(movesList, fenTurn) {
       </tr>`;
 
     turnNumber++;
+    isWhiteTurn = !isWhiteTurn; // alterner pour la ligne suivante
   }
 
   tableHtml += "</table>";
@@ -576,9 +543,9 @@ function updateMovesDisplay() {
   const tempGame = new Chess();
   tempGame.load(chess_data.fen);
   for (let i = 0; i < startIndex; i++) tempGame.move(fullHistory[i]);
-  const fenTurnAfterPlyAhead = tempGame.turn(); // 'w' ou 'b'
-
-  movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurnAfterPlyAhead);
+const fullHistory = chess_data.game.history();
+const startIndex = fullHistory.length - chess_data.plyAhead;
+const movesList = fullHistory.slice(startIndex);
 }
 
 function getMovesInputIdForPlayerToMove() {
@@ -604,8 +571,9 @@ function loadNewPuzzle() {
   chess_data.fen = chess_data.game.fen();
   // CRÉER LES INPUTS DYNAMIQUES et mettre le focus sur le joueur à jouer
 // fenTurn = joueur à jouer après avoir avancé plyAhead
-const fenTurn = chess_data.playerToMoveAfter;
-const movesId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
+setPlayerToMoveAfter(); // recalculer fenTurn
+const fenTurnAfterPlyAhead = chess_data.playerToMoveAfter;
+const movesId = qTypeForAbsColorAndKind(fenTurnAfterPlyAhead, "AllLegal", fenTurnAfterPlyAhead);
 createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
 
 const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
