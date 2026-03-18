@@ -495,22 +495,41 @@ function createMovesTableHtml(movesList, fenTurn) {
   let turnNumber = 1;
   let i = 0;
 
-  // Si le premier coup est de la couleur adverse du trait, on met "..." pour le trait
+  // Affiche le premier coup en tenant compte de la couleur du trait
   if (movesList.length > 0) {
+    const firstMoveIsWhite = i % 2 === 0; // 0 = white, 1 = black dans l'ordre movesList
     if (fenTurn === "w") {
-      tableHtml += `
-        <tr>
-          <td class="turn">1.</td>
-          <td class="w">${movesList[i++] || ""}</td>
-          <td class="b">...</td>
-        </tr>`;
+      if (firstMoveIsWhite) {
+        tableHtml += `
+          <tr>
+            <td class="turn">1.</td>
+            <td class="w">${movesList[i++]}</td>
+            <td class="b">${movesList[i++] || ""}</td>
+          </tr>`;
+      } else {
+        tableHtml += `
+          <tr>
+            <td class="turn">1.</td>
+            <td class="w">...</td>
+            <td class="b">${movesList[i++]}</td>
+          </tr>`;
+      }
     } else {
-      tableHtml += `
-        <tr>
-          <td class="turn">1.</td>
-          <td class="w">...</td>
-          <td class="b">${movesList[i++] || ""}</td>
-        </tr>`;
+      if (!firstMoveIsWhite) {
+        tableHtml += `
+          <tr>
+            <td class="turn">1.</td>
+            <td class="w">${movesList[i++] || ""}</td>
+            <td class="b">${movesList[i++]}</td>
+          </tr>`;
+      } else {
+        tableHtml += `
+          <tr>
+            <td class="turn">1.</td>
+            <td class="w">${movesList[i++]}</td>
+            <td class="b">...</td>
+          </tr>`;
+      }
     }
     turnNumber++;
   }
