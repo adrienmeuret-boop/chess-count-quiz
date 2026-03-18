@@ -913,8 +913,11 @@ if (doFocus) {
 
 function focusInputForPlayerToMove() {
   const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
-  // p1 = joueur à jouer → la colonne correcte pour le focus
-  const inputId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
+  // p1 correspond toujours à la colonne du joueur ayant le trait
+  const inputId = chess_data.plyAhead % 2 === 0
+    ? qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn)
+    : qTypeForAbsColorAndKind(fenTurn === "w" ? "b" : "w", "AllLegal", fenTurn);
+    
   const el = document.getElementById(inputId);
   if (el) el.focus();
 }
