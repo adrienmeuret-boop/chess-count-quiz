@@ -487,8 +487,7 @@ function createMovesTableHtml(movesList, fenTurn) {
   if (!Array.isArray(movesList)) movesList = [];
 
   let tableHtml = `<h3>Compute counts after these moves:</h3>
-  <table class="moves-table">
-    <tr><th>#</th><th>White</th><th>Black</th></tr>`;
+  <table class="moves-table">`;
 
   let turnNumber = 1;
   let i = 0;
@@ -498,6 +497,7 @@ function createMovesTableHtml(movesList, fenTurn) {
     let whiteMove = "";
     let blackMove = "";
 
+    // Premier demi-coup
     if (i === 0) {
       if (traitIsWhite) {
         whiteMove = movesList[i] || "";
@@ -507,38 +507,28 @@ function createMovesTableHtml(movesList, fenTurn) {
         blackMove = movesList[i] || "";
       }
       i++;
-    }
-
-    while (i < movesList.length) {
+    } else {
+      // Alternance normale
       if (traitIsWhite) {
         whiteMove = movesList[i] || "";
         i++;
-        if (i < movesList.length) {
-          blackMove = movesList[i] || "";
-          i++;
-        } else {
-          blackMove = "";
-        }
+        blackMove = i < movesList.length ? movesList[i] || "" : "";
+        i++;
       } else {
         blackMove = movesList[i] || "";
         i++;
-        if (i < movesList.length) {
-          whiteMove = movesList[i] || "";
-          i++;
-        } else {
-          whiteMove = "";
-        }
+        whiteMove = i < movesList.length ? movesList[i] || "" : "";
+        i++;
       }
-
-      tableHtml += `
-      <tr>
-        <td class="turn">${turnNumber}.</td>
-        <td class="w">${whiteMove}</td>
-        <td class="b">${blackMove}</td>
-      </tr>`;
-      turnNumber++;
-      break; // sortir de la boucle interne pour créer une ligne par tour
     }
+
+    tableHtml += `
+    <tr>
+      <td class="turn">${turnNumber}.</td>
+      <td class="w">${whiteMove}</td>
+      <td class="b">${blackMove}</td>
+    </tr>`;
+    turnNumber++;
   }
 
   tableHtml += "</table>";
