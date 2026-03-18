@@ -513,16 +513,22 @@ function createMovesTableHtml(movesList, fenTurn) {
     if (i === 0) {
       // premier demi-coup = trait
       if (traitIsWhite) {
-        whiteMove = movesList[i++] || "";
-        blackMove = movesList[i++] || ""; // vide si pas de coup
+        // Chercher le premier coup blanc légal dans movesList
+        whiteMove = movesList.find((_, idx) => idx % 2 === 0) || "";
+        blackMove = ""; // colonne noire vide
+        i++; // avancer d'un demi-coup
       } else {
-        whiteMove = "...";                 // mise en forme seulement
-        blackMove = movesList[i++] || "";
+        // Chercher le premier coup noir légal dans movesList
+        blackMove = movesList.find((_, idx) => idx % 2 !== 0) || "";
+        whiteMove = "..."; // colonne blanche = mise en forme
+        i++;
       }
     } else {
-      // alternance normale
-      whiteMove = movesList[i++] || "";
-      blackMove = movesList[i++] || "";
+      // alternance normale : prendre deux coups suivants
+      whiteMove = movesList[i] || "";
+      i++;
+      blackMove = movesList[i] || "";
+      i++;
     }
 
     tableHtml += `
