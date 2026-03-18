@@ -546,12 +546,8 @@ function updateMovesDisplay() {
 }
 
 function getMovesInputIdForPlayerToMove() {
-  // vrai joueur à jouer maintenant
   const fenTurn = chess_data.playerToMoveAfter || "w";
-
-  // focus sur p1AllLegal du joueur à jouer
-  // on utilise "p1" pour le joueur ayant le trait
-  return `p1AllLegal${fenTurn === "w" ? "W" : "B"}`.toLowerCase();
+  return `p1AllLegal${fenTurn === "w" ? "W" : "B"}`; // <-- supprimer .toLowerCase()
 }
 
 // ----------------------------------------------------------
