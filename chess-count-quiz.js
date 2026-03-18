@@ -539,13 +539,9 @@ function updateMovesDisplay() {
   const startIndex = fullHistory.length - chess_data.plyAhead;
   const movesList = fullHistory.slice(startIndex);
 
-  // Vrai joueur à jouer après plyAhead
-  const tempGame = new Chess();
-  tempGame.load(chess_data.fen);
-  for (let i = 0; i < startIndex; i++) tempGame.move(fullHistory[i]);
-const fullHistory = chess_data.game.history();
-const startIndex = fullHistory.length - chess_data.plyAhead;
-const movesList = fullHistory.slice(startIndex);
+  // Générer le tableau avec le trait correct
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer après plyAhead
+  movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurn);
 }
 
 function getMovesInputIdForPlayerToMove() {
@@ -567,20 +563,18 @@ function loadNewPuzzle() {
   chess_data.game_index = game_and_ply.game;
   chess_data.ply = game_and_ply.ply;
 
-  chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
-  chess_data.fen = chess_data.game.fen();
-  // CRÉER LES INPUTS DYNAMIQUES et mettre le focus sur le joueur à jouer
-// fenTurn = joueur à jouer après avoir avancé plyAhead
-setPlayerToMoveAfter(); // recalculer fenTurn
+chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
+chess_data.fen = chess_data.game.fen();
+setPlayerToMoveAfter(); // calculer le joueur à jouer après plyAhead
 const fenTurnAfterPlyAhead = chess_data.playerToMoveAfter;
 const movesId = qTypeForAbsColorAndKind(fenTurnAfterPlyAhead, "AllLegal", fenTurnAfterPlyAhead);
 createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
 
 const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
 chess_data.board.position(prior_game.fen());
-
-// Utiliser le vrai joueur à jouer (après plyAhead)
-if (chess_data.playerToMoveAfter === "b") chess_data.board.flip();
+if (chess_data.playerToMoveAfter === "b") {
+  chess_data.board.flip();
+}
 
   ensurePieceMarkers();
   clearPieceMarkers();
