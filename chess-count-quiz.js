@@ -494,6 +494,8 @@ if (!ans) {
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 // ----------------------------------------------------------
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
+// ----------------------------------------------------------
+// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 function createMovesTableHtml(movesList, fenTurn) {
   let tableHtml = `<h3>Compute counts after these moves:</h3>
   <table class="moves-table">`;
@@ -537,6 +539,7 @@ function createMovesTableHtml(movesList, fenTurn) {
 
     tableHtml += `
     <tr>
+      <td class="turn">${turnNumber}.</td>
       <td class="w">${whiteMove}</td>
       <td class="b">${blackMove}</td>
     </tr>`;
