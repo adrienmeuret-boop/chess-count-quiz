@@ -493,51 +493,45 @@ if (!ans) {
 // ----------------------------------------------------------
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 function createMovesTableHtml(movesList, fenTurn) {
-let tableHtml = `<h3>Compute counts after these moves:</h3>
+  let tableHtml = `<h3>Compute counts after these moves:</h3>
 <table class="moves-table">`;
 
   const totalMoves = movesList.length;
-
   let turnNumber = 1;
   let i = 0;
 
-  // couleur qui doit jouer le prochain coup
-  let currentIsWhite = (fenTurn === "w");
+  let currentTurn = fenTurn; // joueur à jouer pour le coup i
 
   while (i < totalMoves) {
-
     let whiteMove = "";
     let blackMove = "";
 
-    // si c'est blanc qui joue
-    if (currentIsWhite) {
+    if (currentTurn === "w") {
       whiteMove = movesList[i] || "";
       i++;
-      currentIsWhite = false;
-
       if (i < totalMoves) {
         blackMove = movesList[i] || "";
         i++;
-        currentIsWhite = true;
       }
-    }
-
-    // si c'est noir qui joue
-    else {
-      whiteMove = "...";
+    } else {
       blackMove = movesList[i] || "";
       i++;
-      currentIsWhite = true;
+      if (i < totalMoves) {
+        whiteMove = movesList[i] || "";
+        i++;
+      }
     }
 
     tableHtml += `
     <tr>
       <td class="turn">${turnNumber}.</td>
-      <td class="w">${whiteMove}</td>
-      <td class="b">${blackMove}</td>
+      <td class="w">${whiteMove || "..."}</td>
+      <td class="b">${blackMove || "..."}</td>
     </tr>`;
 
     turnNumber++;
+    // alterner le trait pour le tour suivant
+    currentTurn = currentTurn === "w" ? "b" : "w";
   }
 
   tableHtml += "</table>";
