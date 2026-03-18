@@ -492,32 +492,43 @@ if (!ans) {
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 function createMovesTableHtml(movesList, fenTurn) {
   let tableHtml = `<h3>Compute counts after these moves:</h3>
-  <table class="moves-table">`;
+  <table class="moves-table">
+  <tr><th>#</th><th>White</th><th>Black</th></tr>`;
 
+  const totalMoves = movesList.length;
   let turnNumber = 1;
   let i = 0;
-  const totalMoves = movesList.length;
+
+  // Déterminer si la couleur du trait joue en premier
+  const traitIsWhite = fenTurn === "w";
 
   while (i < totalMoves) {
     let whiteMove = "";
     let blackMove = "";
 
-    // Premier demi-coup
+    // Premier coup : toujours la couleur du trait
     if (i === 0) {
-      if (fenTurn === "w") {
+      if (traitIsWhite) {
         whiteMove = movesList[i] || "";
         blackMove = movesList[i + 1] || "";
       } else {
-        whiteMove = "...";
-        blackMove = movesList[i] || "";
-        if (totalMoves > 1) blackMove = movesList[i] || "";
+        whiteMove = "...";            // remplissage pour White
+        blackMove = movesList[i] || ""; // premier coup noir
       }
-      i++; // On a consommé le premier demi-coup
+      i++; // premier demi-coup consommé
     } else {
-      whiteMove = movesList[i] || "";
-      i++;
-      blackMove = movesList[i] || "";
-      i++;
+      // lignes suivantes : alternance normale
+      if (traitIsWhite) {
+        whiteMove = movesList[i] || "";
+        i++;
+        blackMove = movesList[i] || "";
+        i++;
+      } else {
+        whiteMove = movesList[i] || "";
+        i++;
+        blackMove = movesList[i] || "";
+        i++;
+      }
     }
 
     tableHtml += `
