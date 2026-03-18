@@ -655,21 +655,27 @@ function submitAnswers(event) {
     const input = document.getElementById(id);
     if (!input) return;
 
-    const inputValue = parseInt(input.value, 10);
-    const isCorrect = inputValue === chess_data.correct[id].count;
+const fenTurn = chess_data.playerToMoveAfter; // joueur ayant le trait
+const isP1 = id.startsWith("p1");
 
-    const feedbackIcon = document.getElementById(id + "FeedbackIcon");
-    if (feedbackIcon) {
-      feedbackIcon.textContent = isCorrect ? "✓" : "✗";
-      feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
-    }
+// On ne vérifie/affiche que la colonne du joueur ayant le trait
+if (isP1) {
+  const inputValue = parseInt(input.value, 10);
+  const isCorrect = inputValue === chess_data.correct[id].count;
 
-    if (!chess_data.is_correct[id] && isCorrect) {
-      chess_data.is_correct[id] = true;
-      incrementScore();
-    }
+  const feedbackIcon = document.getElementById(id + "FeedbackIcon");
+  if (feedbackIcon) {
+    feedbackIcon.textContent = isCorrect ? "✓" : "✗";
+    feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
+  }
 
-    if (!isCorrect) penalizeTime();
+  if (!chess_data.is_correct[id] && isCorrect) {
+    chess_data.is_correct[id] = true;
+    incrementScore();
+  }
+
+  if (!isCorrect) penalizeTime();
+}
   });
 
   if (gameEnded) return;
