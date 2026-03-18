@@ -655,26 +655,25 @@ function submitAnswers(event) {
     const input = document.getElementById(id);
     if (!input) return;
 
-const fenTurn = chess_data.playerToMoveAfter; // joueur ayant le trait
-const isP1 = id.startsWith("p1");
+// On ne veut vérifier que la colonne du joueur ayant le trait
+const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+const correctId = qTypeForAbsColorAndKind(fenTurn, id.endsWith("Checks") ? "Checks" : id.endsWith("Captures") ? "Captures" : "AllLegal", fenTurn);
 
-// On ne vérifie/affiche que la colonne du joueur ayant le trait
-if (isP1) {
-  const inputValue = parseInt(input.value, 10);
-  const isCorrect = inputValue === chess_data.correct[id].count;
+const inputValue = parseInt(input.value, 10);
+const isCorrect = inputValue === chess_data.correct[correctId].count;
 
-  const feedbackIcon = document.getElementById(id + "FeedbackIcon");
-  if (feedbackIcon) {
-    feedbackIcon.textContent = isCorrect ? "✓" : "✗";
-    feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
-  }
+const feedbackIcon = document.getElementById(id + "FeedbackIcon");
+if (feedbackIcon) {
+  feedbackIcon.textContent = isCorrect ? "✓" : "✗";
+  feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
+}
 
-  if (!chess_data.is_correct[id] && isCorrect) {
-    chess_data.is_correct[id] = true;
-    incrementScore();
-  }
+if (!chess_data.is_correct[correctId] && isCorrect) {
+  chess_data.is_correct[correctId] = true;
+  incrementScore();
+}
 
-  if (!isCorrect) penalizeTime();
+if (!isCorrect) penalizeTime();
 }
   });
 
