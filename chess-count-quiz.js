@@ -493,8 +493,7 @@ if (!ans) {
 // ----------------------------------------------------------
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 function createMovesTableHtml(movesList, fenTurn) {
-  let tableHtml = `<h3>Compute counts after these moves:</h3>
-  <table class="moves-table">
+  let tableHtml = `<table class="moves-table">
   <tr><th>#</th><th>White</th><th>Black</th></tr>`;
 
   const totalMoves = movesList.length;
@@ -508,30 +507,29 @@ function createMovesTableHtml(movesList, fenTurn) {
     let blackMove = "";
 
     if (i === 0) {
-      // Premier demi-coup : toujours le trait
+      // premier demi-coup = couleur du trait
       if (traitIsWhite) {
         whiteMove = movesList[i] || "";
         i++;
-        // Vérifier si on a un demi-coup noir
-        blackMove = i < totalMoves ? movesList[i] || "" : "";
-        if (blackMove) i++;
+        if (i < totalMoves) blackMove = movesList[i] || "";
+        i++;
       } else {
-        whiteMove = "...";
         blackMove = movesList[i] || "";
         i++;
+        if (i < totalMoves) whiteMove = "..."; // remplissage pour white
       }
     } else {
-      // Alternance normale
+      // lignes suivantes = alternance normale
       if (traitIsWhite) {
-        whiteMove = i < totalMoves ? movesList[i] || "" : "";
-        if (whiteMove) i++;
-        blackMove = i < totalMoves ? movesList[i] || "" : "";
-        if (blackMove) i++;
+        whiteMove = movesList[i] || "";
+        i++;
+        if (i < totalMoves) blackMove = movesList[i] || "";
+        i++;
       } else {
-        whiteMove = i < totalMoves ? movesList[i] || "" : "";
-        if (whiteMove) i++;
-        blackMove = i < totalMoves ? movesList[i] || "" : "";
-        if (blackMove) i++;
+        if (i < totalMoves) whiteMove = movesList[i] || "";
+        i++;
+        if (i < totalMoves) blackMove = movesList[i] || "";
+        i++;
       }
     }
 
