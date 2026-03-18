@@ -562,8 +562,6 @@ function getMovesInputIdForPlayerToMove() {
 // Game load / puzzle
 
 function loadNewPuzzle() {
-
-  setPlayerToMoveAfter(); 
   
   clearBoardHighlights();
 
@@ -573,13 +571,15 @@ function loadNewPuzzle() {
 
 chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
 chess_data.fen = chess_data.game.fen();
-setPlayerToMoveAfter(); // calculer le joueur à jouer après plyAhead
+
+// recalculer joueur à jouer **après la création du jeu**
+setPlayerToMoveAfter();
 
 const movesId = getMovesInputIdForPlayerToMove();
 createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
 
-// focus avec délai pour être sûr que l'input existe
-setTimeout(() => focusInputForPlayerToMove(), 0);
+// focus avec micro-délai plus fiable
+setTimeout(() => focusInputForPlayerToMove(), 10);
 
 const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
 chess_data.board.position(prior_game.fen());
