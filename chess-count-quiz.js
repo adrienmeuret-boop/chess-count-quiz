@@ -588,7 +588,8 @@ createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
 
 const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
 chess_data.board.position(prior_game.fen());
-if (chess_data.playerToMoveAfter === "b") {
+// Afficher le joueur avec le trait en bas
+if (chess_data.playerToMove === "b") {
   chess_data.board.flip();
 }
 
