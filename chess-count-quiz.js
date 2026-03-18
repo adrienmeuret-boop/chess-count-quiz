@@ -544,6 +544,12 @@ function updateMovesDisplay() {
   movesDisplay.innerHTML = createMovesTableHtml(movesList, isBlackToMove);
 }
 
+function getMovesInputIdForPlayerToMove() {
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur
+  // AllLegal pour Moves
+  return qTypeForAbsColorAndKind(fenTurn, "AllLegal", chess_data.fen ? chess_data.fen.split(" ")[1] : "w");
+}
+
 // ----------------------------------------------------------
 // Game load / puzzle
 
@@ -601,10 +607,9 @@ chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
   }
 
 if (window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints)) {
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
-  const qType = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn); // juste Moves
-  const el = document.getElementById(qType);
-  if (el) el.focus();
+  const movesId = getMovesInputIdForPlayerToMove();
+  const el = document.getElementById(movesId);
+  if (el) setTimeout(() => el.focus(), 50);
 }
 
   const showMovesButton = document.getElementById("showMovesButton");
@@ -749,12 +754,9 @@ createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
   setupHighlightButtons();
 
 if (window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints)) {
-  const fenTurn = chess_data.playerToMoveAfter; // 'w' ou 'b'
-  const movesId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn); // id de la case Moves
+  const movesId = getMovesInputIdForPlayerToMove();
   const el = document.getElementById(movesId);
-  if (el) {
-    setTimeout(() => el.focus(), 50);
-  }
+  if (el) setTimeout(() => el.focus(), 50);
 }
   
   const plyAhead = parseInt(document.getElementById("plyAhead").value, 10);
@@ -924,10 +926,8 @@ if (focusId) {
 
 function createDynamicInputsLabel(questionType) {
   const isP1 = questionType.startsWith("p1");
-
-  const realTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
-
-  const colorAbs = isP1 ? realTurn : realTurn === "w" ? "b" : "w";
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+  const colorAbs = isP1 ? fenTurn : fenTurn === "w" ? "b" : "w";
   const who = colorAbs === "w" ? "White's" : "Black's";
 
   let what = "Moves";
