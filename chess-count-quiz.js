@@ -484,9 +484,9 @@ if (!ans) {
 }
 
 function createMovesTableHtml(movesList, fenTurn) {
-  let tableHtml = `<h3>Compute counts after these moves:</h3>
-  <table class="moves-table">
-    <tr><th>#</th><th>White</th><th>Black</th></tr>`;
+  // table simplifiée, pas de mots en gras
+  let tableHtml = `<table class="moves-table">
+    <tr><th>#</th><th></th><th></th></tr>`; // colonnes vides pour White / Black
 
   let turnNumber = 1;
   let i = 0;
