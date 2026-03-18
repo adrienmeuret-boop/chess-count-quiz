@@ -488,19 +488,26 @@ if (!ans) {
 
 function updateMovesDisplay() {
   const movesDisplay = document.getElementById("remainingMoves");
+
   if (!movesDisplay || chess_data.plyAhead === 0) {
     if (movesDisplay) movesDisplay.innerHTML = "";
     return;
   }
 
-  const game = new Chess(chess_data.fen);
+  // Charger toute la partie
+  const game = new Chess();
+  game.load_pgn(chess_data.games[chess_data.game_index]);
+
   const fullHistory = game.history({ verbose: false });
+
   const plyAhead = chess_data.plyAhead;
   const fenTurn = chess_data.playerToMoveAfter;
 
-  // On prend les derniers coups selon plyAhead
-  const startIndex = Math.max(0, fullHistory.length - plyAhead);
-  const movesList = fullHistory.slice(startIndex);
+  // On récupère uniquement les derniers coups joués
+  const startIndex = Math.max(0, chess_data.ply - plyAhead);
+  const movesList = fullHistory.slice(startIndex, chess_data.ply);
+
+  console.log("compute moves:", movesList);
 
   movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurn, startIndex);
 }
