@@ -483,69 +483,78 @@ if (!ans) {
   });
 }
 
-// -----------------------------------------------------------
-// Moves display
+// ----------------------------------------------------------
+// Moves table (remainingMoves)
 
-function updateMovesDisplay() {
-  const movesDisplay = document.getElementById("remainingMoves");
+// ----------------------------------------------------------
+// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
+// ----------------------------------------------------------
+// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
+function createMovesTableHtml(movesList, fenTurn) {
+  let tableHtml = `<h3>Compute counts after these moves:</h3>
+    <table class="moves-table">`;
 
-  if (!movesDisplay || chess_data.plyAhead === 0) {
-    if (movesDisplay) movesDisplay.innerHTML = "";
-    return;
+  let turnNumber = 1;
+
+  for (let i = 0; i < movesList.length; i += 2) {
+    // Calculer quelle couleur joue ce coup
+for (let i = 0; i < movesList.length; i += 2) {
+  let whiteMove = "";
+  let blackMove = "";
+
+  // Si c’est le trait au blanc, le premier coup de la liste est blanc
+  if (i === 0 && fenTurn === "b") {
+    // Premier coup pour noir → afficher "..." en blanc
+    whiteMove = "...";
+    blackMove = movesList[i] || "";
+  } else {
+    whiteMove = movesList[i] || "";
+    blackMove = movesList[i + 1] || "";
   }
 
-  // Charger toute la partie
-  const game = new Chess();
-  game.load_pgn(chess_data.games[chess_data.game_index]);
+  // Si c’est le trait au noir et qu’on a déjà décalé, inverser les couleurs
+  if (fenTurn === "b") {
+    [whiteMove, blackMove] = [blackMove, whiteMove];
+  }
 
-  const fullHistory = game.history({ verbose: false });
+  tableHtml += `
+    <tr>
+      <td class="turn">${turnNumber}.</td>
+      <td class="w">${whiteMove}</td>
+      <td class="b">${blackMove}</td>
+    </tr>`;
 
-  const plyAhead = chess_data.plyAhead;
-  const fenTurn = chess_data.playerToMoveAfter;
-
-  // On récupère uniquement les derniers coups joués
-  const startIndex = Math.max(0, chess_data.ply - plyAhead);
-  const movesList = fullHistory.slice(startIndex, chess_data.ply);
-
-  console.log("compute moves:", movesList);
-
-  movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurn, startIndex);
+  turnNumber++;
 }
 
-function createMovesTableHtml(movesList, fenTurn, startIndex = 0) {
-  let tableHtml = `<table class="moves-table">
-    <tr><th>#</th><th>White</th><th>Black</th></tr>`;
+    tableHtml += `
+      <tr>
+        <td class="turn">${turnNumber}.</td>
+        <td class="w">${whiteMove}</td>
+        <td class="b">${blackMove}</td>
+      </tr>`;
 
-  let turnNumber = Math.floor(startIndex / 2) + 1;
-  let i = 0;
-  const traitIsWhite = fenTurn === "w";
-
-  while (i < movesList.length) {
-    let whiteMove = "";
-    let blackMove = "";
-
-    if (i === 0) {
-      // Premier coup selon le trait
-      if (traitIsWhite) whiteMove = movesList[i++] || "";
-      else blackMove = movesList[i++] || "...";
-    }
-
-    // Ensuite on alterne les coups
-    if (i < movesList.length) {
-      if (traitIsWhite) blackMove = movesList[i++] || "";
-      else whiteMove = movesList[i++] || "";
-    }
-
-    tableHtml += `<tr>
-      <td>${turnNumber}</td>
-      <td>${whiteMove}</td>
-      <td>${blackMove}</td>
-    </tr>`;
     turnNumber++;
   }
 
   tableHtml += "</table>";
   return tableHtml;
+}
+
+function updateMovesDisplay() {
+  const movesDisplay = document.getElementById("remainingMoves");
+  if (!movesDisplay || chess_data.plyAhead === 0) {
+    if (movesDisplay) movesDisplay.innerHTML = "";
+    return;
+  }
+
+  const fullHistory = chess_data.game.history();
+  const startIndex = fullHistory.length - chess_data.plyAhead;
+  const movesList = fullHistory.slice(startIndex);
+
+  // Générer le tableau avec le trait correct
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer après plyAhead
+  movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurn);
 }
 
 function getMovesInputIdForPlayerToMove() {
@@ -558,48 +567,40 @@ function getMovesInputIdForPlayerToMove() {
 // Game load / puzzle
 
 function loadNewPuzzle() {
-  // Déterminer le joueur à jouer après le ply courant
-  setPlayerToMoveAfter(); 
 
-  // Nettoyer les surlignages
+  setPlayerToMoveAfter(); 
+  
   clearBoardHighlights();
 
-  // Sélection aléatoire du puzzle et du ply
   const game_and_ply = getRandomPosNumber(chess_data.game_weights, chess_data.playerToMoveAfter === "w");
   chess_data.game_index = game_and_ply.game;
   chess_data.ply = game_and_ply.ply;
 
-  // Charger la position actuelle du jeu
-  chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
-  chess_data.fen = chess_data.game.fen();
-  setPlayerToMoveAfter(); // recalculer joueur à jouer après plyAhead
+chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
+chess_data.fen = chess_data.game.fen();
+setPlayerToMoveAfter(); // calculer le joueur à jouer après plyAhead
+const fenTurnAfterPlyAhead = chess_data.playerToMoveAfter;
+const movesId = qTypeForAbsColorAndKind(fenTurnAfterPlyAhead, "AllLegal", fenTurnAfterPlyAhead);
+createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
 
-  // Créer les inputs dynamiques
-  const fenTurnAfterPlyAhead = chess_data.playerToMoveAfter;
-  const movesId = qTypeForAbsColorAndKind(fenTurnAfterPlyAhead, "AllLegal", fenTurnAfterPlyAhead);
-  createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
+const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
+chess_data.board.position(prior_game.fen());
+if (chess_data.playerToMoveAfter === "b") {
+  chess_data.board.flip();
+}
 
-  // Afficher la position avant le plyAhead
-  const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
-  chess_data.board.position(prior_game.fen());
-  if (chess_data.playerToMoveAfter === "b") chess_data.board.flip();
-
-  // Préparer les marqueurs
   ensurePieceMarkers();
   clearPieceMarkers();
-
-  // Calculer les réponses correctes avant d’afficher les coups
-  const allTypes = getFixedDisplayQuestionTypes();
-  chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
-
-  // Afficher la table des coups
   updateMovesDisplay();
 
-  // Pré-calcul pour les boutons de surlignage
-  chess_data.is_correct = Object.fromEntries(allTypes.map((name) => [name, false]));
+const allTypes = getFixedDisplayQuestionTypes();
+chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
 
-  // Réinitialiser les inputs et les labels
-  allTypes.forEach((id) => {
+  // Pre-calc AllLegal for highlight buttons (useful even if not asked)
+
+  chess_data.is_correct = Object.fromEntries(getFixedDisplayQuestionTypes().map((name) => [name, false]));
+
+  getFixedDisplayQuestionTypes().forEach((id) => {
     const input = document.getElementById(id);
     if (input) input.value = 0;
 
@@ -613,21 +614,19 @@ function loadNewPuzzle() {
     if (shownMovesLabel) shownMovesLabel.textContent = "";
   });
 
-  // Vider et masquer la liste de coups (bas de page)
+  // Clear movesList (bottom) when new puzzle loads
   const movesList = document.getElementById("movesList");
   if (movesList) {
     movesList.innerHTML = "";
     movesList.style.display = "none";
   }
 
-  // Réactiver le bouton "Show Moves"
   const showMovesButton = document.getElementById("showMovesButton");
   if (showMovesButton) {
     showMovesButton.disabled = false;
     showMovesButton.style.backgroundColor = "";
   }
 
-  // Lier le formulaire à la fonction de submit
   const form = document.getElementById("chessCountForm");
   if (form) form.onsubmit = submitAnswers;
 }
