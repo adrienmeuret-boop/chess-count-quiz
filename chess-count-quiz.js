@@ -650,49 +650,47 @@ function submitAnswers(event) {
   event.preventDefault();
 
   const prevTime = chess_data.timeRemaining;
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
 
-  // On ne vérifie que p1 (joueur ayant le trait)
-  chess_data.questionTypes
-    .filter(id => id.startsWith("p1"))
-    .forEach((id) => {
-      const input = document.getElementById(id);
-      if (!input) return;
+  // Parcours de toutes les inputs affichées
+  chess_data.questionTypes.forEach((id) => {
+    const input = document.getElementById(id);
+    if (!input) return;
 
-      const correct = chess_data.correct[id]; // <-- utilise directement l'ID existant
-      if (!correct) return;
+    // On prend toujours l'ID exact pour récupérer le correct count
+    const correct = chess_data.correct[id];
+    if (!correct) return;
 
-      const inputValue = parseInt(input.value, 10);
-      const isCorrect = inputValue === correct.count;
+    const inputValue = parseInt(input.value, 10);
+    const isCorrect = inputValue === correct.count;
 
-      const feedbackIcon = document.getElementById(id + "FeedbackIcon");
-      if (feedbackIcon) {
-        feedbackIcon.textContent = isCorrect ? "✓" : "✗";
-        feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
-      }
+    // Feedback visuel
+    const feedbackIcon = document.getElementById(id + "FeedbackIcon");
+    if (feedbackIcon) {
+      feedbackIcon.textContent = isCorrect ? "✓" : "✗";
+      feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
+    }
 
-      if (!chess_data.is_correct[id] && isCorrect) {
-        chess_data.is_correct[id] = true;
-        incrementScore();
-      }
+    // Score uniquement si jamais marqué correct
+    if (!chess_data.is_correct[id] && isCorrect) {
+      chess_data.is_correct[id] = true;
+      incrementScore();
+    }
 
-      if (!isCorrect) penalizeTime();
-    });
+    if (!isCorrect) penalizeTime();
+  });
 
   if (gameEnded) return;
 
+  // Gestion du temps
   if (prevTime > 0 && chess_data.timeRemaining === 0) playBuzz();
-  if (chess_data.timeRemaining <= 0) {   
-    gameEnded = true;   
-    endGame();   
-    return; 
+  if (chess_data.timeRemaining <= 0) {
+    gameEnded = true;
+    endGame();
+    return;
   }
 
-  // Vérifie si toutes les p1 sont correctes pour charger le nouveau puzzle
-  const all_correct = chess_data.questionTypes
-    .filter(id => id.startsWith("p1"))
-    .every(id => chess_data.is_correct[id]);
-
+  // Vérifie si toutes les cases affichées sont correctes
+  const all_correct = chess_data.questionTypes.every(id => chess_data.is_correct[id]);
   if (all_correct) {
     loadNewPuzzle();
     setTimeout(() => focusInputForPlayerToMove(), 0);
