@@ -742,6 +742,15 @@ async function saveSettings() {
   createDynamicInputs(getFixedDisplayQuestionTypes());
   setupHighlightButtons();
 
+if (window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints)) {
+  const fenTurn = chess_data.playerToMoveAfter; // 'w' ou 'b'
+  const movesId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn); // id de la case Moves
+  const el = document.getElementById(movesId);
+  if (el) {
+    setTimeout(() => el.focus(), 50);
+  }
+}
+  
   const plyAhead = parseInt(document.getElementById("plyAhead").value, 10);
   chess_data.plyAhead = plyAhead;
   localStorage.setItem("plyAhead", plyAhead);
