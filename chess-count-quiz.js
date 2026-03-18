@@ -539,6 +539,9 @@ function createMovesTableHtml(movesList, fenTurn) {
 // ----------------------------------------------------------
 // Update moves display
 // ----------------------------------------------------------
+// ----------------------------------------------------------
+// Update moves display
+// ----------------------------------------------------------
 function updateMovesDisplay() {
   const movesDisplay = document.getElementById("remainingMoves");
   if (!movesDisplay || chess_data.plyAhead === 0) {
@@ -546,25 +549,36 @@ function updateMovesDisplay() {
     return;
   }
 
-  const fullHistory = chess_data.game.history({ verbose: false });
+  // On récupère la partie depuis la position courante
+  const game = new Chess(chess_data.fen);
+  const fullHistory = game.history({ verbose: false });
+
   const plyAhead = chess_data.plyAhead;
   const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer après plyAhead
 
   let movesList = [];
+  let i = 0;
 
-  // Construire movesList en alternant correctement blanc / noir
-  if (fenTurn === "w") {
-    // coups blancs puis noirs dans l'ordre
-    for (let idx = 0; idx < fullHistory.length && movesList.length < plyAhead; idx++) {
-      if (idx % 2 === 0) movesList.push(fullHistory[idx]); // blanc
-      else if (movesList.length < plyAhead) movesList.push(fullHistory[idx]); // noir
+  // Premier demi-coup = trait
+  if (i < fullHistory.length) {
+    if (fenTurn === "w") {
+      movesList.push(fullHistory[i]); // blanc
+      i++;
+      // si plyAhead > 1, on continue pour le noir
+      if (i < fullHistory.length && movesList.length < plyAhead) movesList.push(fullHistory[i]);
+      i++;
+    } else {
+      movesList.push(fullHistory[i]); // noir
+      i++;
+      if (i < fullHistory.length && movesList.length < plyAhead) movesList.push(fullHistory[i]);
+      i++;
     }
-  } else {
-    // coups noirs puis blancs dans l'ordre
-    for (let idx = 0; idx < fullHistory.length && movesList.length < plyAhead; idx++) {
-      if (idx % 2 !== 0) movesList.push(fullHistory[idx]); // noir
-      else if (movesList.length < plyAhead) movesList.push(fullHistory[idx]); // blanc
-    }
+  }
+
+  // Alternance normale après le premier demi-coup
+  while (movesList.length < plyAhead && i < fullHistory.length) {
+    movesList.push(fullHistory[i]);
+    i++;
   }
 
   movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurn);
