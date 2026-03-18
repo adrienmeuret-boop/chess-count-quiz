@@ -901,7 +901,8 @@ function createDynamicInputs(questionTypes, focusId) {
 
 elem.appendChild(div);
 });
-
+}
+  
 function focusInputForPlayerToMove() {
   const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
   const inputId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
