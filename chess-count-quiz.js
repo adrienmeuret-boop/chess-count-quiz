@@ -915,11 +915,15 @@ setTimeout(() => {
 }
 
 function createDynamicInputsLabel(questionType) {
-  let who, what;
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
 
-  if (questionType.startsWith("p1")) who = chess_data.playerToMoveAfter === "w" ? "White's" : "Black's";
-  else who = chess_data.playerToMoveAfter === "w" ? "Black's" : "White's";
+  let whoColor;
+  if (questionType.startsWith("p1")) whoColor = fenTurn; // joueur à jouer
+  else whoColor = fenTurn === "w" ? "b" : "w"; // l’autre
 
+  let who = whoColor === "w" ? "White's" : "Black's";
+
+  let what;
   if (questionType.endsWith("Checks")) what = "Checks";
   else if (questionType.endsWith("Captures")) what = "Captures";
   else what = "Moves";
