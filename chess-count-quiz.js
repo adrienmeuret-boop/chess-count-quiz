@@ -651,13 +651,10 @@ function submitAnswers(event) {
 
   const prevTime = chess_data.timeRemaining;
 
-  // Identifier le joueur ayant le trait (p1)
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+  // Récupère tous les inputs p1 (joueur ayant le trait)
+  const p1Ids = chess_data.questionTypes.filter(id => id.startsWith("p1"));
 
-  // IDs de la colonne du joueur à jouer
-  const relevantIds = chess_data.questionTypes.filter(id => id.startsWith("p1"));
-
-  relevantIds.forEach((id) => {
+  p1Ids.forEach((id) => {
     const input = document.getElementById(id);
     if (!input) return;
 
@@ -667,12 +664,14 @@ function submitAnswers(event) {
     const inputValue = parseInt(input.value, 10);
     const isCorrect = inputValue === correct.count;
 
+    // Affiche feedback
     const feedbackIcon = document.getElementById(id + "FeedbackIcon");
     if (feedbackIcon) {
       feedbackIcon.textContent = isCorrect ? "✓" : "✗";
       feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
     }
 
+    // Score
     if (!chess_data.is_correct[id] && isCorrect) {
       chess_data.is_correct[id] = true;
       incrementScore();
@@ -691,8 +690,8 @@ function submitAnswers(event) {
   }
 
   // Vérifie si toutes les cases p1 sont correctes
-  const all_correct = relevantIds.every(id => chess_data.is_correct[id]);
-  if (all_correct) {
+  const allCorrect = p1Ids.every(id => chess_data.is_correct[id]);
+  if (allCorrect) {
     loadNewPuzzle();
     setTimeout(() => focusInputForPlayerToMove(), 0);
   }
