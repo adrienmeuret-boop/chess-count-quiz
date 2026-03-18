@@ -197,7 +197,7 @@ function initTimer() {
     chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 1);
     updateTimerDisplay();
 
-    if (chess_data.timeRemaining === 0) {
+    if (chess_data.timeRemaining <= 0) {
       gameEnded = true;
       playBuzz();
       endGame();
@@ -300,13 +300,14 @@ function highlightSquares(squares) {
   const boardEl = document.getElementById("board");
   if (!boardEl || !Array.isArray(squares)) return;
 
-  squares.forEach((sq) => {
-    const el = boardEl.querySelector(`[data-square="${sq}"]`);
-    if (el) return el.classList.add("hl-red");
-
+ squares.forEach((sq) => {
+  const el = boardEl.querySelector(`[data-square="${sq}"]`);
+  if (el) el.classList.add("hl-red");
+  else {
     const el2 = boardEl.querySelector(`.square-${sq}`);
     if (el2) el2.classList.add("hl-red");
-  });
+  }
+});
 }
 
 
@@ -459,26 +460,22 @@ function setupHighlightButtons() {
         return;
       }
 
-      if (!chess_data.correct) chess_data.correct = {};
+if (!chess_data.correct) chess_data.correct = {};
 
-      // Déterminer la couleur réelle à jouer
-const fenTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
+const fenTurn = chess_data.playerToMoveAfter;
 
-      // Déterminer le type de question exact (p1/p2 + kind)
-      let kind;
-      if (key.includes("moves")) kind = "AllLegal";
-      else if (key.includes("checks")) kind = "Checks";
-      else if (key.includes("captures")) kind = "Captures";
+let kind;
+if (key.includes("moves")) kind = "AllLegal";
+else if (key.includes("checks")) kind = "Checks";
+else if (key.includes("captures")) kind = "Captures";
 
-// fenTurn = vrai joueur à jouer
-const fenTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
 const qType = qTypeForAbsColorAndKind(side, kind, fenTurn);
 
-      let ans = chess_data.correct[qType];
-      if (!ans) {
-        ans = getOneCorrectAnswer(chess_data.fen, qType);
-        chess_data.correct[qType] = ans;
-      }
+let ans = chess_data.correct[qType];
+if (!ans) {
+  ans = getOneCorrectAnswer(chess_data.fen, qType);
+  chess_data.correct[qType] = ans;
+}
 
       if (!ans?.targets) return;
       highlightMovesByPiece(ans.targets, side);
@@ -574,10 +571,11 @@ const fenTurn = chess_data.playerToMoveAfter;
 const movesId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
 createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
 
-  const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
-  chess_data.board.position(prior_game.fen());
-  const fenTurn = prior_game.fen().split(" ")[1];
-  if (fenTurn === "b") chess_data.board.flip();
+const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
+chess_data.board.position(prior_game.fen());
+
+// Utiliser le vrai joueur à jouer (après plyAhead)
+if (chess_data.playerToMoveAfter === "b") chess_data.board.flip();
 
   ensurePieceMarkers();
   clearPieceMarkers();
@@ -587,9 +585,6 @@ const allTypes = getFixedDisplayQuestionTypes();
 chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
 
   // Pre-calc AllLegal for highlight buttons (useful even if not asked)
-  [qTypeForAbsColorAndKind("w", "AllLegal"), qTypeForAbsColorAndKind("b", "AllLegal")].forEach((qType) => {
-    if (!chess_data.correct[qType]) chess_data.correct[qType] = getOneCorrectAnswer(chess_data.fen, qType);
-  });
 
   chess_data.is_correct = Object.fromEntries(getFixedDisplayQuestionTypes().map((name) => [name, false]));
 
@@ -637,24 +632,8 @@ function startNewGame() {
   gameEnded = false;
   resetScore();
   loadNewPuzzle();
-  startTimer();
-  initTimer();
-
-  // Initialisation audio pour buzzer
-  try {
-    if (!playBuzz._ctx) {
-      playBuzz._ctx = new (window.AudioContext || window.webkitAudioContext)();
-
-      fetch("duck.mp3")
-        .then(r => r.arrayBuffer())
-        .then(b => playBuzz._ctx.decodeAudioData(b))
-        .then(buf => { playBuzz._buffer = buf; })
-        .catch(e => console.warn("Audio decode failed:", e));
-    }
-  } catch (e) {
-    console.warn("AudioContext creation failed:", e);
-  }
-}
+chess_data.timeRemaining = chess_data.showTimer ? chess_data.defaultTimeRemaining : 9999;
+initTimer();
 
 // ----------------------------------------------------------
 // Submit answers
@@ -920,10 +899,7 @@ setTimeout(() => {
 }
 
 function createDynamicInputsLabel(questionType) {
-// fenTurn = vrai joueur à jouer
-const fenTurn = chess_data.fen ? chess_data.fen.split(" ")[1] : "w";
-
-// p1 = joueur à jouer (celui dont c'est le trait), p2 = l'autre joueur
+const fenTurn = chess_data.playerToMoveAfter;
 let whoColor = questionType.startsWith("p1") ? fenTurn : (fenTurn === "w" ? "b" : "w");
 
   // Nom du joueur pour le label
@@ -942,6 +918,22 @@ let whoColor = questionType.startsWith("p1") ? fenTurn : (fenTurn === "w" ? "b" 
 // Main boot
 
 document.addEventListener("DOMContentLoaded", () => {
+
+  // Préchargement audio buzzer
+try {
+  if (!playBuzz._ctx) {
+    playBuzz._ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    fetch("duck.mp3")
+      .then(r => r.arrayBuffer())
+      .then(b => playBuzz._ctx.decodeAudioData(b))
+      .then(buf => { playBuzz._buffer = buf; })
+      .catch(e => console.warn("Audio decode failed:", e));
+  }
+} catch (e) {
+  console.warn("AudioContext creation failed:", e);
+}
+  
   // Settings modal wiring
   setupSettingsModal();
 
