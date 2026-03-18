@@ -546,11 +546,9 @@ function updateMovesDisplay() {
 }
 
 function getMovesInputIdForPlayerToMove() {
-  const fenTurn = chess_data.playerToMoveAfter || "w";
-  // Renvoie l'ID exact correspondant aux inputs générés dynamiquement
-  return fenTurn === chess_data.playerToMoveAfter ? "p1AllLegal" : "p2AllLegal";
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+  return qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
 }
-
 // ----------------------------------------------------------
 // Game load / puzzle
 
@@ -916,13 +914,14 @@ setTimeout(() => {
 }
 
 function createDynamicInputsLabel(questionType) {
-  let color = "w";
-  if (questionType.toLowerCase().includes("b")) color = "b";
-  const who = color === "w" ? "White's" : "Black's";
+  let who, what;
 
-  let what = "Moves";
+  if (questionType.startsWith("p1")) who = chess_data.playerToMoveAfter === "w" ? "White's" : "Black's";
+  else who = chess_data.playerToMoveAfter === "w" ? "Black's" : "White's";
+
   if (questionType.endsWith("Checks")) what = "Checks";
   else if (questionType.endsWith("Captures")) what = "Captures";
+  else what = "Moves";
 
   return `${who}\n${what}:`;
 }
