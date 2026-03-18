@@ -876,6 +876,10 @@ function createDynamicInputs(questionTypes, focusId) {
     input.min = "0";
     input.required = true;
 
+    if (questionType.startsWith("p1") && questionType.endsWith("AllLegal") && chess_data.playerToMoveAfter === (questionType.startsWith("p1") ? "w" : "b")) {
+        input.focus();
+    }
+    
     decrementButton.textContent = "←";
     decrementButton.type = "button";
     decrementButton.onclick = () => {
@@ -909,13 +913,21 @@ elem.appendChild(div);
   
 function focusInputForPlayerToMove() {
   const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+  // p1 = joueur à jouer → la colonne correcte pour le focus
   const inputId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
   const el = document.getElementById(inputId);
   if (el) el.focus();
 }
   
 function createDynamicInputsLabel(questionType) {
-let whoColor = questionType.startsWith("p1") ? chess_data.playerToMoveAfter : (chess_data.playerToMoveAfter === "w" ? "b" : "w");
+let whoColor;
+if (questionType.startsWith("p1")) {
+  // p1 = joueur à qui c’est le trait → playerToMoveAfter
+  whoColor = chess_data.playerToMoveAfter;
+} else {
+  // p2 = l’autre joueur
+  whoColor = chess_data.playerToMoveAfter === "w" ? "b" : "w";
+}
 
   // Nom du joueur pour le label
   const who = whoColor === "w" ? "White's" : "Black's";
