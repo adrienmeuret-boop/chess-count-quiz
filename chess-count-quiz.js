@@ -492,9 +492,11 @@ if (!ans) {
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 // ----------------------------------------------------------
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
+// ----------------------------------------------------------
+// Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 function createMovesTableHtml(movesList, fenTurn) {
-  let tableHtml = `<table class="moves-table">
-  <tr><th>#</th><th>White</th><th>Black</th></tr>`;
+  let tableHtml = `<h3>Compute counts after these moves:</h3>
+  <table class="moves-table">`;
 
   const totalMoves = movesList.length;
   let turnNumber = 1;
@@ -507,35 +509,34 @@ function createMovesTableHtml(movesList, fenTurn) {
     let blackMove = "";
 
     if (i === 0) {
-      // premier demi-coup = couleur du trait
+      // premier demi-coup = trait
       if (traitIsWhite) {
         whiteMove = movesList[i] || "";
         i++;
-        if (i < totalMoves) blackMove = movesList[i] || "";
-        i++;
+        blackMove = movesList[i] || "...";
+        if (blackMove !== "...") i++;
       } else {
+        whiteMove = "...";
         blackMove = movesList[i] || "";
         i++;
-        if (i < totalMoves) whiteMove = "..."; // remplissage pour white
       }
     } else {
-      // lignes suivantes = alternance normale
+      // alternance normale
       if (traitIsWhite) {
         whiteMove = movesList[i] || "";
         i++;
-        if (i < totalMoves) blackMove = movesList[i] || "";
+        blackMove = movesList[i] || "";
         i++;
       } else {
-        if (i < totalMoves) whiteMove = movesList[i] || "";
+        whiteMove = movesList[i] || "";
         i++;
-        if (i < totalMoves) blackMove = movesList[i] || "";
+        blackMove = movesList[i] || "";
         i++;
       }
     }
 
     tableHtml += `
     <tr>
-      <td class="turn">${turnNumber}.</td>
       <td class="w">${whiteMove}</td>
       <td class="b">${blackMove}</td>
     </tr>`;
