@@ -535,21 +535,18 @@ function updateMovesDisplay() {
   const prevPlyIndex = fullHistory.length - chess_data.plyAhead;
   const movesList = fullHistory.slice(prevPlyIndex);
 
-  // Déterminer qui joue le premier coup de movesList
+  // Le vrai joueur à jouer après prevPlyIndex coups
   const tempGame = new Chess();
   tempGame.load(chess_data.fen);
   for (let i = 0; i < prevPlyIndex; i++) tempGame.move(fullHistory[i]);
-
-  // Le vrai joueur à jouer après prevPlyIndex coups
   const fenTurnAfterPlyAhead = tempGame.turn();
   const isBlackToMove = fenTurnAfterPlyAhead === "b";
 
-  // --- MODIF CIBLE ---
   // Réordonner movesList pour que le premier coup corresponde toujours au trait
   let orderedMoves = [];
   if (isBlackToMove) {
-    // Si trait au noir, on met d'abord un blanc fictif "..." pour garder le tableau correct
-    orderedMoves = ["..."].concat(movesList);
+    const firstBlack = movesList[0] || "";
+    orderedMoves = ["...", firstBlack, ...movesList.slice(1)];
   } else {
     orderedMoves = movesList.slice();
   }
