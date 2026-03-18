@@ -739,7 +739,13 @@ async function saveSettings() {
   chess_data.questionTypes = Array.from(questionCheckboxes).map((opt) => opt.value);
   localStorage.setItem("questionTypes", JSON.stringify(chess_data.questionTypes));
 
-  createDynamicInputs(getFixedDisplayQuestionTypes());
+// Déterminer le joueur à jouer : 'w' ou 'b'
+const fenTurn = chess_data.playerToMoveAfter; 
+// Trouver l'ID de l'input correspondant à ce joueur
+const movesId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
+
+// Créer les inputs et mettre le focus sur le bon input
+createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
   setupHighlightButtons();
 
 if (window.innerWidth > 768 && !("ontouchstart" in window || navigator.maxTouchPoints)) {
@@ -905,7 +911,14 @@ function createDynamicInputs(questionTypes) {
     div.appendChild(feedbackIcon);
     div.appendChild(shownMoves);
 
-    elem.appendChild(div);
+elem.appendChild(div);
+});
+
+// ---------- Focus automatique après que tout soit rendu ----------
+if (focusId) {
+  const el = document.getElementById(focusId);
+  if (el) setTimeout(() => el.focus(), 50);
+}
   });
 }
 
