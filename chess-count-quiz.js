@@ -673,9 +673,8 @@ if (!chess_data.is_correct[correctId] && isCorrect) {
   incrementScore();
 }
 
-if (!isCorrect) penalizeTime();
-}
-  });
+  if (!isCorrect) penalizeTime();
+});
 
   if (gameEnded) return;
 
