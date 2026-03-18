@@ -492,48 +492,40 @@ if (!ans) {
 // Moves table (remainingMoves) fixe : premier coup = trait, autre couleur = "..."
 function createMovesTableHtml(movesList, fenTurn) {
   let tableHtml = `<h3>Compute counts after these moves:</h3>
-    <table class="moves-table">`;
+  <table class="moves-table">`;
 
   let turnNumber = 1;
+  let i = 0;
+  const totalMoves = movesList.length;
 
-  for (let i = 0; i < movesList.length; i += 2) {
-    // Calculer quelle couleur joue ce coup
-for (let i = 0; i < movesList.length; i += 2) {
-  let whiteMove = "";
-  let blackMove = "";
+  while (i < totalMoves) {
+    let whiteMove = "";
+    let blackMove = "";
 
-  // Si c’est le trait au blanc, le premier coup de la liste est blanc
-  if (i === 0 && fenTurn === "b") {
-    // Premier coup pour noir → afficher "..." en blanc
-    whiteMove = "...";
-    blackMove = movesList[i] || "";
-  } else {
-    whiteMove = movesList[i] || "";
-    blackMove = movesList[i + 1] || "";
-  }
+    // Premier demi-coup
+    if (i === 0) {
+      if (fenTurn === "w") {
+        whiteMove = movesList[i] || "";
+        blackMove = movesList[i + 1] || "";
+      } else {
+        whiteMove = "...";
+        blackMove = movesList[i] || "";
+        if (totalMoves > 1) blackMove = movesList[i] || "";
+      }
+      i++; // On a consommé le premier demi-coup
+    } else {
+      whiteMove = movesList[i] || "";
+      i++;
+      blackMove = movesList[i] || "";
+      i++;
+    }
 
-  // Si c’est le trait au noir et qu’on a déjà décalé, inverser les couleurs
-  if (fenTurn === "b") {
-    [whiteMove, blackMove] = [blackMove, whiteMove];
-  }
-
-  tableHtml += `
+    tableHtml += `
     <tr>
       <td class="turn">${turnNumber}.</td>
       <td class="w">${whiteMove}</td>
       <td class="b">${blackMove}</td>
     </tr>`;
-
-  turnNumber++;
-}
-
-    tableHtml += `
-      <tr>
-        <td class="turn">${turnNumber}.</td>
-        <td class="w">${whiteMove}</td>
-        <td class="b">${blackMove}</td>
-      </tr>`;
-
     turnNumber++;
   }
 
