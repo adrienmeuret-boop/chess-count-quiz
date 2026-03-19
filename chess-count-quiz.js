@@ -656,17 +656,13 @@ function playerColorForInputId(id) {
 function submitAnswers(event) {
   event.preventDefault();
 
+  if (!chess_data || !chess_data.correct) return;
+
   const prevTime = chess_data.timeRemaining;
 
-  const displayedTypes = getFixedDisplayQuestionTypes();
-
-  // 🔥 construire la vraie liste des inputs à corriger
-const activeDisplayed = displayedTypes.filter((id) => {
-  const kind = id.replace(/^p[12]/, ""); // Checks / Captures / AllLegal
-
-  // 🔥 On ne filtre QUE par type (Checks / Captures / Moves)
-  return chess_data.questionTypes.some((q) => q.endsWith(kind));
-});
+  // 🔥 Construire la liste réelle des inputs à corriger
+  // On ne prend QUE ceux qui sont cochés dans Settings
+  const activeDisplayed = getFixedDisplayQuestionTypes().filter((id) => chess_data.questionTypes.includes(id));
 
   activeDisplayed.forEach((id) => {
     const input = document.getElementById(id);
@@ -694,6 +690,7 @@ const activeDisplayed = displayedTypes.filter((id) => {
 
   if (gameEnded) return;
 
+  // Jouer le buzzer si le temps s'écoule
   if (prevTime > 0 && chess_data.timeRemaining === 0) playBuzz();
   if (chess_data.timeRemaining <= 0) {
     gameEnded = true;
@@ -701,6 +698,7 @@ const activeDisplayed = displayedTypes.filter((id) => {
     return;
   }
 
+  // Vérifier si tous les inputs cochés sont corrects
   const allCorrect = activeDisplayed.every((id) => chess_data.is_correct[id]);
 
   if (allCorrect) {
