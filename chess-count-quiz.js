@@ -732,47 +732,6 @@ function setupSettingsModal() {
   });
 }
 
-async function saveSettings() {
-  const showTimer = document.getElementById("showTimer").checked;
-  chess_data.showTimer = showTimer;
-  localStorage.setItem("showTimer", showTimer);
-  setTimerVisibility(showTimer);
-
-  const defaultTimeMinutesEl = document.getElementById("defaultTimeMinutes");
-  if (defaultTimeMinutesEl) {
-    const minutes = parseInt(defaultTimeMinutesEl.value, 10);
-    chess_data.defaultTimeRemaining = (isNaN(minutes) ? 3 : minutes) * 60;
-    localStorage.setItem("defaultTimeRemaining", chess_data.defaultTimeRemaining);
-  }
-
-  const selectedToMove = document.querySelector('input[name="playerToMove"]:checked');
-  localStorage.setItem("selectedToMove", selectedToMove.value);
-  setPlayerToMove(selectedToMove.value);
-
-  chess_data.games = await getGames();
-  chess_data.game_weights = await getWeights();
-  setBoard();
-
-  const questionCheckboxes = document.querySelectorAll('input[name="quizOption"]:checked');
-  chess_data.questionTypes = Array.from(questionCheckboxes).map((opt) => opt.value);
-  localStorage.setItem("questionTypes", JSON.stringify(chess_data.questionTypes));
-
-const fenTurn = chess_data.playerToMoveAfter || "w";
-const movesId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
-
-createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
-  setupHighlightButtons();
-  
-  const plyAhead = parseInt(document.getElementById("plyAhead").value, 10);
-  chess_data.plyAhead = plyAhead;
-  localStorage.setItem("plyAhead", plyAhead);
-
-  setPlayerToMoveAfter();
-
-  const settings = document.getElementById("settingsModal");
-  if (settings) settings.style.display = "none";
-}
-
 function setTimerVisibility(visible) {
   const timerSection = document.getElementById("timerSection");
   if (!timerSection) return;
@@ -921,18 +880,57 @@ function createDynamicInputs(questionTypes, doFocus = true) {
   });
 
   // ⚡ Focus automatique sur p1 = joueur ayant le trait
-  if (doFocus) {
-    const p1InputId = "p1AllLegal"; // p1 = joueur avec le trait
-    const el = document.getElementById(p1InputId);
-    if (el) el.focus();
-  }
+  if (doFocus) focusInputForPlayerToMove();
 }
 
 function focusInputForPlayerToMove() {
   const fenTurn = chess_data.playerToMoveAfter; // joueur qui a le trait
-  const inputId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
+  const inputId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn); // p1 = trait
   const el = document.getElementById(inputId);
   if (el) el.focus();
+}
+
+// ----------------------------------------------------------
+// saveSettings corrigée
+
+async function saveSettings() {
+  const showTimer = document.getElementById("showTimer").checked;
+  chess_data.showTimer = showTimer;
+  localStorage.setItem("showTimer", showTimer);
+  setTimerVisibility(showTimer);
+
+  const defaultTimeMinutesEl = document.getElementById("defaultTimeMinutes");
+  if (defaultTimeMinutesEl) {
+    const minutes = parseInt(defaultTimeMinutesEl.value, 10);
+    chess_data.defaultTimeRemaining = (isNaN(minutes) ? 3 : minutes) * 60;
+    localStorage.setItem("defaultTimeRemaining", chess_data.defaultTimeRemaining);
+  }
+
+  const selectedToMove = document.querySelector('input[name="playerToMove"]:checked');
+  localStorage.setItem("selectedToMove", selectedToMove.value);
+  setPlayerToMove(selectedToMove.value);
+
+  chess_data.games = await getGames();
+  chess_data.game_weights = await getWeights();
+  setBoard();
+
+  const questionCheckboxes = document.querySelectorAll('input[name="quizOption"]:checked');
+  chess_data.questionTypes = Array.from(questionCheckboxes).map((opt) => opt.value);
+  localStorage.setItem("questionTypes", JSON.stringify(chess_data.questionTypes));
+
+  // Création des inputs dynamiques avec focus correct sur p1
+  createDynamicInputs(getFixedDisplayQuestionTypes());
+
+  setupHighlightButtons();
+
+  const plyAhead = parseInt(document.getElementById("plyAhead").value, 10);
+  chess_data.plyAhead = plyAhead;
+  localStorage.setItem("plyAhead", plyAhead);
+
+  setPlayerToMoveAfter();
+
+  const settings = document.getElementById("settingsModal");
+  if (settings) settings.style.display = "none";
 }
   
 function createDynamicInputsLabel(questionType) {
