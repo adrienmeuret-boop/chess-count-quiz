@@ -227,17 +227,15 @@ function qTypeForAbsColorAndKind(color, kind, fenTurn) {
 }
 
 function getFixedDisplayQuestionTypes() {
-  // fenTurn = vrai joueur à jouer maintenant
-  const fenTurn = chess_data.playerToMoveAfter || "w";
-
+  // p1 = joueur à qui c’est le trait (playerToMoveAfter)
+  // p2 = l’autre joueur
   return [
-    qTypeForAbsColorAndKind("w", "AllLegal", fenTurn),
-    qTypeForAbsColorAndKind("w", "Checks", fenTurn),
-    qTypeForAbsColorAndKind("w", "Captures", fenTurn),
-
-    qTypeForAbsColorAndKind("b", "AllLegal", fenTurn),
-    qTypeForAbsColorAndKind("b", "Checks", fenTurn),
-    qTypeForAbsColorAndKind("b", "Captures", fenTurn),
+    "p1AllLegal",
+    "p1Checks",
+    "p1Captures",
+    "p2AllLegal",
+    "p2Checks",
+    "p2Captures",
   ];
 }
 
@@ -864,48 +862,51 @@ chess_data.board = Chessboard("board", { position: "start" });
 // ----------------------------------------------------------
 // Dynamic inputs
 
-function createDynamicInputs(questionTypes, focusId, doFocus = false) {
-  const elem = document.getElementById("count-inputs");
-  if (!elem) return;
+// ----------------------------------------------------------
+// Dynamic inputs
 
-  elem.innerHTML = "";
+function createDynamicInputs(questionTypes, doFocus = true) {
+  const container = document.getElementById("count-inputs");
+  if (!container) return;
+  container.innerHTML = "";
 
   questionTypes.forEach((questionType) => {
     const div = document.createElement("div");
     div.className = "input-group";
 
     const label = document.createElement("label");
-    const input = document.createElement("input");
-    const decrementButton = document.createElement("button");
-    const incrementButton = document.createElement("button");
-    const feedbackIcon = document.createElement("span");
-    const shownMoves = document.createElement("label");
-
     label.textContent = createDynamicInputsLabel(questionType);
 
+    const input = document.createElement("input");
     input.type = "number";
     input.id = questionType;
     input.name = questionType;
     input.min = "0";
+    input.value = 0;
     input.required = true;
-    
-    decrementButton.textContent = "←";
-    decrementButton.type = "button";
-    decrementButton.onclick = () => {
-      if (parseInt(input.value || "0", 10) > 0) input.value = parseInt(input.value || "0", 10) - 1;
-    };
-    decrementButton.className = "decrement";
 
-    incrementButton.textContent = "→";
+    const decrementButton = document.createElement("button");
+    decrementButton.type = "button";
+    decrementButton.textContent = "←";
+    decrementButton.className = "decrement";
+    decrementButton.onclick = () => {
+      if (parseInt(input.value || "0", 10) > 0)
+        input.value = parseInt(input.value || "0", 10) - 1;
+    };
+
+    const incrementButton = document.createElement("button");
     incrementButton.type = "button";
+    incrementButton.textContent = "→";
+    incrementButton.className = "increment";
     incrementButton.onclick = () => {
       input.value = parseInt(input.value || "0", 10) + 1;
     };
-    incrementButton.className = "increment";
 
+    const feedbackIcon = document.createElement("span");
     feedbackIcon.className = "feedbackIcon";
     feedbackIcon.id = `${questionType}FeedbackIcon`;
 
+    const shownMoves = document.createElement("label");
     shownMoves.className = "shownMoves";
     shownMoves.id = `${questionType}ShownMoves`;
 
@@ -916,15 +917,14 @@ function createDynamicInputs(questionTypes, focusId, doFocus = false) {
     div.appendChild(feedbackIcon);
     div.appendChild(shownMoves);
 
-elem.appendChild(div);
-});
-if (doFocus) {
-  // Focus automatiquement sur p1 = joueur ayant le trait
-  const p1Input = questionTypes.find(q => q.startsWith("p1"));
-  if (p1Input) {
-    const el = document.getElementById(p1Input);
-      if (el) el.focus();
-    }
+    container.appendChild(div);
+  });
+
+  // ⚡ Focus automatique sur p1 = joueur ayant le trait
+  if (doFocus) {
+    const p1InputId = "p1AllLegal"; // p1 = joueur avec le trait
+    const el = document.getElementById(p1InputId);
+    if (el) el.focus();
   }
 }
 
