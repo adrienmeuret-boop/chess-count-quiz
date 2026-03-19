@@ -658,7 +658,6 @@ function submitAnswers(event) {
 
   const prevTime = chess_data.timeRemaining;
 
-  // Vérifie uniquement les inputs cochés dans le settings
   chess_data.questionTypes.forEach((id) => {
     const input = document.getElementById(id);
     if (!input) return;
@@ -669,14 +668,12 @@ function submitAnswers(event) {
     const inputValue = parseInt(input.value, 10);
     const isCorrect = inputValue === correct.count;
 
-    // Affichage du feedback
     const feedbackIcon = document.getElementById(id + "FeedbackIcon");
     if (feedbackIcon) {
       feedbackIcon.textContent = isCorrect ? "✓" : "✗";
       feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
     }
 
-    // Score et pénalisation pour ce joueur
     if (!chess_data.is_correct[id] && isCorrect) {
       chess_data.is_correct[id] = true;
       incrementScore();
@@ -694,7 +691,6 @@ function submitAnswers(event) {
     return;
   }
 
-  // Vérifie si toutes les cases cochées sont correctes
   const allCorrect = chess_data.questionTypes.every((id) => chess_data.is_correct[id]);
 
   if (allCorrect) {
