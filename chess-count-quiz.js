@@ -755,12 +755,9 @@ async function saveSettings() {
   chess_data.questionTypes = Array.from(questionCheckboxes).map((opt) => opt.value);
   localStorage.setItem("questionTypes", JSON.stringify(chess_data.questionTypes));
 
-// Déterminer le joueur à jouer : 'w' ou 'b'
-const fenTurn = chess_data.game.turn();
-// Trouver l'ID de l'input correspondant à ce joueur
+const fenTurn = chess_data.playerToMoveAfter;
 const movesId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
 
-// Créer les inputs et mettre le focus sur le bon input
 createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
   setupHighlightButtons();
   
