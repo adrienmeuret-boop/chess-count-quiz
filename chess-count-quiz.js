@@ -929,11 +929,8 @@ function createDynamicInputs(questionTypes, doFocus = true) {
 }
 
 function focusInputForPlayerToMove() {
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
-  const inputId = chess_data.plyAhead % 2 === 0
-    ? qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn)
-    : qTypeForAbsColorAndKind(fenTurn === "w" ? "b" : "w", "AllLegal", fenTurn);
-    
+  const fenTurn = chess_data.playerToMoveAfter; // joueur qui a le trait
+  const inputId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
   const el = document.getElementById(inputId);
   if (el) el.focus();
 }
