@@ -639,7 +639,7 @@ function startNewGame() {
   gameEnded = false;
   resetScore();
 loadNewPuzzle();
-setTimeout(() => focusInputForPlayerToMove(), 0); // <-- ajouter cette ligne
+focusInputForPlayerToMove(); // <-- ajouter cette ligne
 chess_data.timeRemaining = chess_data.showTimer ? chess_data.defaultTimeRemaining : 9999;
 initTimer();
 }
@@ -660,10 +660,16 @@ function submitAnswers(event) {
 
   const displayedTypes = getFixedDisplayQuestionTypes();
 
-  displayedTypes.forEach((id) => {
-    // Ne vérifier QUE ce qui est coché dans settings
-    if (!chess_data.questionTypes.includes(id)) return;
+  // 🔥 construire la vraie liste des inputs à corriger
+const activeDisplayed = displayedTypes.filter((id) => {
+  const kind = id.replace(/^p[12]/, ""); // Checks / Captures / AllLegal
 
+  // 🔥 On ne filtre QUE par type (Checks / Captures / Moves)
+  return chess_data.questionTypes.some((q) => q.endsWith(kind));
+});
+  });
+
+  activeDisplayed.forEach((id) => {
     const input = document.getElementById(id);
     if (!input) return;
 
@@ -696,14 +702,11 @@ function submitAnswers(event) {
     return;
   }
 
-  // Vérifier uniquement les cases cochées
-  const allCorrect = chess_data.questionTypes.every(
-    (id) => chess_data.is_correct[id]
-  );
+  const allCorrect = activeDisplayed.every((id) => chess_data.is_correct[id]);
 
   if (allCorrect) {
     loadNewPuzzle();
-    setTimeout(() => focusInputForPlayerToMove(), 0);
+    focusInputForPlayerToMove();
   }
 }
 
@@ -929,10 +932,11 @@ if (doFocus) {
 }
 
 function focusInputForPlayerToMove() {
-  const fenTurn = chess_data.playerToMoveAfter;
-
-  const inputId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
-
+  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
+  const inputId = chess_data.plyAhead % 2 === 0
+    ? qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn)
+    : qTypeForAbsColorAndKind(fenTurn === "w" ? "b" : "w", "AllLegal", fenTurn);
+    
   const el = document.getElementById(inputId);
   if (el) el.focus();
 }
