@@ -639,7 +639,7 @@ function startNewGame() {
   gameEnded = false;
   resetScore();
 loadNewPuzzle();
-focusInputForPlayerToMove(); // <-- ajouter cette ligne
+setTimeout(() => focusInputForPlayerToMove(), 0); // <-- ajouter cette ligne
 chess_data.timeRemaining = chess_data.showTimer ? chess_data.defaultTimeRemaining : 9999;
 initTimer();
 }
@@ -658,7 +658,12 @@ function submitAnswers(event) {
 
   const prevTime = chess_data.timeRemaining;
 
-  chess_data.questionTypes.forEach((id) => {
+  const displayedTypes = getFixedDisplayQuestionTypes();
+
+  displayedTypes.forEach((id) => {
+    // Ne vérifier QUE ce qui est coché dans settings
+    if (!chess_data.questionTypes.includes(id)) return;
+
     const input = document.getElementById(id);
     if (!input) return;
 
@@ -691,7 +696,10 @@ function submitAnswers(event) {
     return;
   }
 
-  const allCorrect = chess_data.questionTypes.every((id) => chess_data.is_correct[id]);
+  // Vérifier uniquement les cases cochées
+  const allCorrect = chess_data.questionTypes.every(
+    (id) => chess_data.is_correct[id]
+  );
 
   if (allCorrect) {
     loadNewPuzzle();
@@ -765,8 +773,6 @@ createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
 
   const settings = document.getElementById("settingsModal");
   if (settings) settings.style.display = "none";
-
-  startNewGame();
 }
 
 function setTimerVisibility(visible) {
@@ -923,12 +929,10 @@ if (doFocus) {
 }
 
 function focusInputForPlayerToMove() {
-  const fenTurn = chess_data.playerToMoveAfter; // vrai joueur à jouer
-  // p1 correspond toujours à la colonne du joueur ayant le trait
-  const inputId = chess_data.plyAhead % 2 === 0
-    ? qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn)
-    : qTypeForAbsColorAndKind(fenTurn === "w" ? "b" : "w", "AllLegal", fenTurn);
-    
+  const fenTurn = chess_data.playerToMoveAfter;
+
+  const inputId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
+
   const el = document.getElementById(inputId);
   if (el) el.focus();
 }
