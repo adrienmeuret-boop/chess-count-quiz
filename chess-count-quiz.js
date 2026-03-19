@@ -751,7 +751,7 @@ async function saveSettings() {
   chess_data.questionTypes = Array.from(questionCheckboxes).map((opt) => opt.value);
   localStorage.setItem("questionTypes", JSON.stringify(chess_data.questionTypes));
 
-const fenTurn = chess_data.playerToMoveAfter;
+const fenTurn = chess_data.playerToMoveAfter || "w";
 const movesId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
 
 createDynamicInputs(getFixedDisplayQuestionTypes(), movesId);
