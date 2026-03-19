@@ -6,6 +6,37 @@ let gameEnded = false;
 let timerInterval = null;
 
 // -----------------------------------------------------------
+// FEN / player helpers
+
+function getPlayersFromFen(fen) {
+  if (typeof fen !== "string") return { p1: "w", p2: "b" };
+
+  const parts = fen.split(" ");
+  const turn = parts[1] === "b" ? "b" : "w";
+
+  return {
+    p1: turn,
+    p2: turn === "w" ? "b" : "w",
+  };
+}
+
+function getFenTurn(fen) {
+  return getPlayersFromFen(fen).p1;
+}
+
+function getOpponentColor(color) {
+  return color === "w" ? "b" : "w";
+}
+
+// Return a game where it's the specified player to move ("w" or "b") from the given FEN
+function switchFenSides(fen, side) {
+  const fenParts = typeof fen === "string" ? fen.split(" ") : [];
+  if (fenParts.length < 2) return fen;
+  fenParts[1] = side === "b" ? "b" : "w";
+  return fenParts.join(" ");
+}
+
+// -----------------------------------------------------------
 // Chess functions
 
 // Return the number of possible checking moves
@@ -48,12 +79,8 @@ function countAllLegal(game) {
   };
 }
 
-// Return a game where it's the specified player to move ('w' or 'b') from the given FEN
-function switchFenSides(fen, side) {
-  const fenParts = fen.split(" ");
-  fenParts[1] = side;
-  return fenParts.join(" ");
-}
+// -----------------------------------------------------------
+// Game loading helpers
 
 // Return array of PGN games
 async function getGames() {
@@ -75,6 +102,7 @@ async function getGames() {
       currentGame += "\n\n" + section;
     }
   }
+
   if (currentGame) games.push(currentGame.trim());
 
   console.log("Number of games found:", games.length);
@@ -85,6 +113,7 @@ async function getGames() {
 // Load the game weights file and return parsed weights
 async function getWeights() {
   const path = "lichess-puzzles/selected_weights.json";
+
   try {
     const response = await fetch(path);
     if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -129,11 +158,19 @@ function getGame(game_index, ply) {
 
   const moves = game.history();
   game.reset();
-  for (let i = 0; i < ply; i++) game.move(moves[i]);
+
+  for (let i = 0; i < ply; i++) {
+    game.move(moves[i]);
+  }
+
   return game;
 }
 
-// Return object with correct counts for black and white from given fen
+// -----------------------------------------------------------
+// Correct answers logic
+// p1 = player to move in FEN
+// p2 = other player
+
 function getCorrectAnswers(fen, questionTypes) {
   return questionTypes.reduce((result, quesType) => {
     result[quesType] = getOneCorrectAnswer(fen, quesType);
@@ -142,11 +179,11 @@ function getCorrectAnswers(fen, questionTypes) {
 }
 
 function getOneCorrectAnswer(fen, questionType) {
-  const realTurn = fen.split(" ")[1];
+  const players = getPlayersFromFen(fen);
   let side;
 
-  if (questionType.startsWith("p1")) side = realTurn;
-  else if (questionType.startsWith("p2")) side = realTurn === "w" ? "b" : "w";
+  if (questionType.startsWith("p1")) side = players.p1;
+  else if (questionType.startsWith("p2")) side = players.p2;
   else throw new RangeError("Expected p1 or p2");
 
   const modFen = switchFenSides(fen, side);
@@ -191,6 +228,7 @@ function initTimer() {
   }
 
   updateTimerDisplay();
+
   timerInterval = setInterval(() => {
     if (gameEnded) return;
 
@@ -219,7 +257,11 @@ function penalizeTime() {
 }
 
 // -----------------------------------------------------------
-// Display ordering (White then Black, Moves->Checks->Captures)
+// Display ordering
+// Fixed order on screen:
+// p1 Moves / Checks / Captures
+// p2 Moves / Checks / Captures
+// p1/p2 are always derived from chess_data.fen
 
 function qTypeForAbsColorAndKind(color, kind, fenTurn) {
   const prefix = color === fenTurn ? "p1" : "p2";
@@ -227,8 +269,6 @@ function qTypeForAbsColorAndKind(color, kind, fenTurn) {
 }
 
 function getFixedDisplayQuestionTypes() {
-  // p1 = joueur à qui c’est le trait (playerToMoveAfter)
-  // p2 = l’autre joueur
   return [
     "p1AllLegal",
     "p1Checks",
@@ -298,16 +338,15 @@ function highlightSquares(squares) {
   const boardEl = document.getElementById("board");
   if (!boardEl || !Array.isArray(squares)) return;
 
- squares.forEach((sq) => {
-  const el = boardEl.querySelector(`[data-square="${sq}"]`);
-  if (el) el.classList.add("hl-red");
-  else {
-    const el2 = boardEl.querySelector(`.square-${sq}`);
-    if (el2) el2.classList.add("hl-red");
-  }
-});
+  squares.forEach((sq) => {
+    const el = boardEl.querySelector(`[data-square="${sq}"]`);
+    if (el) el.classList.add("hl-red");
+    else {
+      const el2 = boardEl.querySelector(`.square-${sq}`);
+      if (el2) el2.classList.add("hl-red");
+    }
+  });
 }
-
 
 // -----------------------------------------------------------
 // Piece markers (6 zones)
@@ -449,31 +488,32 @@ function setupHighlightButtons() {
     const side = labels[key];
 
     btn.type = "button";
+
     btn.onclick = () => {
       if (!side) {
-        // clear
         clearBoardHighlights();
         clearPieceMarkers();
         clearBigMarkers();
         return;
       }
 
-if (!chess_data.correct) chess_data.correct = {};
+      if (!chess_data.correct) chess_data.correct = {};
 
-const fenTurn = chess_data.playerToMoveAfter;
+      const fenTurn = getFenTurn(chess_data.fen);
 
-let kind;
-if (key.includes("moves")) kind = "AllLegal";
-else if (key.includes("checks")) kind = "Checks";
-else if (key.includes("captures")) kind = "Captures";
+      let kind;
+      if (key.includes("moves")) kind = "AllLegal";
+      else if (key.includes("checks")) kind = "Checks";
+      else if (key.includes("captures")) kind = "Captures";
+      else return;
 
-const qType = qTypeForAbsColorAndKind(side, kind, fenTurn);
+      const qType = qTypeForAbsColorAndKind(side, kind, fenTurn);
 
-let ans = chess_data.correct[qType];
-if (!ans) {
-  ans = getOneCorrectAnswer(chess_data.fen, qType);
-  chess_data.correct[qType] = ans;
-}
+      let ans = chess_data.correct[qType];
+      if (!ans) {
+        ans = getOneCorrectAnswer(chess_data.fen, qType);
+        chess_data.correct[qType] = ans;
+      }
 
       if (!ans?.targets) return;
       highlightMovesByPiece(ans.targets, side);
@@ -482,7 +522,8 @@ if (!ans) {
 }
 
 // ----------------------------------------------------------
-// Moves table (remainingMoves) corrigée
+// Moves table
+
 function createMovesTableHtml(movesList, fenTurn) {
   let tableHtml = `<h3>Compute counts after these moves:</h3>
 <table class="moves-table">`;
@@ -490,8 +531,6 @@ function createMovesTableHtml(movesList, fenTurn) {
   const totalMoves = movesList.length;
   let turnNumber = 1;
 
-  // Déterminer la couleur du premier coup réel dans le slice
-  // vrai = blanc, faux = noir
   let currentIsWhite = fenTurn === "w";
 
   let i = 0;
@@ -500,7 +539,6 @@ function createMovesTableHtml(movesList, fenTurn) {
     let blackMove = "";
 
     if (currentIsWhite) {
-      // Premier coup à jouer = blanc
       whiteMove = movesList[i] || "";
       i++;
       currentIsWhite = false;
@@ -511,7 +549,6 @@ function createMovesTableHtml(movesList, fenTurn) {
         currentIsWhite = true;
       }
     } else {
-      // Premier coup à jouer = noir → colonne blanche vide = "..."
       whiteMove = "...";
       blackMove = movesList[i] || "";
       i++;
@@ -543,53 +580,47 @@ function updateMovesDisplay() {
   const startIndex = fullHistory.length - chess_data.plyAhead;
   const movesList = fullHistory.slice(startIndex);
 
-  // Déterminer le joueur à jouer pour le premier coup affiché
-  const firstMoveIsWhite = (startIndex % 2 === 0); // vrai si premier coup slice = blanc
+  const firstMoveIsWhite = startIndex % 2 === 0;
   const fenTurnAfterPlyAhead = firstMoveIsWhite ? "w" : "b";
 
   movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurnAfterPlyAhead);
 }
 
 function getMovesInputIdForPlayerToMove() {
-  // le vrai joueur à jouer
-  const fenTurn = chess_data.playerToMoveAfter;
-  // p1 = joueur à jouer
-  return qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn);
+  return "p1AllLegal";
 }
+
 // ----------------------------------------------------------
 // Game load / puzzle
 
 function loadNewPuzzle() {
-  
   clearBoardHighlights();
+  clearPieceMarkers();
+  clearBigMarkers();
 
   const game_and_ply = getRandomPosNumber(chess_data.game_weights, chess_data.playerToMoveAfter === "w");
   chess_data.game_index = game_and_ply.game;
   chess_data.ply = game_and_ply.ply;
 
-chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
-chess_data.fen = chess_data.game.fen();
+  chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
+  chess_data.fen = chess_data.game.fen();
 
-// recalculer joueur à jouer **après la création du jeu**
-setPlayerToMoveAfter();
+  createDynamicInputs(getFixedDisplayQuestionTypes(), false);
 
-createDynamicInputs(getFixedDisplayQuestionTypes());
+  const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
+  chess_data.board.position(prior_game.fen());
 
-const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
-chess_data.board.position(prior_game.fen());
-// Afficher le joueur avec le trait en bas
-if (chess_data.playerToMove === "b") {
-  chess_data.board.flip();
-}
+  if (chess_data.playerToMove === "b") {
+    chess_data.board.flip();
+  }
 
   ensurePieceMarkers();
   clearPieceMarkers();
+  clearBigMarkers();
   updateMovesDisplay();
 
-const allTypes = getFixedDisplayQuestionTypes();
-chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
-
-  // Pre-calc AllLegal for highlight buttons (useful even if not asked)
+  const allTypes = getFixedDisplayQuestionTypes();
+  chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
 
   chess_data.is_correct = Object.fromEntries(getFixedDisplayQuestionTypes().map((name) => [name, false]));
 
@@ -607,7 +638,6 @@ chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
     if (shownMovesLabel) shownMovesLabel.textContent = "";
   });
 
-  // Clear movesList (bottom) when new puzzle loads
   const movesList = document.getElementById("movesList");
   if (movesList) {
     movesList.innerHTML = "";
@@ -625,30 +655,31 @@ chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
 }
 
 function startNewGame() {
-  // Sélection du joueur à jouer
   const selected = document.querySelector('input[name="playerToMove"]:checked').value;
   setPlayerToMove(selected);
   setPlayerToMoveAfter();
 
-  // Initialisation du board
   setBoard();
 
-  // Réinitialisation du jeu
   gameEnded = false;
   resetScore();
-loadNewPuzzle();
-focusInputForPlayerToMove(); // <-- ajouter cette ligne
-chess_data.timeRemaining = chess_data.showTimer ? chess_data.defaultTimeRemaining : 9999;
-initTimer();
+  loadNewPuzzle();
+  focusInputForPlayerToMove();
+
+  chess_data.timeRemaining = chess_data.showTimer ? chess_data.defaultTimeRemaining : 9999;
+  initTimer();
 }
+
 // ----------------------------------------------------------
+// Input / player mapping
 
-// Renvoie "w" ou "b" pour un ID donné
 function playerColorForInputId(id) {
-  if (id.startsWith("p1")) return chess_data.playerToMoveAfter; // joueur ayant le trait
-  else return chess_data.playerToMoveAfter === "w" ? "b" : "w";  // l’autre joueur
+  const players = getPlayersFromFen(chess_data.fen);
+  if (id.startsWith("p1")) return players.p1;
+  return players.p2;
 }
 
+// ----------------------------------------------------------
 // Submit answers
 
 function submitAnswers(event) {
@@ -658,8 +689,6 @@ function submitAnswers(event) {
 
   const prevTime = chess_data.timeRemaining;
 
-  // 🔥 Construire la liste réelle des inputs à corriger
-  // On ne prend QUE ceux qui sont cochés dans Settings
   const activeDisplayed = getFixedDisplayQuestionTypes().filter((id) => chess_data.questionTypes.includes(id));
 
   activeDisplayed.forEach((id) => {
@@ -688,15 +717,14 @@ function submitAnswers(event) {
 
   if (gameEnded) return;
 
-  // Jouer le buzzer si le temps s'écoule
   if (prevTime > 0 && chess_data.timeRemaining === 0) playBuzz();
+
   if (chess_data.timeRemaining <= 0) {
     gameEnded = true;
     endGame();
     return;
   }
 
-  // Vérifier si tous les inputs cochés sont corrects
   const allCorrect = activeDisplayed.every((id) => chess_data.is_correct[id]);
 
   if (allCorrect) {
@@ -715,16 +743,19 @@ function setupSettingsModal() {
 
   if (!settings) return;
 
-  // Force closed on load (even if CSS modal is broken)
   settings.style.display = "none";
 
   if (settingsBtn) {
     settingsBtn.type = "button";
-    settingsBtn.onclick = () => (settings.style.display = "block");
+    settingsBtn.onclick = () => {
+      settings.style.display = "block";
+    };
   }
 
   if (closeBtn) {
-    closeBtn.onclick = () => (settings.style.display = "none");
+    closeBtn.onclick = () => {
+      settings.style.display = "none";
+    };
   }
 
   window.addEventListener("click", (event) => {
@@ -738,7 +769,7 @@ function setTimerVisibility(visible) {
   timerSection.style.display = visible ? "block" : "none";
 }
 
-// ----------------------------------------------------------
+// -----------------------------------------------------------
 // Load settings
 
 async function loadSettings() {
@@ -760,15 +791,20 @@ async function loadSettings() {
   };
 
   chess_data.showTimer = localStorage.getItem("showTimer") === "false" ? false : true;
+
   const showTimerEl = document.getElementById("showTimer");
   if (showTimerEl) showTimerEl.checked = chess_data.showTimer;
   setTimerVisibility(chess_data.showTimer);
 
-    const savedDefaultTimeRemaining = localStorage.getItem("defaultTimeRemaining");
-  chess_data.defaultTimeRemaining = savedDefaultTimeRemaining ? parseInt(savedDefaultTimeRemaining, 10) : chess_data.defaultTimeRemaining;
+  const savedDefaultTimeRemaining = localStorage.getItem("defaultTimeRemaining");
+  chess_data.defaultTimeRemaining = savedDefaultTimeRemaining
+    ? parseInt(savedDefaultTimeRemaining, 10)
+    : chess_data.defaultTimeRemaining;
 
   const defaultTimeMinutesEl = document.getElementById("defaultTimeMinutes");
-  if (defaultTimeMinutesEl) defaultTimeMinutesEl.value = Math.max(1, Math.round(chess_data.defaultTimeRemaining / 60));
+  if (defaultTimeMinutesEl) {
+    defaultTimeMinutesEl.value = Math.max(1, Math.round(chess_data.defaultTimeRemaining / 60));
+  }
 
   const selectedToMoveStored = localStorage.getItem("selectedToMove") || "Random";
   const radio = document.querySelector(`input[value="${selectedToMoveStored}"]`);
@@ -777,6 +813,7 @@ async function loadSettings() {
 
   const savedPlyAhead = localStorage.getItem("plyAhead");
   chess_data.plyAhead = savedPlyAhead ? parseInt(savedPlyAhead, 10) : 0;
+
   const plyAheadEl = document.getElementById("plyAhead");
   if (plyAheadEl) plyAheadEl.value = chess_data.plyAhead;
 
@@ -790,13 +827,17 @@ async function loadSettings() {
   if (storedTypes) chess_data.questionTypes = JSON.parse(storedTypes);
   else chess_data.questionTypes = ["p1Checks", "p1Captures", "p2Checks", "p2Captures"];
 
-  document.querySelectorAll('input[name="quizOption"]').forEach((option) => (option.checked = false));
+  document.querySelectorAll('input[name="quizOption"]').forEach((option) => {
+    option.checked = false;
+  });
+
   chess_data.questionTypes.forEach((questionType) => {
     const el = document.querySelector(`input[value="${questionType}"]`);
     if (el) el.checked = true;
   });
 
-setupHighlightButtons();
+  createDynamicInputs(getFixedDisplayQuestionTypes(), false);
+  setupHighlightButtons();
 }
 
 function setPlayerToMove(selected) {
@@ -810,16 +851,17 @@ function setPlayerToMove(selected) {
 
 function setPlayerToMoveAfter() {
   chess_data.playerToMoveAfter =
-    chess_data.plyAhead % 2 === 0 ? chess_data.playerToMove : chess_data.playerToMove === "w" ? "b" : "w";
+    chess_data.plyAhead % 2 === 0
+      ? chess_data.playerToMove
+      : chess_data.playerToMove === "w"
+      ? "b"
+      : "w";
 }
 
 function setBoard() {
-chess_data.board = Chessboard("board", { position: "start" });
+  chess_data.board = Chessboard("board", { position: "start" });
   ensurePieceMarkers();
 }
-
-// ----------------------------------------------------------
-// Dynamic inputs
 
 // ----------------------------------------------------------
 // Dynamic inputs
@@ -827,6 +869,7 @@ chess_data.board = Chessboard("board", { position: "start" });
 function createDynamicInputs(questionTypes, doFocus = true) {
   const container = document.getElementById("count-inputs");
   if (!container) return;
+
   container.innerHTML = "";
 
   questionTypes.forEach((questionType) => {
@@ -849,8 +892,9 @@ function createDynamicInputs(questionTypes, doFocus = true) {
     decrementButton.textContent = "←";
     decrementButton.className = "decrement";
     decrementButton.onclick = () => {
-      if (parseInt(input.value || "0", 10) > 0)
+      if (parseInt(input.value || "0", 10) > 0) {
         input.value = parseInt(input.value || "0", 10) - 1;
+      }
     };
 
     const incrementButton = document.createElement("button");
@@ -879,19 +923,16 @@ function createDynamicInputs(questionTypes, doFocus = true) {
     container.appendChild(div);
   });
 
-  // ⚡ Focus automatique sur p1 = joueur ayant le trait
   if (doFocus) focusInputForPlayerToMove();
 }
 
 function focusInputForPlayerToMove() {
-  const fenTurn = chess_data.playerToMoveAfter; // joueur qui a le trait
-  const inputId = qTypeForAbsColorAndKind(fenTurn, "AllLegal", fenTurn); // p1 = trait
-  const el = document.getElementById(inputId);
+  const el = document.getElementById("p1AllLegal");
   if (el) el.focus();
 }
 
 // ----------------------------------------------------------
-// saveSettings corrigée
+// saveSettings
 
 async function saveSettings() {
   const showTimer = document.getElementById("showTimer").checked;
@@ -918,35 +959,72 @@ async function saveSettings() {
   chess_data.questionTypes = Array.from(questionCheckboxes).map((opt) => opt.value);
   localStorage.setItem("questionTypes", JSON.stringify(chess_data.questionTypes));
 
-  // Création des inputs dynamiques avec focus correct sur p1
-  createDynamicInputs(getFixedDisplayQuestionTypes());
-
-  setupHighlightButtons();
-
   const plyAhead = parseInt(document.getElementById("plyAhead").value, 10);
   chess_data.plyAhead = plyAhead;
   localStorage.setItem("plyAhead", plyAhead);
 
   setPlayerToMoveAfter();
 
+  createDynamicInputs(getFixedDisplayQuestionTypes(), false);
+  setupHighlightButtons();
+
+  clearBoardHighlights();
+  clearPieceMarkers();
+  clearBigMarkers();
+
+  gameEnded = true;
+
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  chess_data.fen = null;
+  chess_data.correct = null;
+  chess_data.is_correct = null;
+
+  if (chess_data.board) {
+    chess_data.board.position("start");
+    if (chess_data.playerToMove === "b") chess_data.board.flip();
+  }
+
+  const remainingMoves = document.getElementById("remainingMoves");
+  if (remainingMoves) remainingMoves.innerHTML = "";
+
+  const movesList = document.getElementById("movesList");
+  if (movesList) {
+    movesList.innerHTML = "";
+    movesList.style.display = "none";
+  }
+
+  getFixedDisplayQuestionTypes().forEach((id) => {
+    const input = document.getElementById(id);
+    if (input) input.value = 0;
+
+    const feedbackIcon = document.getElementById(id + "FeedbackIcon");
+    if (feedbackIcon) {
+      feedbackIcon.textContent = "";
+      feedbackIcon.className = "feedbackIcon";
+    }
+
+    const shownMovesLabel = document.getElementById(id + "ShownMoves");
+    if (shownMovesLabel) shownMovesLabel.textContent = "";
+  });
+
+  resetScore();
+  chess_data.timeRemaining = chess_data.showTimer ? chess_data.defaultTimeRemaining : 9999;
+  updateTimerDisplay();
+
   const settings = document.getElementById("settingsModal");
   if (settings) settings.style.display = "none";
 }
-  
-function createDynamicInputsLabel(questionType) {
-let whoColor;
-if (questionType.startsWith("p1")) {
-  // p1 = joueur à qui c’est le trait → playerToMoveAfter
-  whoColor = chess_data.playerToMoveAfter;
-} else {
-  // p2 = l’autre joueur
-  whoColor = chess_data.playerToMoveAfter === "w" ? "b" : "w";
-}
 
-  // Nom du joueur pour le label
+function createDynamicInputsLabel(questionType) {
+  const players = getPlayersFromFen(chess_data.fen);
+  const whoColor = questionType.startsWith("p1") ? players.p1 : players.p2;
+
   const who = whoColor === "w" ? "White's" : "Black's";
 
-  // Type de question
   let what;
   if (questionType.endsWith("Checks")) what = "Checks";
   else if (questionType.endsWith("Captures")) what = "Captures";
@@ -959,23 +1037,22 @@ if (questionType.startsWith("p1")) {
 // Main boot
 
 document.addEventListener("DOMContentLoaded", () => {
+  try {
+    if (!playBuzz._ctx) {
+      playBuzz._ctx = new (window.AudioContext || window.webkitAudioContext)();
 
-  // Préchargement audio buzzer
-try {
-  if (!playBuzz._ctx) {
-    playBuzz._ctx = new (window.AudioContext || window.webkitAudioContext)();
-
-    fetch("duck.mp3")
-      .then(r => r.arrayBuffer())
-      .then(b => playBuzz._ctx.decodeAudioData(b))
-      .then(buf => { playBuzz._buffer = buf; })
-      .catch(e => console.warn("Audio decode failed:", e));
+      fetch("duck.mp3")
+        .then((r) => r.arrayBuffer())
+        .then((b) => playBuzz._ctx.decodeAudioData(b))
+        .then((buf) => {
+          playBuzz._buffer = buf;
+        })
+        .catch((e) => console.warn("Audio decode failed:", e));
+    }
+  } catch (e) {
+    console.warn("AudioContext creation failed:", e);
   }
-} catch (e) {
-  console.warn("AudioContext creation failed:", e);
-}
-  
-  // Settings modal wiring
+
   setupSettingsModal();
 
   const startBtn = document.getElementById("startButton");
@@ -984,7 +1061,6 @@ try {
     startBtn.addEventListener("click", startNewGame);
   }
 
-  // Show Answers button wiring
   const btn = document.getElementById("showMovesButton");
   if (btn) {
     btn.type = "button";
