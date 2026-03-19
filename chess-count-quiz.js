@@ -667,7 +667,6 @@ const activeDisplayed = displayedTypes.filter((id) => {
   // 🔥 On ne filtre QUE par type (Checks / Captures / Moves)
   return chess_data.questionTypes.some((q) => q.endsWith(kind));
 });
-  });
 
   activeDisplayed.forEach((id) => {
     const input = document.getElementById(id);
