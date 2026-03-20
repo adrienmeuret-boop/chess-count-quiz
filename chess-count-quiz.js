@@ -826,6 +826,7 @@ function submitAnswers(event) {
   if (!chess_data || !chess_data.correct || gameEnded) return;
 
   const prevTime = chess_data.timeRemaining;
+  let hasWrongAnswer = false;
 
   const activeDisplayed = getFixedDisplayQuestionTypes().filter((id) =>
     chess_data.questionTypes.includes(id)
@@ -852,16 +853,21 @@ function submitAnswers(event) {
     }
 
     if (!isCorrect) {
+      hasWrongAnswer = true;
       penalizeTime();
     }
   });
 
+  if (hasWrongAnswer) {
+    playDuck();
+  }
+
   if (gameEnded) return;
 
-if (chess_data.showTimer && prevTime > 0 && chess_data.timeRemaining <= 0) {
-  triggerGameOver();
-  return;
-}
+  if (chess_data.showTimer && prevTime > 0 && chess_data.timeRemaining <= 0) {
+    triggerGameOver();
+    return;
+  }
 
   const allCorrect = activeDisplayed.every((id) => chess_data.is_correct[id]);
 
@@ -1156,14 +1162,14 @@ function playDuck() {
 
 document.addEventListener("DOMContentLoaded", () => {
   try {
-    if (!playBuzz._ctx) {
-      playBuzz._ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!playDuck._ctx) {
+      playDuck._ctx = new (window.AudioContext || window.webkitAudioContext)();
 
       fetch("duck.mp3")
         .then((r) => r.arrayBuffer())
-        .then((b) => playBuzz._ctx.decodeAudioData(b))
+        .then((b) => playDuck._ctx.decodeAudioData(b))
         .then((buf) => {
-          playBuzz._buffer = buf;
+          playDuck._buffer = buf;
         })
         .catch((e) => console.warn("Audio decode failed:", e));
     }
