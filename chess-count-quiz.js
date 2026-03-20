@@ -1195,10 +1195,27 @@ function createDynamicInputs(displayIds, doFocus = true) {
 
 function focusInputForPlayerToMove() {
   setTimeout(() => {
-    const turn = getFenTurn(chess_data?.displayFen || chess_data?.fen);
-    const targetId = turn === "w" ? "wAllLegal" : "bAllLegal";
+    if (!chess_data?.questionTypes?.length) return;
+
+    const focusOrder = [
+      "p1AllLegal",
+      "p1Checks",
+      "p1Captures",
+      "p2AllLegal",
+      "p2Checks",
+      "p2Captures",
+    ];
+
+    const firstActiveQuestionType = focusOrder.find((questionType) =>
+      chess_data.questionTypes.includes(questionType)
+    );
+
+    if (!firstActiveQuestionType) return;
+
+    const targetId = getDisplayIdFromQuestionType(firstActiveQuestionType);
     const el = byId(targetId);
-    if (el) el.focus();
+
+    if (el && !el.disabled) el.focus();
   }, 0);
 }
 
