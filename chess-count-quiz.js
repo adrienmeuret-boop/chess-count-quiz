@@ -1134,6 +1134,23 @@ function createDynamicInputsLabel(questionType) {
   return `${who}\n${what}:`;
 }
 
+function playDuck() {
+  try {
+    if (!playDuck._ctx || !playDuck._buffer) return;
+
+    if (playDuck._ctx.state === "suspended") {
+      playDuck._ctx.resume();
+    }
+
+    const source = playDuck._ctx.createBufferSource();
+    source.buffer = playDuck._buffer;
+    source.connect(playDuck._ctx.destination);
+    source.start(0);
+  } catch (e) {
+    console.warn("Failed to play duck:", e);
+  }
+}
+
 // -----------------------------------------------------------
 // Main boot
 
