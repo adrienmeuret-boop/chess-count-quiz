@@ -2,16 +2,25 @@
 // Global variables
 
 let chess_data = null; // See loadSettings for value of chess_data
-let gameEnded = false;
+let gameEnded = true;
 let timerInterval = null;
+
+// -----------------------------------------------------------
+// DOM helpers
+
+function byId(id) {
+  return document.getElementById(id);
+}
 
 // -----------------------------------------------------------
 // FEN / player helpers
 
 function getPlayersFromFen(fen) {
-  if (typeof fen !== "string") return { p1: "w", p2: "b" };
+  if (typeof fen !== "string") {
+    return { p1: "w", p2: "b" };
+  }
 
-  const parts = fen.split(" ");
+  const parts = fen.trim().split(/\s+/);
   const turn = parts[1] === "b" ? "b" : "w";
 
   return {
@@ -30,8 +39,11 @@ function getOpponentColor(color) {
 
 // Return a game where it's the specified player to move ("w" or "b") from the given FEN
 function switchFenSides(fen, side) {
-  const fenParts = typeof fen === "string" ? fen.split(" ") : [];
+  if (typeof fen !== "string") return fen;
+
+  const fenParts = fen.trim().split(/\s+/);
   if (fenParts.length < 2) return fen;
+
   fenParts[1] = side === "b" ? "b" : "w";
   return fenParts.join(" ");
 }
@@ -86,7 +98,12 @@ function countAllLegal(game) {
 async function getGames() {
   const path = "lichess-puzzles/selected_games.pgn";
   console.log("Loading games from:", path);
+
   const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`Failed to load PGN file: HTTP ${response.status}`);
+  }
+
   const text = await response.text();
   console.log("Raw PGN text length:", text.length);
 
@@ -106,7 +123,8 @@ async function getGames() {
   if (currentGame) games.push(currentGame.trim());
 
   console.log("Number of games found:", games.length);
-  if (games.length <= 0) console.log("Error with PGN file");
+  if (games.length <= 0) console.error("Error with PGN file");
+
   return games;
 }
 
@@ -127,6 +145,10 @@ async function getWeights() {
 }
 
 function getRandomPosNumber(game_weights, white) {
+  if (!Array.isArray(game_weights) || game_weights.length === 0) {
+    throw new Error("No weights available.");
+  }
+
   const filtered = game_weights.filter((entry) => (white ? entry.ply % 2 === 0 : entry.ply % 2 !== 0));
   if (filtered.length === 0) throw new Error("No entries available for the specified color.");
 
@@ -146,20 +168,25 @@ function getRandomPosNumber(game_weights, white) {
 
 // Return a game object with the given index
 function getGame(game_index, ply) {
+  if (!chess_data?.games?.[game_index]) {
+    console.error("Game index out of range:", game_index);
+    return null;
+  }
+
   const game = new Chess();
   const pgn = chess_data.games[game_index];
   console.log("PGN length:", pgn.length);
 
   const parsedGame = game.load_pgn(pgn);
   if (!parsedGame) {
-    console.log("Error parsing PGN");
+    console.error("Error parsing PGN");
     return null;
   }
 
   const moves = game.history();
   game.reset();
 
-  for (let i = 0; i < ply; i++) {
+  for (let i = 0; i < ply && i < moves.length; i++) {
     game.move(moves[i]);
   }
 
@@ -188,7 +215,11 @@ function getOneCorrectAnswer(fen, questionType) {
 
   const modFen = switchFenSides(fen, side);
   const game = new Chess();
-  game.load(modFen);
+  const loaded = game.load(modFen);
+
+  if (!loaded) {
+    throw new Error(`Invalid FEN for ${questionType}: ${modFen}`);
+  }
 
   if (questionType.endsWith("Checks")) return countChecks(game);
   if (questionType.endsWith("Captures")) return countCaptures(game);
@@ -201,49 +232,80 @@ function getOneCorrectAnswer(fen, questionType) {
 // Timer and score code
 
 function updateTimerDisplay() {
-  const minutes = Math.floor(chess_data.timeRemaining / 60);
-  const seconds = chess_data.timeRemaining % 60;
-  const timerEl = document.getElementById("timer");
-  if (!timerEl) return;
+  const timerEl = byId("timer");
+  if (!timerEl || !chess_data) return;
 
-  timerEl.textContent = `Time: ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  if (!chess_data.showTimer) {
+    timerEl.textContent = "";
+    return;
+  }
+
+  const safeTime = Number.isFinite(chess_data.timeRemaining)
+    ? Math.max(0, chess_data.timeRemaining)
+    : 0;
+
+  const minutes = Math.floor(safeTime / 60);
+  const seconds = safeTime % 60;
+
+  timerEl.textContent = `Time: ${minutes.toString().padStart(2, "0")}:${seconds
+    .toString()
+    .padStart(2, "0")}`;
 }
 
 function incrementScore() {
+  if (!chess_data) return;
+
   chess_data.score++;
-  const scoreEl = document.getElementById("score");
+  const scoreEl = byId("score");
   if (scoreEl) scoreEl.textContent = `Score: ${chess_data.score}`;
 }
 
 function resetScore() {
+  if (!chess_data) return;
+
   chess_data.score = 0;
-  const scoreEl = document.getElementById("score");
+  const scoreEl = byId("score");
   if (scoreEl) scoreEl.textContent = `Score: ${chess_data.score}`;
 }
 
-function initTimer() {
+function stopTimer() {
   if (timerInterval) {
     clearInterval(timerInterval);
     timerInterval = null;
   }
+}
 
+function triggerGameOver(playSound = true) {
+  if (gameEnded) return;
+
+  gameEnded = true;
+  stopTimer();
+
+  if (playSound) playBuzz();
+  endGame();
+}
+
+function initTimer() {
+  stopTimer();
   updateTimerDisplay();
 
+  if (!chess_data?.showTimer) return;
+
   timerInterval = setInterval(() => {
-    if (gameEnded) return;
+    if (gameEnded || !chess_data) return;
 
     chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 1);
     updateTimerDisplay();
 
     if (chess_data.timeRemaining <= 0) {
-      gameEnded = true;
-      playBuzz();
-      endGame();
+      triggerGameOver(true);
     }
   }, 1000);
 }
 
 function startTimer() {
+  if (!chess_data) return;
+
   if (chess_data.showTimer) chess_data.timeRemaining = chess_data.defaultTimeRemaining;
   else chess_data.timeRemaining = Infinity;
 
@@ -252,6 +314,8 @@ function startTimer() {
 }
 
 function penalizeTime() {
+  if (!chess_data || gameEnded || !chess_data.showTimer) return;
+
   chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 10);
   updateTimerDisplay();
 }
@@ -283,15 +347,33 @@ function getFixedDisplayQuestionTypes() {
 // Reveal answers (numbers near inputs + moves list in #movesList)
 
 function revealAnswers() {
-  const movesList = document.getElementById("movesList");
+  const activeDisplayed = getFixedDisplayQuestionTypes().filter((id) =>
+    chess_data?.questionTypes?.includes(id)
+  );
+
+  const hasWrongAnswer = activeDisplayed.some((id) => {
+    const input = byId(id);
+    const correct = chess_data?.correct?.[id];
+    if (!input || !correct) return false;
+
+    const inputValue = parseInt(input.value, 10);
+    const safeValue = Number.isNaN(inputValue) ? 0 : inputValue;
+    return safeValue !== correct.count;
+  });
+
+  if (hasWrongAnswer) {
+    playBuzz();
+  }
+
+  const movesList = byId("movesList");
   if (movesList) {
     movesList.innerHTML = "";
     movesList.style.display = "block";
   }
 
   getFixedDisplayQuestionTypes().forEach((id) => {
-    const shownMovesLabel = document.getElementById(id + "ShownMoves");
-    const correct = chess_data.correct?.[id];
+    const shownMovesLabel = byId(id + "ShownMoves");
+    const correct = chess_data?.correct?.[id];
     if (!shownMovesLabel || !correct) return;
 
     const movesText = Array.isArray(correct.moves) ? correct.moves.join(", ") : "";
@@ -316,7 +398,7 @@ function revealAnswers() {
     }
   });
 
-  const showMovesButton = document.getElementById("showMovesButton");
+  const showMovesButton = byId("showMovesButton");
   if (showMovesButton) {
     showMovesButton.disabled = true;
     showMovesButton.style.backgroundColor = "#d3d3d3";
@@ -327,24 +409,21 @@ function revealAnswers() {
 // Board square highlights
 
 function clearBoardHighlights() {
-  const boardEl = document.getElementById("board");
+  const boardEl = byId("board");
   if (!boardEl) return;
+
   boardEl.querySelectorAll(".hl-red").forEach((el) => el.classList.remove("hl-red"));
 }
 
 function highlightSquares(squares) {
   clearBoardHighlights();
 
-  const boardEl = document.getElementById("board");
+  const boardEl = byId("board");
   if (!boardEl || !Array.isArray(squares)) return;
 
   squares.forEach((sq) => {
-    const el = boardEl.querySelector(`[data-square="${sq}"]`);
+    const el = boardEl.querySelector(`[data-square="${sq}"]`) || boardEl.querySelector(`.square-${sq}`);
     if (el) el.classList.add("hl-red");
-    else {
-      const el2 = boardEl.querySelector(`.square-${sq}`);
-      if (el2) el2.classList.add("hl-red");
-    }
   });
 }
 
@@ -352,7 +431,7 @@ function highlightSquares(squares) {
 // Piece markers (6 zones)
 
 function ensurePieceMarkers() {
-  const boardEl = document.getElementById("board");
+  const boardEl = byId("board");
   if (!boardEl) return;
 
   const squares = boardEl.querySelectorAll(".square-55d63");
@@ -380,14 +459,16 @@ function ensurePieceMarkers() {
 }
 
 function clearPieceMarkers() {
-  const boardEl = document.getElementById("board");
+  const boardEl = byId("board");
   if (!boardEl) return;
 
-  boardEl.querySelectorAll(".pm6 .pm.on, .pm6 .pm.solid").forEach((el) => el.classList.remove("on", "solid"));
+  boardEl
+    .querySelectorAll(".pm6 .pm.on, .pm6 .pm.solid")
+    .forEach((el) => el.classList.remove("on", "solid"));
 }
 
 function clearBigMarkers() {
-  const boardEl = document.getElementById("board");
+  const boardEl = byId("board");
   if (!boardEl) return;
 
   boardEl.querySelectorAll(".pmBig").forEach((el) => {
@@ -397,7 +478,7 @@ function clearBigMarkers() {
 }
 
 function markSquarePiece(square, piece) {
-  const boardEl = document.getElementById("board");
+  const boardEl = byId("board");
   if (!boardEl) return;
 
   const sqEl = boardEl.querySelector(`[data-square="${square}"]`) || boardEl.querySelector(`.square-${square}`);
@@ -417,6 +498,8 @@ function highlightMovesByPiece(moveList, side) {
   if (!Array.isArray(moveList)) return;
 
   const map = new Map();
+  const boardEl = byId("board");
+  if (!boardEl) return;
 
   moveList.forEach((m) => {
     if (!m?.to || !m?.piece) return;
@@ -424,8 +507,6 @@ function highlightMovesByPiece(moveList, side) {
     const counts = map.get(m.to);
     counts.set(m.piece, (counts.get(m.piece) || 0) + 1);
   });
-
-  const boardEl = document.getElementById("board");
 
   for (const [sq, counts] of map.entries()) {
     const piecesDistinct = Array.from(counts.keys());
@@ -497,6 +578,7 @@ function setupHighlightButtons() {
         return;
       }
 
+      if (!chess_data?.fen) return;
       if (!chess_data.correct) chess_data.correct = {};
 
       const fenTurn = getFenTurn(chess_data.fen);
@@ -530,7 +612,6 @@ function createMovesTableHtml(movesList, fenTurn) {
 
   const totalMoves = movesList.length;
   let turnNumber = 1;
-
   let currentIsWhite = fenTurn === "w";
 
   let i = 0;
@@ -570,9 +651,11 @@ function createMovesTableHtml(movesList, fenTurn) {
 }
 
 function updateMovesDisplay() {
-  const movesDisplay = document.getElementById("remainingMoves");
-  if (!movesDisplay || chess_data.plyAhead === 0) {
-    if (movesDisplay) movesDisplay.innerHTML = "";
+  const movesDisplay = byId("remainingMoves");
+  if (!movesDisplay) return;
+
+  if (!chess_data?.game || chess_data.plyAhead === 0) {
+    movesDisplay.innerHTML = "";
     return;
   }
 
@@ -591,28 +674,110 @@ function getMovesInputIdForPlayerToMove() {
 }
 
 // ----------------------------------------------------------
-// Game load / puzzle
+// Board helpers
 
-function loadNewPuzzle() {
+function setBoardOrientation() {
+  if (!chess_data?.board) return;
+
+  const wanted = chess_data.playerToMove === "b" ? "black" : "white";
+
+  if (typeof chess_data.board.orientation === "function") {
+    chess_data.board.orientation(wanted);
+  }
+}
+
+function setBoard() {
+  if (!chess_data.board) {
+    chess_data.board = Chessboard("board", { position: "start" });
+  } else {
+    chess_data.board.position("start");
+  }
+
+  setBoardOrientation();
+  ensurePieceMarkers();
+}
+
+// ----------------------------------------------------------
+// Reset helpers
+
+function resetAnswerUi() {
+  getFixedDisplayQuestionTypes().forEach((id) => {
+    const input = byId(id);
+    if (input) input.value = 0;
+
+    const feedbackIcon = byId(id + "FeedbackIcon");
+    if (feedbackIcon) {
+      feedbackIcon.textContent = "";
+      feedbackIcon.className = "feedbackIcon";
+    }
+
+    const shownMovesLabel = byId(id + "ShownMoves");
+    if (shownMovesLabel) shownMovesLabel.textContent = "";
+  });
+
+  const movesList = byId("movesList");
+  if (movesList) {
+    movesList.innerHTML = "";
+    movesList.style.display = "none";
+  }
+
+  const showMovesButton = byId("showMovesButton");
+  if (showMovesButton) {
+    showMovesButton.disabled = false;
+    showMovesButton.style.backgroundColor = "";
+  }
+}
+
+function clearBoardDecorations() {
   clearBoardHighlights();
   clearPieceMarkers();
   clearBigMarkers();
+}
+
+function resetRoundState() {
+  clearBoardDecorations();
+
+  chess_data.fen = null;
+  chess_data.correct = null;
+  chess_data.is_correct = null;
+  chess_data.game = null;
+  chess_data.game_index = null;
+  chess_data.ply = 0;
+
+  const remainingMoves = byId("remainingMoves");
+  if (remainingMoves) remainingMoves.innerHTML = "";
+
+  resetAnswerUi();
+}
+
+// ----------------------------------------------------------
+// Game load / puzzle
+
+function loadNewPuzzle() {
+  clearBoardDecorations();
 
   const game_and_ply = getRandomPosNumber(chess_data.game_weights, chess_data.playerToMoveAfter === "w");
   chess_data.game_index = game_and_ply.game;
   chess_data.ply = game_and_ply.ply;
 
   chess_data.game = getGame(game_and_ply.game, game_and_ply.ply);
+  if (!chess_data.game) {
+    console.error("Failed to load puzzle.");
+    return;
+  }
+
   chess_data.fen = chess_data.game.fen();
 
   createDynamicInputs(getFixedDisplayQuestionTypes(), false);
 
   const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
-  chess_data.board.position(prior_game.fen());
-
-  if (chess_data.playerToMove === "b") {
-    chess_data.board.flip();
+  if (!prior_game) {
+    console.error("Failed to load prior game.");
+    return;
   }
+
+  chess_data.board.position(prior_game.fen());
+  setBoardOrientation();
 
   ensurePieceMarkers();
   clearPieceMarkers();
@@ -622,40 +787,18 @@ function loadNewPuzzle() {
   const allTypes = getFixedDisplayQuestionTypes();
   chess_data.correct = getCorrectAnswers(chess_data.fen, allTypes);
 
-  chess_data.is_correct = Object.fromEntries(getFixedDisplayQuestionTypes().map((name) => [name, false]));
+  chess_data.is_correct = Object.fromEntries(allTypes.map((name) => [name, false]));
 
-  getFixedDisplayQuestionTypes().forEach((id) => {
-    const input = document.getElementById(id);
-    if (input) input.value = 0;
+  resetAnswerUi();
 
-    const feedbackIcon = document.getElementById(id + "FeedbackIcon");
-    if (feedbackIcon) {
-      feedbackIcon.textContent = "";
-      feedbackIcon.className = "feedbackIcon";
-    }
-
-    const shownMovesLabel = document.getElementById(id + "ShownMoves");
-    if (shownMovesLabel) shownMovesLabel.textContent = "";
-  });
-
-  const movesList = document.getElementById("movesList");
-  if (movesList) {
-    movesList.innerHTML = "";
-    movesList.style.display = "none";
-  }
-
-  const showMovesButton = document.getElementById("showMovesButton");
-  if (showMovesButton) {
-    showMovesButton.disabled = false;
-    showMovesButton.style.backgroundColor = "";
-  }
-
-  const form = document.getElementById("chessCountForm");
+  const form = byId("chessCountForm");
   if (form) form.onsubmit = submitAnswers;
 }
 
 function startNewGame() {
-  const selected = document.querySelector('input[name="playerToMove"]:checked').value;
+  const selectedInput = document.querySelector('input[name="playerToMove"]:checked');
+  const selected = selectedInput ? selectedInput.value : "Random";
+
   setPlayerToMove(selected);
   setPlayerToMoveAfter();
 
@@ -666,7 +809,7 @@ function startNewGame() {
   loadNewPuzzle();
   focusInputForPlayerToMove();
 
-  chess_data.timeRemaining = chess_data.showTimer ? chess_data.defaultTimeRemaining : 9999;
+  chess_data.timeRemaining = chess_data.showTimer ? chess_data.defaultTimeRemaining : Infinity;
   initTimer();
 }
 
@@ -674,7 +817,7 @@ function startNewGame() {
 // Input / player mapping
 
 function playerColorForInputId(id) {
-  const players = getPlayersFromFen(chess_data.fen);
+  const players = getPlayersFromFen(chess_data?.fen);
   if (id.startsWith("p1")) return players.p1;
   return players.p2;
 }
@@ -685,23 +828,24 @@ function playerColorForInputId(id) {
 function submitAnswers(event) {
   event.preventDefault();
 
-  if (!chess_data || !chess_data.correct) return;
+  if (!chess_data || !chess_data.correct || gameEnded) return;
 
   const prevTime = chess_data.timeRemaining;
 
-  const activeDisplayed = getFixedDisplayQuestionTypes().filter((id) => chess_data.questionTypes.includes(id));
+  const activeDisplayed = getFixedDisplayQuestionTypes().filter((id) =>
+    chess_data.questionTypes.includes(id)
+  );
 
   activeDisplayed.forEach((id) => {
-    const input = document.getElementById(id);
-    if (!input) return;
-
+    const input = byId(id);
     const correct = chess_data.correct[id];
-    if (!correct) return;
+    if (!input || !correct) return;
 
     const inputValue = parseInt(input.value, 10);
-    const isCorrect = inputValue === correct.count;
+    const safeValue = Number.isNaN(inputValue) ? 0 : inputValue;
+    const isCorrect = safeValue === correct.count;
 
-    const feedbackIcon = document.getElementById(id + "FeedbackIcon");
+    const feedbackIcon = byId(id + "FeedbackIcon");
     if (feedbackIcon) {
       feedbackIcon.textContent = isCorrect ? "✓" : "✗";
       feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
@@ -712,16 +856,17 @@ function submitAnswers(event) {
       incrementScore();
     }
 
-    if (!isCorrect) penalizeTime();
+    if (!isCorrect) {
+      penalizeTime();
+    }
   });
 
   if (gameEnded) return;
 
-  if (prevTime > 0 && chess_data.timeRemaining === 0) playBuzz();
+  const shouldBuzz = chess_data.showTimer && prevTime > 0 && chess_data.timeRemaining <= 0;
 
-  if (chess_data.timeRemaining <= 0) {
-    gameEnded = true;
-    endGame();
+  if (chess_data.showTimer && chess_data.timeRemaining <= 0) {
+    triggerGameOver(shouldBuzz);
     return;
   }
 
@@ -737,8 +882,8 @@ function submitAnswers(event) {
 // Settings dialog box
 
 function setupSettingsModal() {
-  const settings = document.getElementById("settingsModal");
-  const settingsBtn = document.getElementById("settingsButton");
+  const settings = byId("settingsModal");
+  const settingsBtn = byId("settingsButton");
   const closeBtn = document.querySelector("#settingsModal .close-button");
 
   if (!settings) return;
@@ -764,7 +909,7 @@ function setupSettingsModal() {
 }
 
 function setTimerVisibility(visible) {
-  const timerSection = document.getElementById("timerSection");
+  const timerSection = byId("timerSection");
   if (!timerSection) return;
   timerSection.style.display = visible ? "block" : "none";
 }
@@ -788,11 +933,14 @@ async function loadSettings() {
     plyAhead: 0,
     playerToMove: "w",
     playerToMoveAfter: "w",
+    game: null,
+    game_index: null,
+    ply: 0,
   };
 
   chess_data.showTimer = localStorage.getItem("showTimer") === "false" ? false : true;
 
-  const showTimerEl = document.getElementById("showTimer");
+  const showTimerEl = byId("showTimer");
   if (showTimerEl) showTimerEl.checked = chess_data.showTimer;
   setTimerVisibility(chess_data.showTimer);
 
@@ -801,7 +949,7 @@ async function loadSettings() {
     ? parseInt(savedDefaultTimeRemaining, 10)
     : chess_data.defaultTimeRemaining;
 
-  const defaultTimeMinutesEl = document.getElementById("defaultTimeMinutes");
+  const defaultTimeMinutesEl = byId("defaultTimeMinutes");
   if (defaultTimeMinutesEl) {
     defaultTimeMinutesEl.value = Math.max(1, Math.round(chess_data.defaultTimeRemaining / 60));
   }
@@ -814,7 +962,7 @@ async function loadSettings() {
   const savedPlyAhead = localStorage.getItem("plyAhead");
   chess_data.plyAhead = savedPlyAhead ? parseInt(savedPlyAhead, 10) : 0;
 
-  const plyAheadEl = document.getElementById("plyAhead");
+  const plyAheadEl = byId("plyAhead");
   if (plyAheadEl) plyAheadEl.value = chess_data.plyAhead;
 
   setPlayerToMoveAfter();
@@ -838,6 +986,8 @@ async function loadSettings() {
 
   createDynamicInputs(getFixedDisplayQuestionTypes(), false);
   setupHighlightButtons();
+  resetScore();
+  startTimer();
 }
 
 function setPlayerToMove(selected) {
@@ -858,16 +1008,11 @@ function setPlayerToMoveAfter() {
       : "w";
 }
 
-function setBoard() {
-  chess_data.board = Chessboard("board", { position: "start" });
-  ensurePieceMarkers();
-}
-
 // ----------------------------------------------------------
 // Dynamic inputs
 
 function createDynamicInputs(questionTypes, doFocus = true) {
-  const container = document.getElementById("count-inputs");
+  const container = byId("count-inputs");
   if (!container) return;
 
   container.innerHTML = "";
@@ -892,9 +1037,8 @@ function createDynamicInputs(questionTypes, doFocus = true) {
     decrementButton.textContent = "←";
     decrementButton.className = "decrement";
     decrementButton.onclick = () => {
-      if (parseInt(input.value || "0", 10) > 0) {
-        input.value = parseInt(input.value || "0", 10) - 1;
-      }
+      const current = parseInt(input.value || "0", 10);
+      if (current > 0) input.value = current - 1;
     };
 
     const incrementButton = document.createElement("button");
@@ -902,7 +1046,8 @@ function createDynamicInputs(questionTypes, doFocus = true) {
     incrementButton.textContent = "→";
     incrementButton.className = "increment";
     incrementButton.onclick = () => {
-      input.value = parseInt(input.value || "0", 10) + 1;
+      const current = parseInt(input.value || "0", 10);
+      input.value = current + 1;
     };
 
     const feedbackIcon = document.createElement("span");
@@ -927,7 +1072,7 @@ function createDynamicInputs(questionTypes, doFocus = true) {
 }
 
 function focusInputForPlayerToMove() {
-  const el = document.getElementById("p1AllLegal");
+  const el = byId("p1AllLegal");
   if (el) el.focus();
 }
 
@@ -935,94 +1080,57 @@ function focusInputForPlayerToMove() {
 // saveSettings
 
 async function saveSettings() {
-  const showTimer = document.getElementById("showTimer").checked;
-  chess_data.showTimer = showTimer;
-  localStorage.setItem("showTimer", showTimer);
-  setTimerVisibility(showTimer);
+  const showTimerEl = byId("showTimer");
+  const defaultTimeMinutesEl = byId("defaultTimeMinutes");
+  const selectedToMove = document.querySelector('input[name="playerToMove"]:checked');
+  const plyAheadEl = byId("plyAhead");
 
-  const defaultTimeMinutesEl = document.getElementById("defaultTimeMinutes");
+  chess_data.showTimer = !!showTimerEl?.checked;
+  localStorage.setItem("showTimer", chess_data.showTimer);
+  setTimerVisibility(chess_data.showTimer);
+
   if (defaultTimeMinutesEl) {
     const minutes = parseInt(defaultTimeMinutesEl.value, 10);
-    chess_data.defaultTimeRemaining = (isNaN(minutes) ? 3 : minutes) * 60;
+    chess_data.defaultTimeRemaining = (Number.isNaN(minutes) ? 3 : Math.max(1, minutes)) * 60;
     localStorage.setItem("defaultTimeRemaining", chess_data.defaultTimeRemaining);
   }
 
-  const selectedToMove = document.querySelector('input[name="playerToMove"]:checked');
-  localStorage.setItem("selectedToMove", selectedToMove.value);
-  setPlayerToMove(selectedToMove.value);
+  if (selectedToMove) {
+    localStorage.setItem("selectedToMove", selectedToMove.value);
+    setPlayerToMove(selectedToMove.value);
+  }
 
   chess_data.games = await getGames();
   chess_data.game_weights = await getWeights();
-  setBoard();
 
   const questionCheckboxes = document.querySelectorAll('input[name="quizOption"]:checked');
   chess_data.questionTypes = Array.from(questionCheckboxes).map((opt) => opt.value);
   localStorage.setItem("questionTypes", JSON.stringify(chess_data.questionTypes));
 
-  const plyAhead = parseInt(document.getElementById("plyAhead").value, 10);
-  chess_data.plyAhead = plyAhead;
-  localStorage.setItem("plyAhead", plyAhead);
+  const plyAhead = parseInt(plyAheadEl?.value, 10);
+  chess_data.plyAhead = Number.isNaN(plyAhead) ? 0 : plyAhead;
+  localStorage.setItem("plyAhead", chess_data.plyAhead);
 
   setPlayerToMoveAfter();
 
   createDynamicInputs(getFixedDisplayQuestionTypes(), false);
   setupHighlightButtons();
 
-  clearBoardHighlights();
-  clearPieceMarkers();
-  clearBigMarkers();
-
   gameEnded = true;
+  stopTimer();
 
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
-
-  chess_data.fen = null;
-  chess_data.correct = null;
-  chess_data.is_correct = null;
-
-  if (chess_data.board) {
-    chess_data.board.position("start");
-    if (chess_data.playerToMove === "b") chess_data.board.flip();
-  }
-
-  const remainingMoves = document.getElementById("remainingMoves");
-  if (remainingMoves) remainingMoves.innerHTML = "";
-
-  const movesList = document.getElementById("movesList");
-  if (movesList) {
-    movesList.innerHTML = "";
-    movesList.style.display = "none";
-  }
-
-  getFixedDisplayQuestionTypes().forEach((id) => {
-    const input = document.getElementById(id);
-    if (input) input.value = 0;
-
-    const feedbackIcon = document.getElementById(id + "FeedbackIcon");
-    if (feedbackIcon) {
-      feedbackIcon.textContent = "";
-      feedbackIcon.className = "feedbackIcon";
-    }
-
-    const shownMovesLabel = document.getElementById(id + "ShownMoves");
-    if (shownMovesLabel) shownMovesLabel.textContent = "";
-  });
-
+  resetRoundState();
+  setBoard();
   resetScore();
-  chess_data.timeRemaining = chess_data.showTimer ? chess_data.defaultTimeRemaining : 9999;
-  updateTimerDisplay();
+  startTimer();
 
-  const settings = document.getElementById("settingsModal");
+  const settings = byId("settingsModal");
   if (settings) settings.style.display = "none";
 }
 
 function createDynamicInputsLabel(questionType) {
-  const players = getPlayersFromFen(chess_data.fen);
+  const players = getPlayersFromFen(chess_data?.fen);
   const whoColor = questionType.startsWith("p1") ? players.p1 : players.p2;
-
   const who = whoColor === "w" ? "White's" : "Black's";
 
   let what;
@@ -1055,13 +1163,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setupSettingsModal();
 
-  const startBtn = document.getElementById("startButton");
+  const startBtn = byId("startButton");
   if (startBtn) {
     startBtn.type = "button";
     startBtn.addEventListener("click", startNewGame);
   }
 
-  const btn = document.getElementById("showMovesButton");
+  const btn = byId("showMovesButton");
   if (btn) {
     btn.type = "button";
     btn.addEventListener("click", revealAnswers);
