@@ -275,16 +275,22 @@ function stopTimer() {
   }
 }
 
-function triggerGameOver(playSound = true) {
+function triggerGameOver() {
   if (gameEnded) return;
 
   gameEnded = true;
   stopTimer();
 
-  if (playSound) playBuzz();
-  endGame();
-}
+  revealAnswers();
 
+  getFixedDisplayQuestionTypes().forEach((id) => {
+    const input = byId(id);
+    if (input) input.disabled = true;
+  });
+
+  const startBtn = byId("startButton");
+  if (startBtn) startBtn.disabled = false;
+}
 function initTimer() {
   stopTimer();
   updateTimerDisplay();
@@ -297,9 +303,9 @@ function initTimer() {
     chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 1);
     updateTimerDisplay();
 
-    if (chess_data.timeRemaining <= 0) {
-      triggerGameOver(true);
-    }
+if (chess_data.timeRemaining <= 0) {
+  triggerGameOver();
+}
   }, 1000);
 }
 
@@ -351,27 +357,13 @@ function revealAnswers() {
     chess_data?.questionTypes?.includes(id)
   );
 
-  const hasWrongAnswer = activeDisplayed.some((id) => {
-    const input = byId(id);
-    const correct = chess_data?.correct?.[id];
-    if (!input || !correct) return false;
-
-    const inputValue = parseInt(input.value, 10);
-    const safeValue = Number.isNaN(inputValue) ? 0 : inputValue;
-    return safeValue !== correct.count;
-  });
-
-  if (hasWrongAnswer) {
-    playBuzz();
-  }
-
   const movesList = byId("movesList");
   if (movesList) {
     movesList.innerHTML = "";
     movesList.style.display = "block";
   }
 
-  getFixedDisplayQuestionTypes().forEach((id) => {
+  activeDisplayed.forEach((id) => {
     const shownMovesLabel = byId(id + "ShownMoves");
     const correct = chess_data?.correct?.[id];
     if (!shownMovesLabel || !correct) return;
@@ -703,7 +695,10 @@ function setBoard() {
 function resetAnswerUi() {
   getFixedDisplayQuestionTypes().forEach((id) => {
     const input = byId(id);
-    if (input) input.value = 0;
+if (input) {
+  input.value = 0;
+  input.disabled = false;
+}
 
     const feedbackIcon = byId(id + "FeedbackIcon");
     if (feedbackIcon) {
@@ -863,12 +858,10 @@ function submitAnswers(event) {
 
   if (gameEnded) return;
 
-  const shouldBuzz = chess_data.showTimer && prevTime > 0 && chess_data.timeRemaining <= 0;
-
-  if (chess_data.showTimer && chess_data.timeRemaining <= 0) {
-    triggerGameOver(shouldBuzz);
-    return;
-  }
+if (chess_data.showTimer && prevTime > 0 && chess_data.timeRemaining <= 0) {
+  triggerGameOver();
+  return;
+}
 
   const allCorrect = activeDisplayed.every((id) => chess_data.is_correct[id]);
 
