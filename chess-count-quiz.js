@@ -294,8 +294,6 @@ function triggerGameOver() {
   gameEnded = true;
   stopTimer();
 
-  revealAnswers();
-
   getFixedDisplayQuestionTypes().forEach((id) => {
     const input = byId(id);
     if (input) input.disabled = true;
@@ -304,7 +302,6 @@ function triggerGameOver() {
   const startBtn = byId("startButton");
   if (startBtn) startBtn.disabled = false;
 }
-
 function initTimer() {
   stopTimer();
   updateTimerDisplay();
@@ -397,6 +394,33 @@ function getQuestionTypeFromDisplayId(displayId) {
 // -----------------------------------------------------------
 // Reveal answers (numbers near inputs + moves list in #movesList)
 
+function updateShowAnswersButtonLabel() {
+  const btn = byId("showMovesButton");
+  if (!btn) return;
+  btn.textContent = chess_data?.answersVisible ? "Hide answers" : "Show answers";
+}
+
+function hideAnswers() {
+  const activeDisplayed = getFixedDisplayQuestionTypes().filter((displayId) => {
+    const questionType = getQuestionTypeFromDisplayId(displayId);
+    return chess_data?.questionTypes?.includes(questionType);
+  });
+
+  activeDisplayed.forEach((displayId) => {
+    const shownMovesLabel = byId(displayId + "ShownMoves");
+    if (shownMovesLabel) shownMovesLabel.textContent = "";
+  });
+
+  const movesList = byId("movesList");
+  if (movesList) {
+    movesList.innerHTML = "";
+    movesList.style.display = "none";
+  }
+
+  if (chess_data) chess_data.answersVisible = false;
+  updateShowAnswersButtonLabel();
+}
+
 function revealAnswers() {
   const activeDisplayed = getFixedDisplayQuestionTypes().filter((displayId) => {
     const questionType = getQuestionTypeFromDisplayId(displayId);
@@ -437,11 +461,55 @@ function revealAnswers() {
     }
   });
 
-  const showMovesButton = byId("showMovesButton");
-  if (showMovesButton) {
-    showMovesButton.disabled = true;
-    showMovesButton.style.backgroundColor = "#d3d3d3";
+  if (chess_data) chess_data.answersVisible = true;
+  updateShowAnswersButtonLabel();
+}
+
+function evaluateAnswersFromShowButton() {
+  if (!chess_data || !chess_data.correct) return;
+
+  let hasWrongAnswer = false;
+
+  const activeDisplayed = getFixedDisplayQuestionTypes().filter((displayId) => {
+    const questionType = getQuestionTypeFromDisplayId(displayId);
+    return chess_data.questionTypes.includes(questionType);
+  });
+
+  activeDisplayed.forEach((displayId) => {
+    const input = byId(displayId);
+    const questionType = getQuestionTypeFromDisplayId(displayId);
+    const correct = chess_data.correct[questionType];
+    if (!input || !correct) return;
+
+    const inputValue = parseInt(input.value, 10);
+    const safeValue = Number.isNaN(inputValue) ? 0 : inputValue;
+    const isCorrect = safeValue === correct.count;
+
+    const feedbackIcon = byId(displayId + "FeedbackIcon");
+    if (feedbackIcon) {
+      feedbackIcon.textContent = isCorrect ? "✓" : "✗";
+      feedbackIcon.className = isCorrect ? "feedbackIcon correct" : "feedbackIcon incorrect";
+    }
+
+    if (!isCorrect) {
+      hasWrongAnswer = true;
+      penalizeTime();
+    }
+  });
+
+  if (hasWrongAnswer) playDuck();
+}
+
+function toggleShowAnswers() {
+  if (!chess_data || !chess_data.correct) return;
+
+  if (chess_data.answersVisible) {
+    hideAnswers();
+    return;
   }
+
+  evaluateAnswersFromShowButton();
+  revealAnswers();
 }
 
 // -----------------------------------------------------------
@@ -742,12 +810,6 @@ function resetAnswerUi() {
       input.disabled = false;
     }
 
-    const feedbackIcon = byId(id + "FeedbackIcon");
-    if (feedbackIcon) {
-      feedbackIcon.textContent = "";
-      feedbackIcon.className = "feedbackIcon";
-    }
-
     const shownMovesLabel = byId(id + "ShownMoves");
     if (shownMovesLabel) shownMovesLabel.textContent = "";
   });
@@ -757,6 +819,9 @@ function resetAnswerUi() {
     movesList.innerHTML = "";
     movesList.style.display = "none";
   }
+
+  if (chess_data) chess_data.answersVisible = false;
+  updateShowAnswersButtonLabel();
 
   const showMovesButton = byId("showMovesButton");
   if (showMovesButton) {
@@ -778,6 +843,7 @@ function resetRoundState() {
   chess_data.displayFen = null;
   chess_data.correct = null;
   chess_data.is_correct = null;
+  chess_data.answersVisible = false;
   chess_data.game = null;
   chess_data.game_index = null;
   chess_data.ply = 0;
@@ -827,6 +893,14 @@ function loadNewPuzzle() {
   const allQuestionTypes = getAllLogicalQuestionTypes();
   chess_data.correct = getCorrectAnswers(chess_data.fen, allQuestionTypes);
   chess_data.is_correct = Object.fromEntries(allQuestionTypes.map((name) => [name, false]));
+
+  getFixedDisplayQuestionTypes().forEach((id) => {
+    const feedbackIcon = byId(id + "FeedbackIcon");
+    if (feedbackIcon) {
+      feedbackIcon.textContent = "";
+      feedbackIcon.className = "feedbackIcon";
+    }
+  });
 
   resetAnswerUi();
 
@@ -976,6 +1050,7 @@ async function loadSettings() {
     game_weights: null,
     board: null,
     questionTypes: null,
+    answersVisible: false,
     plyAhead: 0,
     playerToMove: "w",
     playerToMoveAfter: "w",
@@ -1032,6 +1107,7 @@ async function loadSettings() {
 
   createDynamicInputs(getFixedDisplayQuestionTypes(), false);
   setupHighlightButtons();
+  updateShowAnswersButtonLabel();
   resetScore();
   startTimer();
 }
@@ -1237,7 +1313,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btn = byId("showMovesButton");
   if (btn) {
     btn.type = "button";
-    btn.addEventListener("click", revealAnswers);
+    btn.addEventListener("click", toggleShowAnswers);
   }
 });
 
