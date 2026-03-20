@@ -497,7 +497,7 @@ function evaluateAnswersFromShowButton() {
     }
   });
 
-  if (hasWrongAnswer) playDuck();
+  if (hasWrongAnswer && !gameEnded) playDuck();
 }
 
 function toggleShowAnswers() {
