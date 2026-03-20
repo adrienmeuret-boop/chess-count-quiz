@@ -294,14 +294,12 @@ function triggerGameOver() {
   gameEnded = true;
   stopTimer();
 
-  getFixedDisplayQuestionTypes().forEach((id) => {
-    const input = byId(id);
-    if (input) input.disabled = true;
-  });
-
   const startBtn = byId("startButton");
   if (startBtn) startBtn.disabled = false;
+
+  playDuck();
 }
+
 function initTimer() {
   stopTimer();
   updateTimerDisplay();
@@ -938,7 +936,7 @@ function playerColorForInputId(id) {
 function submitAnswers(event) {
   event.preventDefault();
 
-  if (!chess_data || !chess_data.correct || gameEnded) return;
+  if (!chess_data || !chess_data.correct) return;
 
   const prevTime = chess_data.timeRemaining;
   let hasWrongAnswer = false;
@@ -969,20 +967,22 @@ function submitAnswers(event) {
       incrementScore();
     }
 
-    if (!isCorrect) {
+    if (!isCorrect && !gameEnded) {
       hasWrongAnswer = true;
       penalizeTime();
     }
   });
 
-  if (hasWrongAnswer) {
+  if (hasWrongAnswer && !gameEnded) {
     playDuck();
   }
 
-  if (gameEnded) return;
-
   if (chess_data.showTimer && prevTime > 0 && chess_data.timeRemaining <= 0) {
     triggerGameOver();
+    return;
+  }
+
+  if (gameEnded) {
     return;
   }
 
