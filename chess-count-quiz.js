@@ -1071,12 +1071,8 @@ function createDynamicInputs(questionTypes, doFocus = true) {
 
 function focusInputForPlayerToMove() {
   setTimeout(() => {
-    const turn = chess_data?.fen?.split(" ")[1];
-
-    const targetId = turn === "w"
-      ? "p1AllLegal"   // White
-      : "p2AllLegal";  // Black
-
+    const turn = getFenTurn(chess_data?.displayFen);
+    const targetId = turn === "b" ? "p2AllLegal" : "p1AllLegal";
     const el = byId(targetId);
     if (el) el.focus();
   }, 0);
