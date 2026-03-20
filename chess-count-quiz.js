@@ -206,10 +206,11 @@ function getCorrectAnswers(fen, questionTypes) {
 }
 
 function getOneCorrectAnswer(fen, questionType) {
+  const players = getPlayersFromFen(fen);
   let side;
 
-  if (questionType.startsWith("p1")) side = "w";
-  else if (questionType.startsWith("p2")) side = "b";
+  if (questionType.startsWith("p1")) side = players.p1;
+  else if (questionType.startsWith("p2")) side = players.p2;
   else throw new RangeError("Expected p1 or p2");
 
   const modFen = switchFenSides(fen, side);
@@ -1074,8 +1075,7 @@ function createDynamicInputs(questionTypes, doFocus = true) {
 
 function focusInputForPlayerToMove() {
   setTimeout(() => {
-    const turn = getFenTurn(chess_data?.displayFen);
-    const targetId = turn === "b" ? "p2AllLegal" : "p1AllLegal";
+    const targetId = "p1AllLegal";
     const el = byId(targetId);
     if (el) el.focus();
   }, 0);
@@ -1134,7 +1134,9 @@ async function saveSettings() {
 }
 
 function createDynamicInputsLabel(questionType) {
-  const who = questionType.startsWith("p1") ? "White's" : "Black's";
+  const players = getPlayersFromFen(chess_data?.fen || chess_data?.displayFen);
+  const color = questionType.startsWith("p1") ? players.p1 : players.p2;
+  const who = color === "w" ? "White's" : "Black's";
 
   let what;
   if (questionType.endsWith("Checks")) what = "Checks";
