@@ -967,7 +967,7 @@ function submitAnswers(event) {
       incrementScore();
     }
 
-    if (!isCorrect && !gameEnded) {
+if (!isCorrect && !gameEnded && chess_data.timeRemaining > 0) {
       hasWrongAnswer = true;
       penalizeTime();
     }
