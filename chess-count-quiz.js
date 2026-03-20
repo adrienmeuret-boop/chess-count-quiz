@@ -1071,8 +1071,10 @@ function createDynamicInputs(questionTypes, doFocus = true) {
 }
 
 function focusInputForPlayerToMove() {
-  const el = byId("p1AllLegal");
-  if (el) el.focus();
+  setTimeout(() => {
+    const el = byId("p1AllLegal");
+    if (el) el.focus();
+  }, 0);
 }
 
 // ----------------------------------------------------------
