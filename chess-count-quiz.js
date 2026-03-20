@@ -732,6 +732,7 @@ function resetRoundState() {
   clearBoardDecorations();
 
   chess_data.fen = null;
+  chess_data.displayFen = null;
   chess_data.correct = null;
   chess_data.is_correct = null;
   chess_data.game = null;
@@ -771,6 +772,7 @@ function loadNewPuzzle() {
   }
 
   chess_data.board.position(prior_game.fen());
+  chess_data.displayFen = prior_game.fen();
   setBoardOrientation();
 
   ensurePieceMarkers();
@@ -919,6 +921,7 @@ async function loadSettings() {
   chess_data = {
     showTimer: true,
     fen: null,
+    displayFen: null,
     correct: null,
     defaultTimeRemaining: 180,
     timeRemaining: 999,
