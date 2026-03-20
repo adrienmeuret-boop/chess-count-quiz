@@ -37,6 +37,18 @@ function getOpponentColor(color) {
   return color === "w" ? "b" : "w";
 }
 
+// p1 / p2 for the quiz are defined from the DISPLAYED board,
+// not from the final calculation position.
+function getQuizPlayers() {
+  const sourceFen = chess_data?.displayFen || chess_data?.fen;
+
+  if (typeof sourceFen !== "string") {
+    return { p1: "w", p2: "b" };
+  }
+
+  return getPlayersFromFen(sourceFen);
+}
+
 // Return a game where it's the specified player to move ("w" or "b") from the given FEN
 function switchFenSides(fen, side) {
   if (typeof fen !== "string") return fen;
@@ -195,18 +207,19 @@ function getGame(game_index, ply) {
 
 // -----------------------------------------------------------
 // Correct answers logic
-// p1 = player to move in FEN
-// p2 = other player
+// p1 = player to move on the DISPLAYED board
+// p2 = the other player
+// answers are computed from chess_data.fen
 
 function getCorrectAnswers(fen, questionTypes) {
-  return questionTypes.reduce((result, quesType) => {
-    result[quesType] = getOneCorrectAnswer(fen, quesType);
+  return questionTypes.reduce((result, questionType) => {
+    result[questionType] = getOneCorrectAnswer(fen, questionType);
     return result;
   }, {});
 }
 
 function getOneCorrectAnswer(fen, questionType) {
-  const players = getPlayersFromFen(fen);
+  const players = getQuizPlayers();
   let side;
 
   if (questionType.startsWith("p1")) side = players.p1;
@@ -291,6 +304,7 @@ function triggerGameOver() {
   const startBtn = byId("startButton");
   if (startBtn) startBtn.disabled = false;
 }
+
 function initTimer() {
   stopTimer();
   updateTimerDisplay();
@@ -303,9 +317,9 @@ function initTimer() {
     chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 1);
     updateTimerDisplay();
 
-if (chess_data.timeRemaining <= 0) {
-  triggerGameOver();
-}
+    if (chess_data.timeRemaining <= 0) {
+      triggerGameOver();
+    }
   }, 1000);
 }
 
@@ -324,19 +338,17 @@ function penalizeTime() {
 
   chess_data.timeRemaining = Math.max(0, chess_data.timeRemaining - 10);
   updateTimerDisplay();
+
+  if (chess_data.timeRemaining <= 0) {
+    triggerGameOver();
+  }
 }
 
 // -----------------------------------------------------------
-// Display ordering
-// Fixed order on screen:
-// p1 Moves / Checks / Captures
-// p2 Moves / Checks / Captures
-// p1/p2 are always derived from chess_data.fen
-
-function qTypeForAbsColorAndKind(color, kind, fenTurn) {
-  const prefix = color === fenTurn ? "p1" : "p2";
-  return `${prefix}${kind}`;
-}
+// Display ordering and mapping
+// Display is always fixed:
+// White then Black
+// Quiz logic stays in p1 / p2 based on displayFen
 
 function getFixedDisplayQuestionTypes() {
   return [
@@ -349,6 +361,17 @@ function getFixedDisplayQuestionTypes() {
   ];
 }
 
+function getAllLogicalQuestionTypes() {
+  return [
+    "p1AllLegal",
+    "p1Checks",
+    "p1Captures",
+    "p2AllLegal",
+    "p2Checks",
+    "p2Captures",
+  ];
+}
+
 function getQuestionKindFromId(id) {
   if (id.endsWith("AllLegal")) return "AllLegal";
   if (id.endsWith("Checks")) return "Checks";
@@ -356,26 +379,27 @@ function getQuestionKindFromId(id) {
   throw new RangeError("Unknown question kind: " + id);
 }
 
-function getDisplayIdFromQuestionType(questionType, fen) {
-  const players = getPlayersFromFen(fen);
+function getDisplayIdFromQuestionType(questionType) {
+  const players = getQuizPlayers();
   const color = questionType.startsWith("p1") ? players.p1 : players.p2;
   const kind = getQuestionKindFromId(questionType);
   return `${color}${kind}`;
 }
 
-function getQuestionTypeFromDisplayId(displayId, fen) {
-  const players = getPlayersFromFen(fen);
+function getQuestionTypeFromDisplayId(displayId) {
+  const players = getQuizPlayers();
   const color = displayId.startsWith("w") ? "w" : "b";
   const prefix = color === players.p1 ? "p1" : "p2";
   const kind = getQuestionKindFromId(displayId);
   return `${prefix}${kind}`;
 }
+
 // -----------------------------------------------------------
 // Reveal answers (numbers near inputs + moves list in #movesList)
 
 function revealAnswers() {
   const activeDisplayed = getFixedDisplayQuestionTypes().filter((displayId) => {
-    const questionType = getQuestionTypeFromDisplayId(displayId, chess_data?.fen);
+    const questionType = getQuestionTypeFromDisplayId(displayId);
     return chess_data?.questionTypes?.includes(questionType);
   });
 
@@ -387,7 +411,7 @@ function revealAnswers() {
 
   activeDisplayed.forEach((displayId) => {
     const shownMovesLabel = byId(displayId + "ShownMoves");
-    const questionType = getQuestionTypeFromDisplayId(displayId, chess_data?.fen);
+    const questionType = getQuestionTypeFromDisplayId(displayId);
     const correct = chess_data?.correct?.[questionType];
     if (!shownMovesLabel || !correct) return;
 
@@ -593,10 +617,8 @@ function setupHighlightButtons() {
         return;
       }
 
-      if (!chess_data?.fen) return;
+      if (!chess_data?.fen || !chess_data?.displayFen) return;
       if (!chess_data.correct) chess_data.correct = {};
-
-      const fenTurn = getFenTurn(chess_data.fen);
 
       let kind;
       if (key.includes("moves")) kind = "AllLegal";
@@ -604,12 +626,13 @@ function setupHighlightButtons() {
       else if (key.includes("captures")) kind = "Captures";
       else return;
 
-      const qType = qTypeForAbsColorAndKind(side, kind, fenTurn);
+      const displayId = `${side}${kind}`;
+      const questionType = getQuestionTypeFromDisplayId(displayId);
 
-      let ans = chess_data.correct[qType];
+      let ans = chess_data.correct[questionType];
       if (!ans) {
-        ans = getOneCorrectAnswer(chess_data.fen, qType);
-        chess_data.correct[qType] = ans;
+        ans = getOneCorrectAnswer(chess_data.fen, questionType);
+        chess_data.correct[questionType] = ans;
       }
 
       if (!ans?.targets) return;
@@ -684,10 +707,6 @@ function updateMovesDisplay() {
   movesDisplay.innerHTML = createMovesTableHtml(movesList, fenTurnAfterPlyAhead);
 }
 
-function getMovesInputIdForPlayerToMove() {
-  return "p1AllLegal";
-}
-
 // ----------------------------------------------------------
 // Board helpers
 
@@ -718,10 +737,10 @@ function setBoard() {
 function resetAnswerUi() {
   getFixedDisplayQuestionTypes().forEach((id) => {
     const input = byId(id);
-if (input) {
-  input.value = 0;
-  input.disabled = false;
-}
+    if (input) {
+      input.value = 0;
+      input.disabled = false;
+    }
 
     const feedbackIcon = byId(id + "FeedbackIcon");
     if (feedbackIcon) {
@@ -787,16 +806,17 @@ function loadNewPuzzle() {
 
   chess_data.fen = chess_data.game.fen();
 
-  createDynamicInputs(getFixedDisplayQuestionTypes(), false);
-
   const prior_game = getGame(game_and_ply.game, Math.max(0, game_and_ply.ply - chess_data.plyAhead));
   if (!prior_game) {
     console.error("Failed to load prior game.");
     return;
   }
 
-  chess_data.board.position(prior_game.fen());
   chess_data.displayFen = prior_game.fen();
+
+  createDynamicInputs(getFixedDisplayQuestionTypes(), false);
+
+  chess_data.board.position(chess_data.displayFen);
   setBoardOrientation();
 
   ensurePieceMarkers();
@@ -804,17 +824,9 @@ function loadNewPuzzle() {
   clearBigMarkers();
   updateMovesDisplay();
 
-const allQuestionTypes = [
-  "p1AllLegal",
-  "p1Checks",
-  "p1Captures",
-  "p2AllLegal",
-  "p2Checks",
-  "p2Captures",
-];
-
-chess_data.correct = getCorrectAnswers(chess_data.fen, allQuestionTypes);
-chess_data.is_correct = Object.fromEntries(allQuestionTypes.map((name) => [name, false]));
+  const allQuestionTypes = getAllLogicalQuestionTypes();
+  chess_data.correct = getCorrectAnswers(chess_data.fen, allQuestionTypes);
+  chess_data.is_correct = Object.fromEntries(allQuestionTypes.map((name) => [name, false]));
 
   resetAnswerUi();
 
@@ -828,7 +840,6 @@ function startNewGame() {
 
   setPlayerToMove(selected);
   setPlayerToMoveAfter();
-
   setBoard();
 
   gameEnded = false;
@@ -859,13 +870,13 @@ function submitAnswers(event) {
   let hasWrongAnswer = false;
 
   const activeDisplayed = getFixedDisplayQuestionTypes().filter((displayId) => {
-    const questionType = getQuestionTypeFromDisplayId(displayId, chess_data.fen);
+    const questionType = getQuestionTypeFromDisplayId(displayId);
     return chess_data.questionTypes.includes(questionType);
   });
 
   activeDisplayed.forEach((displayId) => {
     const input = byId(displayId);
-    const questionType = getQuestionTypeFromDisplayId(displayId, chess_data.fen);
+    const questionType = getQuestionTypeFromDisplayId(displayId);
     const correct = chess_data.correct[questionType];
     if (!input || !correct) return;
 
@@ -902,7 +913,7 @@ function submitAnswers(event) {
   }
 
   const allCorrect = activeDisplayed.every((displayId) => {
-    const questionType = getQuestionTypeFromDisplayId(displayId, chess_data.fen);
+    const questionType = getQuestionTypeFromDisplayId(displayId);
     return chess_data.is_correct[questionType];
   });
 
@@ -1046,23 +1057,23 @@ function setPlayerToMoveAfter() {
 // ----------------------------------------------------------
 // Dynamic inputs
 
-function createDynamicInputs(questionTypes, doFocus = true) {
+function createDynamicInputs(displayIds, doFocus = true) {
   const container = byId("count-inputs");
   if (!container) return;
 
   container.innerHTML = "";
 
-  questionTypes.forEach((questionType) => {
+  displayIds.forEach((displayId) => {
     const div = document.createElement("div");
     div.className = "input-group";
 
     const label = document.createElement("label");
-    label.textContent = createDynamicInputsLabel(questionType);
+    label.textContent = createDynamicInputsLabel(displayId);
 
     const input = document.createElement("input");
     input.type = "number";
-    input.id = questionType;
-    input.name = questionType;
+    input.id = displayId;
+    input.name = displayId;
     input.min = "0";
     input.value = 0;
     input.required = true;
@@ -1087,11 +1098,11 @@ function createDynamicInputs(questionTypes, doFocus = true) {
 
     const feedbackIcon = document.createElement("span");
     feedbackIcon.className = "feedbackIcon";
-    feedbackIcon.id = `${questionType}FeedbackIcon`;
+    feedbackIcon.id = `${displayId}FeedbackIcon`;
 
     const shownMoves = document.createElement("label");
     shownMoves.className = "shownMoves";
-    shownMoves.id = `${questionType}ShownMoves`;
+    shownMoves.id = `${displayId}ShownMoves`;
 
     div.appendChild(label);
     div.appendChild(decrementButton);
@@ -1108,7 +1119,7 @@ function createDynamicInputs(questionTypes, doFocus = true) {
 
 function focusInputForPlayerToMove() {
   setTimeout(() => {
-    const turn = getFenTurn(chess_data?.fen);
+    const turn = getFenTurn(chess_data?.displayFen || chess_data?.fen);
     const targetId = turn === "w" ? "wAllLegal" : "bAllLegal";
     const el = byId(targetId);
     if (el) el.focus();
