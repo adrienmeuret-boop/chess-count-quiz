@@ -967,7 +967,7 @@ function submitAnswers(event) {
       incrementScore();
     }
 
-if (!isCorrect && !gameEnded && chess_data.timeRemaining > 0) {
+    if (!isCorrect && !gameEnded && chess_data.timeRemaining > 0) {
       hasWrongAnswer = true;
       penalizeTime();
     }
@@ -1119,11 +1119,14 @@ function setPlayerToMove(selected) {
 
   chess_data.selectedToMove = selected;
 
-  if (selected === "White") chess_data.playerToMove = "w";
-  else if (selected === "Black") chess_data.playerToMove = "b";
-  else chess_data.playerToMove = Math.random() < 0.5 ? "w" : "b";
+  if (selected === "White") {
+    chess_data.playerToMove = "w";
+  } else if (selected === "Black") {
+    chess_data.playerToMove = "b";
+  } else if (!chess_data.playerToMove) {
+    chess_data.playerToMove = "w";
+  }
 }
-
 function refreshPlayerToMoveForNextPuzzle() {
   if (!chess_data) return;
 
