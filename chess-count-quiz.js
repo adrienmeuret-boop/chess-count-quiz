@@ -857,6 +857,7 @@ function resetRoundState() {
 
 function loadNewPuzzle() {
   clearBoardDecorations();
+  refreshPlayerToMoveForNextPuzzle();
 
   const game_and_ply = getRandomPosNumber(chess_data.game_weights, chess_data.playerToMoveAfter === "w");
   chess_data.game_index = game_and_ply.game;
@@ -911,7 +912,6 @@ function startNewGame() {
   const selected = selectedInput ? selectedInput.value : "Random";
 
   setPlayerToMove(selected);
-  setPlayerToMoveAfter();
   setBoard();
 
   gameEnded = false;
@@ -1052,6 +1052,7 @@ async function loadSettings() {
     questionTypes: null,
     answersVisible: false,
     plyAhead: 0,
+    selectedToMove: "Random",
     playerToMove: "w",
     playerToMoveAfter: "w",
     game: null,
@@ -1116,9 +1117,25 @@ function setPlayerToMove(selected) {
   const el = document.querySelector(`input[value="${selected}"]`);
   if (el) el.checked = true;
 
+  chess_data.selectedToMove = selected;
+
   if (selected === "White") chess_data.playerToMove = "w";
   else if (selected === "Black") chess_data.playerToMove = "b";
   else chess_data.playerToMove = Math.random() < 0.5 ? "w" : "b";
+}
+
+function refreshPlayerToMoveForNextPuzzle() {
+  if (!chess_data) return;
+
+  if (chess_data.selectedToMove === "White") {
+    chess_data.playerToMove = "w";
+  } else if (chess_data.selectedToMove === "Black") {
+    chess_data.playerToMove = "b";
+  } else {
+    chess_data.playerToMove = Math.random() < 0.5 ? "w" : "b";
+  }
+
+  setPlayerToMoveAfter();
 }
 
 function setPlayerToMoveAfter() {
