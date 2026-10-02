@@ -49,7 +49,7 @@ body{
 }
 /* Décale tout le contenu visible (titre, bouton settings, container, paragraphes du bas) */
 body > *{
-  margin-left: var(--shift-x);
+  margin-left: 0;
 }
 
 /* Ne décale pas le modal (sinon il n'est plus centré plein écran) */
@@ -72,7 +72,8 @@ h2{
   align-items: start;
   width: fit-content;
   max-width: 100%;
-  justify-content: start;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Colonne gauche : échiquier uniquement */
@@ -85,17 +86,17 @@ h2{
 .info{
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   min-width: 520px;
   max-height: none;
   overflow: visible;
-  padding-top: 8px;
+  padding-top: 96px;
 }
 
 /* ===== Timer en haut de la colonne droite ===== */
 .timer-top{
   width: 100%;
-  margin-bottom: 22px;
+  margin-bottom: 10px;
 }
 
 #timerSection{
@@ -238,6 +239,15 @@ h2{
   cursor: not-allowed;
 }
 
+/* ===== Titres de sections ===== */
+
+.section-title{
+  font-size: 1.55em;
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 4px 0 2px;
+}
+
 /* ===== Boutons highlight ===== */
 #boardHighlightsControls{
   margin-top: 8px;
@@ -262,7 +272,7 @@ h2{
 /* Espace vide entre Submit Counts et White's Moves
    (même hauteur que l'ancien bouton Show Moves) */
 .submit-gap{
-  height: 44px;
+  height: 6px;
 }
 
 /* ===== Legend sous les boutons ===== */
@@ -273,8 +283,9 @@ h2{
 
 .legend-title{
   font-weight: 700;
-  margin: 12px 0 8px;
+  margin: 0 0 8px;
   font-size: 18px;
+  line-height: 1;
 }
 
 .legend-grid{
