@@ -90,88 +90,100 @@
 
       <div id="board"></div>
 
-      <div class="footer-block">
-        <button id="settingsButton" type="button" class="action-button">
-          Settings
-        </button>
+      <div class="under-board">
 
-        <p>Positions from the <a href="https://database.lichess.org/">Lichess puzzle database</a></p>
-<p>See <a href="https://github.com/adrienmeuret-boop/chess-count-quiz">https://github.com/adrienmeuret-boop/chess-count-quiz</a> for source code</p>
+        <div class="footer-block">
+          <button id="settingsButton" type="button" class="action-button">
+            Settings
+          </button>
+
+          <p>Positions from the <a href="https://database.lichess.org/">Lichess puzzle database</a></p>
+          <p>See <a href="https://github.com/adrienmeuret-boop/chess-count-quiz">https://github.com/adrienmeuret-boop/chess-count-quiz</a> for source code</p>
+        </div>
+
+        <div id="pieceLegend" class="legend">
+          <div class="legend-title">Legend</div>
+
+          <div class="legend-grid">
+            <div class="legend-item"><span class="legend-swatch piece-p"></span><span class="legend-label">Pawn (P)</span></div>
+            <div class="legend-item"><span class="legend-swatch piece-n"></span><span class="legend-label">Knight (N)</span></div>
+            <div class="legend-item"><span class="legend-swatch piece-b"></span><span class="legend-label">Bishop (B)</span></div>
+            <div class="legend-item"><span class="legend-swatch piece-r"></span><span class="legend-label">Rook (R)</span></div>
+            <div class="legend-item"><span class="legend-swatch piece-q"></span><span class="legend-label">Queen (Q)</span></div>
+            <div class="legend-item"><span class="legend-swatch piece-k"></span><span class="legend-label">King (K)</span></div>
+            <div class="legend-item"><span class="legend-swatch side-w"></span><span class="legend-label">Player: White</span></div>
+            <div class="legend-item"><span class="legend-swatch side-b"></span><span class="legend-label">Player: Black</span></div>
+          </div>
+
+          <div class="legend-note">
+            When multiple pieces reach the same square, the big square uses the player color (white / black).
+          </div>
+
+          <div class="legend-note">
+            When the same piece (or piece type) reaches a square multiple times, the marker becomes solid.
+            <div class="legend-example">
+              <span class="legend-swatch solid-demo"></span>
+              <span class="legend-arrow">→</span>
+              <span class="legend-swatch solid-demo solid"></span>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
-
-    <!-- MIDDLE COLUMN -->
+    <!-- RIGHT COLUMN -->
     <div class="info">
+
+      <!-- TIMER -->
+      <div class="timer-top">
+        <div id="timerSection">
+          <div id="timer">Time: 05:00</div>
+          <p class="timer-penalty">10 second penalty per wrong answer</p>
+        </div>
+
+        <div class="timer-actions">
+          <button id="startButton" class="action-button" type="button">Start</button>
+          <button id="showMovesButton" class="action-button" type="button">Show Answers</button>
+        </div>
+      </div>
+
+      <!-- SCORE -->
       <div id="score">Score: 0</div>
 
       <div id="remainingMoves"></div>
 
+      <!-- FORMULAIRE -->
       <form id="chessCountForm">
         <div id="count-inputs">
           <!-- Dynamic input fields will be appended here based on settings -->
         </div>
 
-        <!-- Submit aligné comme les boutons highlight (plein largeur) -->
-        <button type="submit" id="submit" class="action-button full-width">Submit Counts</button>
+        <button type="submit" id="submit" class="action-button full-width">
+          Submit Counts
+        </button>
       </form>
 
-      <!-- Espace vide = même hauteur que l'ancien bouton Show Moves (réglé en CSS) -->
       <div class="submit-gap"></div>
 
+      <!-- HIGHLIGHT BUTTONS -->
       <div id="boardHighlightsControls">
         <button id="hl_p1AllLegal" class="action-button" type="button">White’s Moves</button>
         <button id="hl_p2AllLegal" class="action-button" type="button">Black’s Moves</button>
+
         <button id="hl_p1Checks" class="action-button" type="button">White’s Checks</button>
         <button id="hl_p2Checks" class="action-button" type="button">Black’s Checks</button>
+
         <button id="hl_p1Captures" class="action-button" type="button">White’s Captures</button>
         <button id="hl_p2Captures" class="action-button" type="button">Black’s Captures</button>
+
         <button id="hl_clear" class="action-button" type="button">Clear</button>
       </div>
 
-      <!-- Légende SOUS les boutons -->
-      <div id="pieceLegend" class="legend">
-        <div class="legend-title">Legend</div>
-
-        <div class="legend-grid">
-          <div class="legend-item"><span class="legend-swatch piece-p"></span><span class="legend-label">Pawn (P)</span></div>
-          <div class="legend-item"><span class="legend-swatch piece-n"></span><span class="legend-label">Knight (N)</span></div>
-          <div class="legend-item"><span class="legend-swatch piece-b"></span><span class="legend-label">Bishop (B)</span></div>
-          <div class="legend-item"><span class="legend-swatch piece-r"></span><span class="legend-label">Rook (R)</span></div>
-          <div class="legend-item"><span class="legend-swatch piece-q"></span><span class="legend-label">Queen (Q)</span></div>
-          <div class="legend-item"><span class="legend-swatch piece-k"></span><span class="legend-label">King (K)</span></div>
-          <div class="legend-item"><span class="legend-swatch side-w"></span><span class="legend-label">Player: White</span></div>
-          <div class="legend-item"><span class="legend-swatch side-b"></span><span class="legend-label">Player: Black</span></div>
-        </div>
-
-        <div class="legend-note">
-          When multiple pieces reach the same square, the big square uses the player color (white / black).
-        </div>
-
-        <div class="legend-note">
-          When the same piece (or piece type) reaches a square multiple times, the marker becomes solid.
-    <div class="legend-example">
-  <span class="legend-swatch solid-demo"></span>
-  <span class="legend-arrow">→</span>
-  <span class="legend-swatch solid-demo solid"></span>
-</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT COLUMN (TIMER + Show Moves dessous) -->
-    <div class="timer-col">
-      <div id="timerSection">
-        <div id="timer">Time: 03:00</div>
-        <p class="timer-penalty">10 second penalty per wrong answer</p>
-      </div>
-
-      <div class="timer-actions">
-        <button id="startButton" class="action-button full-width" type="button">Start</button>
-        <button id="showMovesButton" class="action-button full-width" type="button">Show Answers</button>
-      </div>
-
+      <!-- ANSWERS -->
       <div id="movesList"></div>
+
     </div>
+
   </div>
   
   <script src="chess-count-quiz.js"></script>
