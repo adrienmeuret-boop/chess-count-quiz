@@ -788,7 +788,7 @@ function relationTask(item,level) {
  const own=piece=>(piece===piece.toUpperCase())===item.white;
  const pieces=Object.entries(board);
  const focus=item.focus??item.link[1];
- const targets=pieces.filter(([square,piece])=>own(piece)&&(piece.toLowerCase()!=='k'||(level===1&&square===focus)));
+ const targets=pieces.filter(([square,piece])=>own(piece)&&(piece.toLowerCase()!=='k'||level===2||level===4||(level===1&&square===focus)));
  const links=targets.flatMap(([to])=>pieces.filter(([from])=>controls(board,from,to))
   .map(([from,piece])=>({from,to,defence:own(piece)})).filter(link=>board[to].toLowerCase()!=='k'||!link.defence));
  const attacked=targets.map(([sq])=>sq).filter(sq=>links.some(link=>link.to===sq&&!link.defence));
@@ -960,7 +960,10 @@ function render() {
   stage===3?'Quelles sont tes pièces attaquées et sans défense ?':
   'Marque tes pièces et pions attaqués.';
  get('question').hidden=phase==='links-ready';
- if(phase==='links')get('question').textContent='Marque les attaquants et les défenseurs';
+ if(phase==='links'){
+  const target=linkTargets[focusIndex];
+  get('question').textContent=piecesFromFen(current.fen)[target]?.toLowerCase()==='k'?'Qui met ton roi en échec ?':'Marque les attaquants et les défenseurs';
+ }
  const finishedPath=mode==='train'&&pathState(saved).complete;
  if(!current&&finishedPath)get('question').textContent=saved.assessmentDone?'Parcours terminé · bilan disponible dans Statistiques.':'Les 4 étapes sont validées. Bilan final : 32 positions, pièces visibles.';
  const answer=phase==='answer'||phase==='links';
