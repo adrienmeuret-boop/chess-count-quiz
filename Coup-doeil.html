@@ -93,6 +93,8 @@ input,select{max-width:100%;box-sizing:border-box}
 #account #cycle-status:empty{display:none}
 #account #profile-status,#account #diagnostic>p{max-width:54ch;margin:12px auto;line-height:1.45}
 @media(max-width:540px){.account-grid{grid-template-columns:1fr}#account .account-heading{padding:0;gap:8px}#account .account-heading form{position:static}}
+.sq.picked-attacker[aria-pressed=true]{box-shadow:inset 0 0 0 4px #a73538;background:#e5a098}
+.sq.picked-protector[aria-pressed=true]{box-shadow:inset 0 0 0 4px #427a41;background:#aacc97}
 .focus-square::after{content:'';position:absolute;inset:0;z-index:2;box-sizing:border-box;border:clamp(5px,1vw,8px) solid #65301b;border-radius:3px;pointer-events:none}
 .missed-square{box-shadow:inset 0 0 0 3px #c38116}
 .false-square{box-shadow:inset 0 0 0 3px #ae3131}
@@ -290,6 +292,7 @@ try {
 } catch {}
 let saved = family.players[family.active] ?? family.players[0];
 let assessment=false, selectedReport=null;
+let linkTargets, linkDefence;
 let task, seriesExposure, stage, focusIndex, markedTargets, markedLinks, reviewAnswer, flashChallenge, reviewFocus, pathResult;
 let mode = 'train', queue, current, phase, picked, results, started, timer, shown;
 function persist() {
@@ -688,6 +691,8 @@ function next() {
  focusIndex=0;
  markedTargets=[];
  markedLinks=[];
+ linkTargets=[];
+ linkDefence=false;
  reviewAnswer=null;
  reviewFocus=null;
  task=current ? relationTask(current,stage) : null;
@@ -738,7 +743,7 @@ function relationTask(item,level) {
  const focus=item.focus??item.link[1];
  const targets=pieces.filter(([square,piece])=>own(piece)&&(piece.toLowerCase()!=='k'||(level===1&&square===focus)));
  const links=targets.flatMap(([to])=>pieces.filter(([from])=>controls(board,from,to))
-  .map(([from,piece])=>({from,to,defence:own(piece)})));
+  .map(([from,piece])=>({from,to,defence:own(piece)})).filter(link=>board[to].toLowerCase()!=='k'||!link.defence));
  const attacked=targets.map(([sq])=>sq).filter(sq=>links.some(link=>link.to===sq&&!link.defence));
  const exposed=attacked.filter(sq=>!links.some(link=>link.to===sq&&link.defence));
  if(level===4)return {focus,targets:[],links:[{from:item.link[0],to:focus,defence:false}],allLinks:links};
@@ -761,7 +766,7 @@ function squareOrder() {
 
 function drawBoard() {
  const data = boardPieces();
- const focus=stage===1?task?.focus:stage===2&&phase==='links'?markedTargets[focusIndex]:null;
+ const focus=stage===1?task?.focus:stage===2&&phase==='links'?linkTargets[focusIndex]:null;
  const order = squareOrder();
  get('board').replaceChildren(...order.map((square, index) => {
   const button = document.createElement('button');
@@ -772,6 +777,7 @@ function drawBoard() {
   if(phase==='review'&&reviewAnswer?.false.includes(square))button.classList.add('false-square');
   if(phase==='review'&&!reviewAnswer?.ok&&reviewAnswer?.correct.includes(square))button.classList.add('correct-square');
   button.setAttribute('aria-pressed', String(picked.includes(square)));
+  if(phase==='links'&&picked.includes(square))button.classList.add(linkDefence?'picked-protector':'picked-attacker');
   const piece = data[square];
   button.setAttribute('aria-label', square + (piece ? ' ' + names[' pnbrqk'.indexOf(piece.toLowerCase())] +
    (piece === piece.toUpperCase() ? ' blanc' : ' noir') : ''));
@@ -805,7 +811,7 @@ function drawBoard() {
  }));
  const selecting=phase==='answer'||phase==='links';
  const count=get('selection-count');
- get('clear').hidden=!selecting||!picked.length;
+ get('clear').hidden=true;
  count.textContent=selecting&&picked.length?picked.length+' '+(picked.length===1?'case sélectionnée':'cases sélectionnées'):'';
  if(selecting&&stage===4)get('action').textContent='Valider';
  else if(selecting)get('action').textContent=picked.length?(stage===2&&phase==='answer'?'Vérifier les liens':'Valider'):
@@ -817,7 +823,7 @@ function drawBoard() {
   const ns='http://www.w3.org/2000/svg';
   const missed=stage===3
    ? task.allLinks.filter(link=>!link.defence&&reviewAnswer.missed.includes(link.to))
-   : task.links.filter(link=>reviewAnswer.linkCheck.missed.includes(linkKey(link)));
+   : task.links.filter(link=>reviewAnswer.linkCheck.missed.includes(linkKey(link)+(stage===2?(link.defence?'d':'a'):'')));
   for(const link of missed){
    const from=order.indexOf(link.from),to=order.indexOf(link.to);
    const x=from%8+.5,y=Math.floor(from/8)+.5;
@@ -875,22 +881,24 @@ function render() {
  get('question').textContent=!current ? (results.length?'Série terminée':'Les deux tests de cette durée sont terminés.') :
   stage===4?(current.attacker===6?'Le roi adverse attaque quelle pièce ?':
    ([4,5].includes(current.attacker)?'Quelle ':'Quel ')+names[current.attacker]+' adverse attaque une de tes pièces ?'):
-  stage===1?'Qui attaque ou protège la pièce entourée en '+task.focus+' ?':
+  stage===1?(piecesFromFen(current.fen)[task.focus]?.toLowerCase()==='k'?'Qui met ton roi en échec ?':'Qui attaque ou protège la pièce entourée en '+task.focus+' ?'):
   stage===3?'Quelles sont tes pièces attaquées et sans défense ?':
-  phase==='links'?'Qui attaque ou protège ta pièce en '+markedTargets[focusIndex]+' ?':'Quelles sont tes pièces attaquées ?';
+  phase==='links'?(linkDefence?'Qui protège ':'Qui attaque ')+'ta pièce en '+linkTargets[focusIndex]+' ?':'Quelles sont tes pièces attaquées, pions compris ?';
  const finishedPath=mode==='train'&&pathState(saved).complete;
  if(!current&&finishedPath)get('question').textContent=saved.assessmentDone?'Parcours terminé · bilan disponible dans Progrès.':'Les 4 étapes sont validées. Bilan final : 32 positions, pièces visibles.';
  const answer=phase==='answer'||phase==='links';
  get('none').hidden=true;
  get('action').textContent={ready:'Afficher',flash:'Observe',answer:picked.length?'Valider':stage===1?'Aucun lien':'Aucune pièce',links:picked.length?'Valider les liens':'Aucun lien',review:'Suivante',done:mode==='train'?'Continuer le parcours':'Nouvelle série'}[phase];
  get('play-step').textContent=phase==='ready'?'Lis la question, puis affiche la position.':answer?
-  (stage===4?'Clique sur l’attaquant, puis sur sa cible.':(stage===1||phase==='links')?'Marque tous les attaquants et défenseurs.':'Marque toutes les pièces qui correspondent.'):'';
+  (stage===4?'Clique sur l’attaquant, puis sur sa cible.':stage===1?'Marque toutes les pièces demandées.':phase==='links'?(linkDefence?'Marque les protecteurs.':'Marque les attaquants.') : stage===2?'Marque toutes tes pièces attaquées, pions compris.':'Marque toutes les pièces qui correspondent.'):'';
  get('action').hidden=phase==='done'&&((mode==='test'&&!results.length)||(finishedPath&&saved.assessmentDone));
+ if(phase==='done'&&mode==='train'&&!assessment&&!flashChallenge&&pathResult&&!pathResult.passed)get('action').textContent='Recommencer l’étape';
  if(phase==='done'&&finishedPath&&!saved.assessmentDone)get('action').textContent='Commencer le bilan final';
- get('clear').hidden=!answer||!picked.length;
- get('skip').hidden=!answer;
+ get('clear').hidden=true;
+ get('skip').hidden=!answer||mode==='train';
  get('source').hidden=phase!=='review'||!current?.source;
  if(!get('source').hidden)get('source').href=current.source;
+ get('play-step').className=phase==='links'?(linkDefence?'feedback-good':'feedback-bad'):'';
  const feedback=get('feedback');
  feedback.replaceChildren();
  function addResult(label,value,status){
@@ -901,10 +909,15 @@ function render() {
   row.append(label+' : ',amount);
   feedback.append(row);
  }
+ if(phase==='links'){
+  const check=evaluateSet(task.targets,markedTargets);
+  addResult('Pièces repérées',check.correct.length+'/'+task.targets.length,!check.missed.length);
+  addResult('Signalées à tort',check.false.length,!check.false.length);
+ }
  if(phase==='review'){
   const {found,expected,falseCount,attack,defence}=reviewAnswer;
   addResult('Trouvés',found+'/'+expected,found===expected);
-  addResult('Faux',falseCount,falseCount===0);
+  addResult('Signalés à tort',falseCount,falseCount===0);
   if(task.links.length){
    for(const [label,value] of [['Attaques',attack],['Protections',defence]]){
     const [correct,possible]=value.split('/');
@@ -916,7 +929,7 @@ function render() {
   const found=total('found'),expected=total('expected'),falseCount=total('falseCount');
   const exact=results.filter(item=>item.ok).length;
   addResult('Trouvés',found+'/'+expected,found===expected);
-  addResult('Faux',falseCount,falseCount===0);
+  addResult('Signalés à tort',falseCount,falseCount===0);
   addResult('Positions exactes',exact+'/'+results.length,exact===results.length);
  }
  drawBoard();
@@ -943,14 +956,15 @@ function render() {
 function finishAnswer(skip=false) {
  if(!skip&&phase==='answer'&&stage===2&&picked.length){
   markedTargets=[...picked];
-  picked=[];
-  phase='links';
-  render();
-  return;
+  linkTargets=task.targets.filter(square=>markedTargets.includes(square));
+  if(linkTargets.length){picked=[];phase='links';render();return;}
  }
  if(phase==='links'&&!skip){
-  markedLinks.push(...picked.map(from=>from+markedTargets[focusIndex]));
-  if(++focusIndex<markedTargets.length){picked=[];render();return;}
+  const target=linkTargets[focusIndex];
+  markedLinks.push(...picked.map(from=>from+target+(linkDefence?'d':'a')));
+  if(!linkDefence){linkDefence=true;picked=[];render();return;}
+  linkDefence=false;
+  if(++focusIndex<linkTargets.length){picked=[];render();return;}
  }
  if(phase==='answer'&&!skip&&stage===3)markedTargets=[...picked];
  if(phase==='answer'&&!skip&&stage===1)markedLinks=picked.map(from=>from+task.focus);
@@ -965,14 +979,15 @@ function finishAnswer(skip=false) {
   if(valid){task.links=[valid];task.focus=valid.to;}
  }
  const targetCheck=evaluateSet(stage===1||stage===4?[]:task.targets,markedTargets);
- const linkCheck=evaluateSet(task.links.map(linkKey),markedLinks);
+ const answerKey=link=>linkKey(link)+(stage===2?(link.defence?'d':'a'):'');
+ const linkCheck=evaluateSet(task.links.map(answerKey),markedLinks);
  const expected=targetCheck.correct.length+targetCheck.missed.length+task.links.length;
  const found=targetCheck.correct.length+linkCheck.correct.length;
  const falseCount=targetCheck.false.length+linkCheck.false.length;
  const ok=!skip&&found===expected&&falseCount===0;
  const stat=defence=>{
   const relevant=task.links.filter(link=>link.defence===defence);
-  return relevant.filter(link=>linkCheck.correct.includes(linkKey(link))).length+'/'+relevant.length;
+  return relevant.filter(link=>linkCheck.correct.includes(answerKey(link))).length+'/'+relevant.length;
  };
  reviewAnswer={...targetCheck,ok,found,expected,falseCount,linkCheck,attack:stat(false),defence:stat(true)};
  reviewFocus=stage===1||stage===4?task.focus:(targetCheck.missed[0]??targetCheck.false[0]??task.targets[0]??null);
@@ -986,7 +1001,7 @@ function finishAnswer(skip=false) {
    values.direction=dx===dy?'Diagonales':!dx||!dy?'Lignes droites':'Sauts de cavalier';
    values.priority=[values.piece,values.direction,values.distance].join('~');
   }
-  axes.push({values,ok:stage===3?targetCheck.correct.includes(link.to):linkCheck.correct.includes(linkKey(link))});
+  axes.push({values,ok:stage===3?targetCheck.correct.includes(link.to):linkCheck.correct.includes(answerKey(link))});
  }
  if(!axes.length)axes.push({values:{color:current.white?'Blancs':'Noirs'},ok});
  results.push({ok,found,expected,falseCount,axes,ms:Math.max(0,performance.now()-started-seriesExposure)});
