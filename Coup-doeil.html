@@ -655,6 +655,12 @@ function start(nextMode, challenge=null, finalAssessment=false) {
   const backup=positions.filter(item=>!item.reserve&&!queue.some(existing=>existing.fen===item.fen));
   queue.push(...backup.slice(0,6-queue.length));
  }
+ if(!assessment&&mode!=='test'&&queue.length&&!queue.some(item=>isEmptyExercise(item,stage))){
+  const candidates=emptyExercisePool(stage).filter(item=>!item.reserve&&!queue.some(other=>other.fen===item.fen));
+  const ranked=candidates.map(item=>({item,tie:Math.random()})).sort((a,b)=>
+   (saved.seen[a.item.fen]??0)-(saved.seen[b.item.fen]??0)||a.tie-b.tie);
+  if(ranked.length)queue[Math.floor(Math.random()*queue.length)]=ranked[0].item;
+ }
  get('train').setAttribute('aria-pressed', String(mode === 'train'));
  get('vision').setAttribute('aria-pressed', String(mode === 'vision'));
  get('options').hidden = mode === 'train';
@@ -663,6 +669,35 @@ function start(nextMode, challenge=null, finalAssessment=false) {
  next();
 }
 
+const emptyExercisePools=new Map();
+function emptyExercisePool(level){
+ if(emptyExercisePools.has(level))return emptyExercisePools.get(level);
+ const pool=positions.flatMap(item=>{
+  const board=piecesFromFen(item.fen),entries=Object.entries(board);
+  return [item.white,!item.white].flatMap(white=>{
+   const own=piece=>(piece===piece.toUpperCase())===white;
+   const king=entries.find(([,piece])=>own(piece)&&piece.toLowerCase()==='k')?.[0];
+   if(!king||entries.some(([from,piece])=>!own(piece)&&controls(board,from,king)))return [];
+   const view={...item,white};
+   if(level===1){
+    const focus=entries.find(([square,piece])=>own(piece)&&piece.toLowerCase()!=='k'&&!entries.some(([from])=>controls(board,from,square)))?.[0];
+    return focus?[{...view,focus}]:[];
+   }
+   if(level===4){
+    const attacker=entries.find(([,piece])=>!own(piece)&&!entries.some(([from,other])=>
+     other===piece&&entries.some(([to,target])=>own(target)&&controls(board,from,to))))?.[1];
+    return attacker?[{...view,attacker:' pnbrqk'.indexOf(attacker.toLowerCase()),noLink:true}]:[];
+   }
+   return relationTask(view,level).targets.length?[]:[view];
+  });
+ });
+ emptyExercisePools.set(level,pool);
+ return pool;
+}
+function isEmptyExercise(item,level){
+ const task=relationTask(item,level);
+ return !(level===1||level===4?task.links.length:task.targets.length);
+}
 function assessmentQueue() {
  const chosen=new Set();
  const available=[...new Map(positions.map(item=>[item.fen,item])).values()];
@@ -672,16 +707,19 @@ function assessmentQueue() {
   Number(Boolean(saved.seen[a.fen]))-Number(Boolean(saved.seen[b.fen]))||
   Number(b.reserve)-Number(a.reserve)||random.get(a.fen)-random.get(b.fen));
  return pathOrder.flatMap(level=>{
-  const pick=predicate=>{
-   const candidate=ranked.find(item=>!chosen.has(item.fen)&&predicate(item))??ranked.find(item=>!chosen.has(item.fen));
+  const pick=(predicate,pool=ranked)=>{
+   const candidate=pool.find(item=>!chosen.has(item.fen)&&predicate(item))??ranked.find(item=>!chosen.has(item.fen));
    chosen.add(candidate.fen);
    return {...candidate,assessmentLevel:level};
   };
+  const order=new Map(ranked.map((item,index)=>[item.fen,index]));
+  const negatives=emptyExercisePool(level).slice().sort((a,b)=>order.get(a.fen)-order.get(b.fen));
+  const emptySlot=Math.floor(Math.random()*8);
   return Array.from({length:8},(_,index)=>pick(item=>{
-   const sameCamp=item.white===(index%2===0);
-   if(level===3)return sameCamp&&(relationTask(item,3).targets.length===0)===(index<2);
-   return sameCamp&&(item.distance>=4)===(index<2);
-  }));
+   if(item.white!==(index%2===0))return false;
+   if(index===emptySlot)return true;
+   return !isEmptyExercise(item,level)&&(level===3||(item.distance>=4)===(index<2));
+  },index===emptySlot?negatives:ranked));
  });
 }
 function next() {
@@ -747,6 +785,7 @@ function relationTask(item,level) {
   .map(([from,piece])=>({from,to,defence:own(piece)})).filter(link=>board[to].toLowerCase()!=='k'||!link.defence));
  const attacked=targets.map(([sq])=>sq).filter(sq=>links.some(link=>link.to===sq&&!link.defence));
  const exposed=attacked.filter(sq=>!links.some(link=>link.to===sq&&link.defence));
+ if(level===4&&item.noLink)return {focus:null,targets:[],links:[],allLinks:links};
  if(level===4)return {focus,targets:[],links:[{from:item.link[0],to:focus,defence:false}],allLinks:links};
  return {focus, targets:level===3?exposed:attacked,links:level===1?links.filter(link=>link.to===focus):
   level===2?links.filter(link=>attacked.includes(link.to)):[],allLinks:links};
@@ -814,10 +853,10 @@ function drawBoard() {
  const count=get('selection-count');
  get('clear').hidden=true;
  count.textContent=selecting&&picked.length?picked.length+' '+(picked.length===1?'case sélectionnée':'cases sélectionnées'):'';
- if(selecting&&stage===4)get('action').textContent='Valider';
+ if(selecting&&stage===4)get('action').textContent=picked.length?'Valider':'Aucun lien';
  else if(selecting)get('action').textContent=picked.length?(stage===2&&phase==='answer'?'Vérifier les liens':'Valider'):
   (stage===1||phase==='links'?'Aucun lien':'Aucune pièce');
- get('action').disabled = phase === 'flash'||(selecting&&stage===4&&picked.length!==2);
+ get('action').disabled = phase === 'flash'||(selecting&&stage===4&&picked.length===1);
  const arrow = get('arrow');
  arrow.replaceChildren();
  if(phase==='review'&&reviewAnswer){
@@ -880,8 +919,8 @@ function render() {
   status.append(' · ',dot,current.white?' Vous jouez les Blancs':' Vous jouez les Noirs');
  }
  get('question').textContent=!current ? (results.length?'Série terminée':'Les deux tests de cette durée sont terminés.') :
-  stage===4?(current.attacker===6?'Le roi adverse attaque quelle pièce ?':
-   ([4,5].includes(current.attacker)?'Quelle ':'Quel ')+names[current.attacker]+' adverse attaque une de tes pièces ?'):
+  stage===4?(current.attacker===6?'Le roi adverse attaque-t-il une de tes pièces ?':
+   'Une de tes pièces est-elle attaquée par '+([4,5].includes(current.attacker)?'une ':'un ')+names[current.attacker]+' adverse ?'):
   stage===1?(piecesFromFen(current.fen)[task.focus]?.toLowerCase()==='k'?'Qui met ton roi en échec ?':'Qui attaque ou protège la pièce entourée en '+task.focus+' ?'):
   stage===3?'Quelles sont tes pièces attaquées et sans défense ?':
   phase==='links'?(linkDefence?'Qui protège ':'Qui attaque ')+'ta pièce en '+linkTargets[focusIndex]+' ?':'Quelles sont tes pièces attaquées, pions compris ?';
@@ -891,7 +930,7 @@ function render() {
  get('none').hidden=true;
  get('action').textContent={ready:'Afficher',flash:'Observe',answer:picked.length?'Valider':stage===1?'Aucun lien':'Aucune pièce',links:picked.length?'Valider les liens':'Aucun lien',review:'Suivante',done:mode==='train'?'Continuer le parcours':'Nouvelle série'}[phase];
  get('play-step').textContent=phase==='ready'?'Lis la question, puis affiche la position.':answer?
-  (stage===4?'Clique sur l’attaquant, puis sur sa cible.':stage===1?'Marque toutes les pièces demandées.':phase==='links'?(linkDefence?'Marque les protecteurs.':'Marque les attaquants.') : stage===2?'Marque toutes tes pièces attaquées, pions compris.':'Marque toutes les pièces qui correspondent.'):'';
+  (stage===4?'Clique sur l’attaquant, puis sur sa cible, ou choisis Aucun lien.':stage===1?'Marque toutes les pièces demandées.':phase==='links'?(linkDefence?'Marque les protecteurs.':'Marque les attaquants.') : stage===2?'Marque toutes tes pièces attaquées, pions compris.':'Marque toutes les pièces qui correspondent.'):'';
  get('action').hidden=phase==='done'&&((mode==='test'&&!results.length)||(finishedPath&&saved.assessmentDone));
  if(phase==='done'&&mode==='train'&&!assessment&&!flashChallenge&&pathResult&&!pathResult.passed)get('action').textContent='Recommencer l’étape';
  if(phase==='done'&&finishedPath&&!saved.assessmentDone)get('action').textContent='Commencer le bilan final';
@@ -974,7 +1013,7 @@ function finishAnswer(skip=false) {
   const board=piecesFromFen(current.fen);
   const [from,to]=picked;
   const attacker=board[from],target=board[to];
-  const valid=attacker&&target&&attacker.toLowerCase()===board[current.link[0]].toLowerCase()&&
+  const valid=attacker&&target&&attacker.toLowerCase()===' pnbrqk'[current.attacker]&&
    (attacker===attacker.toUpperCase())!==current.white&&(target===target.toUpperCase())===current.white&&
    controls(board,from,to)?{from,to,defence:false}:null;
   if(valid){task.links=[valid];task.focus=valid.to;}
