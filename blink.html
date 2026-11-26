@@ -541,6 +541,10 @@ function testRuns(player,ms) {
  const n=player.testRuns?.[ms];
  return Number.isInteger(n)&&n>=0 ? Math.min(2,n) : 0;
 }
+function emptyResponses(results) {
+ const empty=results.filter(result=>result.emptyResponse);
+ return {correct:empty.filter(result=>result.ok).length,total:empty.length};
+}
 function stageObjectives(exact,total,found,expected,falseCount) {
  const exactMin=Math.ceil(total*.75), foundMin=Math.ceil(expected*.85), falseMax=Math.floor(total/4);
  return [
@@ -1013,6 +1017,10 @@ function render() {
    addResult('Trouvés',found+'/'+expected,found===expected);
    addResult('Signalés à tort',falseCount,falseCount===0,undefined,true);
   }
+  const empty=emptyResponses(results);
+  if(empty.total){
+   addResult('Aucune réponse',empty.correct+'/'+empty.total,empty.correct===empty.total);
+  }
  }
  drawBoard();
  drawStats();
@@ -1084,7 +1092,8 @@ function finishAnswer(skip=false) {
   axes.push({values,ok:stage===3?targetCheck.correct.includes(link.to):linkCheck.correct.includes(answerKey(link))});
  }
  if(!axes.length)axes.push({values:{color:current.white?'Blancs':'Noirs'},ok});
- results.push({ok,found,expected,falseCount,axes,ms:Math.max(0,performance.now()-started-seriesExposure)});
+ const emptyResponse=!skip&&!markedTargets.length&&!markedLinks.length;
+ results.push({ok,emptyResponse,found,expected,falseCount,axes,ms:Math.max(0,performance.now()-started-seriesExposure)});
  if(assessment){
   const seen=saved.assessmentSeen??={};
   seen[current.fen]=(seen[current.fen]??0)+1;
@@ -1101,7 +1110,7 @@ function finishAnswer(skip=false) {
   get('cycle').value='';
 
   if(assessment){saved.assessmentDone=true;selectedReport=null;}
-  saved.visits.push({mode:assessment?'assessment':mode,stage,exposure:seriesExposure,axes,found,expected,falseCount,correct:n,total:results.length,date:new Date().toISOString(),
+  saved.visits.push({mode:assessment?'assessment':mode,stage,exposure:seriesExposure,axes,found,expected,falseCount,emptyResponses:emptyResponses(results),correct:n,total:results.length,date:new Date().toISOString(),
    ms:n?(accurate[Math.floor((n-1)/2)]+accurate[Math.floor(n/2)])/2:null});
   if(mode==='train'&&!flashChallenge&&!assessment){
    const total=results.length;
@@ -1208,7 +1217,8 @@ function drawStats() {
  for(const report of reports.slice(-12).reverse()){
   const entry=document.createElement('li'), button=document.createElement('button');
   button.type='button';
-  button.textContent=sessionLabel(report)+' · '+report.correct+'/'+report.total+' positions exactes';
+  button.textContent=sessionLabel(report)+' · '+report.correct+'/'+report.total+' positions exactes'+
+   (report.emptyResponses?.total?' · Aucune réponse : '+report.emptyResponses.correct+'/'+report.emptyResponses.total:'');
   button.setAttribute('aria-pressed',String(report===selected));
   button.addEventListener('click',()=>{
    const index=[...list.children].indexOf(entry);
