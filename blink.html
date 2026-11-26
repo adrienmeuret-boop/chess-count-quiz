@@ -930,7 +930,7 @@ function render() {
    'Une de tes pièces est-elle attaquée par '+([4,5].includes(current.attacker)?'une ':'un ')+names[current.attacker]+' adverse ?'):
   stage===1?(piecesFromFen(current.fen)[task.focus]?.toLowerCase()==='k'?'Qui met ton roi en échec ?':'Qui attaque ou protège la pièce entourée en '+task.focus+' ?'):
   stage===3?'Quelles sont tes pièces attaquées et sans défense ?':
-  'Marque les pièces/pions attaqués.';
+  'Marque tes pièces et pions attaqués.';
  if(phase==='links'){
   const attack=document.createElement('strong'),defence=document.createElement('strong');
   attack.className='feedback-bad';attack.textContent='attaquants';
