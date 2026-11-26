@@ -274,7 +274,7 @@ try {
 } catch {}
 let saved = family.players[family.active] ?? family.players[0];
 let assessment=false, selectedReport=null;
-let linkTargets, linkDefence;
+let linkTargets;
 let task, seriesExposure, stage, focusIndex, markedTargets, markedLinks, reviewAnswer, flashChallenge, reviewFocus, pathResult;
 let mode = 'train', queue, current, phase, picked, results, started, timer, shown;
 function persist() {
@@ -722,7 +722,6 @@ function next() {
  markedTargets=[];
  markedLinks=[];
  linkTargets=[];
- linkDefence=false;
  reviewAnswer=null;
  reviewFocus=null;
  task=current ? relationTask(current,stage) : null;
@@ -742,6 +741,9 @@ function piecesFromFen(fen) {
  return squares;
 }
 
+function isFriendlyPiece(piece){
+ return Boolean(piece)&&(piece===piece.toUpperCase())===current.white;
+}
 function boardPieces() {
  return current && shown ? piecesFromFen(current.fen) : {};
 }
@@ -797,6 +799,7 @@ function squareOrder() {
 
 function drawBoard() {
  const data = boardPieces();
+ const linkBoard=phase==='links'?piecesFromFen(current.fen):null;
  const focus=stage===1?task?.focus:stage===2&&phase==='links'?linkTargets[focusIndex]:null;
  const order = squareOrder();
  get('board').replaceChildren(...order.map((square, index) => {
@@ -808,7 +811,7 @@ function drawBoard() {
   if(phase==='review'&&reviewAnswer?.false.includes(square))button.classList.add('false-square');
   if(phase==='review'&&!reviewAnswer?.ok&&reviewAnswer?.correct.includes(square))button.classList.add('correct-square');
   button.setAttribute('aria-pressed', String(picked.includes(square)));
-  if(phase==='links'&&picked.includes(square))button.classList.add(linkDefence?'picked-protector':'picked-attacker');
+  if(phase==='links'&&picked.includes(square))button.classList.add(isFriendlyPiece(linkBoard[square])?'picked-protector':'picked-attacker');
   const piece = data[square];
   button.setAttribute('aria-label', square + (piece ? ' ' + names[' pnbrqk'.indexOf(piece.toLowerCase())] +
    (piece === piece.toUpperCase() ? ' blanc' : ' noir') : ''));
@@ -919,14 +922,20 @@ function render() {
    'Une de tes pièces est-elle attaquée par '+([4,5].includes(current.attacker)?'une ':'un ')+names[current.attacker]+' adverse ?'):
   stage===1?(piecesFromFen(current.fen)[task.focus]?.toLowerCase()==='k'?'Qui met ton roi en échec ?':'Qui attaque ou protège la pièce entourée en '+task.focus+' ?'):
   stage===3?'Quelles sont tes pièces attaquées et sans défense ?':
-  phase==='links'?(linkDefence?'Qui protège ':'Qui attaque ')+'ta pièce en '+linkTargets[focusIndex]+' ?':'Quelles sont tes pièces attaquées, pions compris ?';
+  'Quelles sont tes pièces attaquées, pions compris ?';
+ if(phase==='links'){
+  const attack=document.createElement('strong'),defence=document.createElement('strong');
+  attack.className='feedback-bad';attack.textContent='attaquants';
+  defence.className='feedback-good';defence.textContent='défenseurs';
+  get('question').replaceChildren('Marque les ',attack,' et les ',defence);
+ }
  const finishedPath=mode==='train'&&pathState(saved).complete;
  if(!current&&finishedPath)get('question').textContent=saved.assessmentDone?'Parcours terminé · bilan disponible dans Progrès.':'Les 4 étapes sont validées. Bilan final : 32 positions, pièces visibles.';
  const answer=phase==='answer'||phase==='links';
  get('none').hidden=true;
  get('action').textContent={ready:'Afficher',flash:'Observe',answer:picked.length?'Valider':stage===1?'Aucun lien':'Aucune pièce',links:picked.length?'Valider les liens':'Aucun lien',review:'Suivante',done:mode==='train'?'Continuer le parcours':'Nouvelle série'}[phase];
  get('play-step').textContent=answer?
-  (stage===4?'Clique sur l’attaquant, puis sur sa cible, ou choisis Aucun lien.':stage===1?'Marque toutes les pièces demandées.':phase==='links'?(linkDefence?'Marque les protecteurs.':'Marque les attaquants.') : stage===2?'Marque toutes tes pièces attaquées, pions compris.':'Marque toutes les pièces qui correspondent.'):'';
+  (stage===4?'Clique sur l’attaquant, puis sur sa cible, ou choisis Aucun lien.':stage===1?'Marque toutes les pièces demandées.':phase==='links'?'' : stage===2?'Marque toutes tes pièces attaquées, pions compris.':'Marque toutes les pièces qui correspondent.'):'';
  get('action').hidden=phase==='done'&&((mode==='test'&&!results.length)||(finishedPath&&saved.assessmentDone));
  if(phase==='done'&&mode==='train'&&!assessment&&!flashChallenge&&pathResult&&!pathResult.passed)get('action').textContent='Recommencer l’étape';
  if(phase==='done'&&finishedPath&&!saved.assessmentDone)get('action').textContent='Commencer le bilan final';
@@ -934,7 +943,6 @@ function render() {
  get('skip').hidden=!answer||mode==='train';
  get('source').hidden=phase!=='review'||!current?.source;
  if(!get('source').hidden)get('source').href=current.source;
- get('play-step').className=phase==='links'?(linkDefence?'feedback-good':'feedback-bad'):'';
  const feedback=get('feedback');
  feedback.replaceChildren();
  function addResult(label,value,status,goal){
@@ -1005,9 +1013,8 @@ function finishAnswer(skip=false) {
  }
  if(phase==='links'&&!skip){
   const target=linkTargets[focusIndex];
-  markedLinks.push(...picked.map(from=>from+target+(linkDefence?'d':'a')));
-  if(!linkDefence){linkDefence=true;picked=[];render();return;}
-  linkDefence=false;
+  const board=piecesFromFen(current.fen);
+  markedLinks.push(...picked.map(from=>from+target+(isFriendlyPiece(board[from])?'d':'a')));
   if(++focusIndex<linkTargets.length){picked=[];render();return;}
  }
  if(phase==='answer'&&!skip&&stage===3)markedTargets=[...picked];
