@@ -93,6 +93,9 @@ main{width:100%;box-sizing:border-box}
 #account #cycle-status:empty{display:none}
 #account #profile-status,#account #diagnostic>p{max-width:54ch;margin:12px auto;line-height:1.45}
 @media(max-width:540px){.account-grid{grid-template-columns:1fr}#account .account-heading{padding:0;gap:8px}#account .account-heading form{position:static}}
+:root{--target-blue:#83acda}
+.feedback-target{color:var(--target-blue)}
+.sq.picked-target[aria-pressed=true]{box-shadow:inset 0 0 0 4px #376b9b;background:var(--target-blue)}
 .sq.picked-attacker[aria-pressed=true]{box-shadow:inset 0 0 0 4px #a73538;background:#e5a098}
 .sq.picked-protector[aria-pressed=true]{box-shadow:inset 0 0 0 4px #427a41;background:#aacc97}
 .focus-square .coord{z-index:3;padding:0 2px;border-radius:2px;background:#65301b;color:#fff1d9}
@@ -787,7 +790,7 @@ function relationTask(item,level) {
  const attacked=targets.map(([sq])=>sq).filter(sq=>links.some(link=>link.to===sq&&!link.defence));
  const exposed=attacked.filter(sq=>!links.some(link=>link.to===sq&&link.defence));
  if(level===4&&item.noLink)return {focus:null,targets:[],links:[],allLinks:links};
- if(level===4)return {focus,targets:[],links:[{from:item.link[0],to:focus,defence:false}],allLinks:links};
+ if(level===4)return {focus,targets:[],links:links.filter(link=>!link.defence&&link.from===item.link[0]),allLinks:links};
  return {focus, targets:level===3?exposed:attacked,links:level===1?links.filter(link=>link.to===focus):
   level===2?links.filter(link=>attacked.includes(link.to)):[],allLinks:links};
 }
@@ -807,7 +810,7 @@ function squareOrder() {
 
 function drawBoard() {
  const data = boardPieces();
- const identifyingLinks=phase==='links'||(phase==='answer'&&stage===1);
+ const identifyingLinks=phase==='links'||((phase==='answer'||(phase==='review'&&reviewAnswer?.ok))&&stage===1);
  const linkBoard=identifyingLinks?piecesFromFen(current.fen):null;
  const focus=stage===1?task?.focus:stage===2&&phase==='links'?linkTargets[focusIndex]:null;
  const order = squareOrder();
@@ -822,11 +825,11 @@ function drawBoard() {
   if(phase==='review'&&reviewAnswer?.missed.includes(square))button.classList.add('missed-square');
   if(falseSquares.has(square))button.classList.add('false-square');
   if(reviewing&&!reviewAnswer.missed.length&&reviewAnswer.correct.includes(square))button.classList.add('correct-square');
-  button.setAttribute('aria-pressed', String(!reviewing&&picked.includes(square)));
+  button.setAttribute('aria-pressed', String((!reviewing||reviewAnswer.ok)&&picked.includes(square)));
   if(identifyingLinks&&picked.includes(square)&&linkBoard[square]){
    button.classList.add(isFriendlyPiece(linkBoard[square])?'picked-protector':'picked-attacker');
-  }else if(phase==='answer'&&stage===4&&picked[0]===square){
-   button.classList.add('picked-attacker');
+  }else if((phase==='answer'||(reviewing&&reviewAnswer.ok))&&stage===4&&picked.includes(square)){
+   button.classList.add(picked[0]===square?'picked-attacker':'picked-target');
   }
   const piece = data[square];
   button.setAttribute('aria-label', square + (piece ? ' ' + names[' pnbrqk'.indexOf(piece.toLowerCase())] +
@@ -853,7 +856,7 @@ function drawBoard() {
   }
   button.addEventListener('click', () => {
    if(square===focus)return;
-   picked = picked.includes(square)?picked.filter(s=>s!==square):stage===4&&picked.length===2?[square]:[...picked,square];
+   picked = stage===4&&picked[0]===square?[]:picked.includes(square)?picked.filter(s=>s!==square):[...picked,square];
    drawBoard();
    get('board').children[index].focus();
   });
@@ -918,13 +921,13 @@ function drawPathMap() {
 }
 function colorRelationWords(element){
  const text=element.textContent;
- const relation=/\b(attaquants?|attaques?|attaqu[ée]e?s?|protège|protections?|défenseurs?|défense|en échec)\b/gi;
+ const relation=/\b(attaquants?|attaques?|attaqu[ée]e?s?|protège|protections?|défenseurs?|défense|en échec|cibles?)\b/gi;
  const parts=text.split(relation);
  if(parts.length===1)return;
  element.replaceChildren(...parts.map((part,index)=>{
   if(index%2===0)return part;
   const emphasis=document.createElement('strong');
-  emphasis.className=/^(prot|déf)/i.test(part)?'feedback-good':'feedback-bad';
+  emphasis.className=/^cible/i.test(part)?'feedback-target':/^(prot|déf)/i.test(part)?'feedback-good':'feedback-bad';
   emphasis.textContent=part;
   return emphasis;
  }));
@@ -947,8 +950,8 @@ function render() {
   status.append(' · ',dot,current.white?'Trait aux blancs':'Trait aux noirs');
  }
  get('question').textContent=!current ? (results.length?'Série terminée':'Les deux tests de cette durée sont terminés.') :
-  stage===4?(current.attacker===6?'Le roi adverse attaque-t-il une de tes pièces ?':
-   'Une de tes pièces est-elle attaquée par '+([4,5].includes(current.attacker)?'une ':'un ')+names[current.attacker]+' adverse ?'):
+  stage===4?(current.attacker===6?'Quelles pièces le roi adverse attaque-t-il ?':
+   'Quelles pièces sont attaquées par '+([4,5].includes(current.attacker)?'une ':'un ')+names[current.attacker]+' adverse ?'):
   stage===1?(piecesFromFen(current.fen)[task.focus]?.toLowerCase()==='k'?'Qui met ton roi en échec ?':'Qui attaque ou protège la pièce entourée en '+task.focus+' ?'):
   stage===3?'Quelles sont tes pièces attaquées et sans défense ?':
   'Marque tes pièces et pions attaqués.';
@@ -959,7 +962,7 @@ function render() {
  get('none').hidden=true;
  get('action').textContent={ready:'Afficher',flash:'Observe',answer:picked.length?'Valider':'Aucune réponse',links:picked.length?'Valider les liens':'Aucune réponse',review:'Suivant',done:mode==='train'?'Continuer le parcours':'Nouvelle série'}[phase];
  get('play-step').textContent=answer?
-  (stage===4?'Clique sur l’attaquant, puis sur sa cible.':stage===1?'Marque toutes les pièces demandées.':stage===2?'':'Marque toutes les pièces qui correspondent.'):'';
+  (stage===4?'Clique sur l’attaquant, puis sur toutes ses cibles.':stage===1?'Marque toutes les pièces demandées.':stage===2?'':'Marque toutes les pièces qui correspondent.'):'';
  colorRelationWords(get('question'));
  colorRelationWords(get('play-step'));
  get('action').hidden=phase==='done'&&((mode==='test'&&!results.length)||(finishedPath&&saved.assessmentDone));
@@ -1046,15 +1049,14 @@ function finishAnswer(skip=false) {
  }
  if(phase==='answer'&&!skip&&stage===3)markedTargets=[...picked];
  if(phase==='answer'&&!skip&&stage===1)markedLinks=picked.map(from=>from+task.focus);
- if(!skip&&stage===4&&picked.length===2){
-  markedLinks=[picked.join('')];
-  const board=piecesFromFen(current.fen);
-  const [from,to]=picked;
-  const attacker=board[from],target=board[to];
-  const valid=attacker&&target&&attacker.toLowerCase()===' pnbrqk'[current.attacker]&&
-   (attacker===attacker.toUpperCase())!==current.white&&(target===target.toUpperCase())===current.white&&
-   controls(board,from,to)?{from,to,defence:false}:null;
-  if(valid){task.links=[valid];task.focus=valid.to;}
+ if(!skip&&stage===4&&picked.length>=2){
+  const [from,...targets]=picked;
+  markedLinks=targets.map(to=>from+to);
+  const attacker=piecesFromFen(current.fen)[from];
+  if(attacker?.toLowerCase()===' pnbrqk'[current.attacker]&&!isFriendlyPiece(attacker)){
+   const attacks=task.allLinks.filter(link=>!link.defence&&link.from===from);
+   if(attacks.length)task.links=attacks;
+  }
  }
  const targetCheck=evaluateSet(stage===1||stage===4?[]:task.targets,markedTargets);
  const answerKey=link=>linkKey(link)+(stage===2?(link.defence?'d':'a'):'');
@@ -1112,7 +1114,7 @@ function finishAnswer(skip=false) {
  }
  if(mode!=='vision'||results.length===queue.length)persist();
  if(mode==='test')next();
- else{picked=[];phase='review';render();}
+ else{if(!ok||stage===2)picked=[];phase='review';render();}
 }
 
 function drawVolumes(visits) {
