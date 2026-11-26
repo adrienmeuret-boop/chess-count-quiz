@@ -213,16 +213,12 @@ nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:5p
  </div>
 </main>
 <div class="after-game">
-<details><summary>Les étapes du parcours</summary>
- <ol>
- <li>Repère les attaquants et les défenseurs de la pièce entourée.</li>
- <li>Relie un attaquant à sa cible en deux clics.</li>
- <li>Repère toutes tes pièces attaquées. Pour chacune, trouve qui l’attaque et qui la protège.</li>
- <li>Repère les pièces attaquées que personne ne protège.</li>
- </ol>
- <p>Les pièces restent visibles dans le parcours. Deux séries précises de suite valident une étape. Après validation, un défi facultatif ajuste son temps d’affichage selon tes résultats en flash. En jeu libre, tu choisis l’étape et la durée.</p>
-</details>
-<details id="progress"><summary>Progrès</summary>
+<details id="progress"><summary>Statistiques</summary>
+<div id="stats-modes" class="actions progress-controls" role="group" aria-label="Mode des statistiques">
+ <button type="button" data-stats-mode="all" aria-pressed="true">Combiné</button>
+ <button type="button" data-stats-mode="train" aria-pressed="false">Parcours</button>
+ <button type="button" data-stats-mode="vision" aria-pressed="false">Jeu libre</button>
+</div>
 <details id="progress-filters" hidden><summary>Voir un cycle archivé</summary>
 <div class="actions progress-controls">
  <label>Cycle <select id="cycle"><option value="">En cours</option></select></label>
@@ -283,7 +279,7 @@ try {
  else Object.assign(family.players[0], JSON.parse(localStorage.getItem(key)) ?? {});
 } catch {}
 let saved = family.players[family.active] ?? family.players[0];
-let assessment=false, selectedReport=null;
+let assessment=false, selectedReport=null, statsMode='all';
 let linkTargets;
 let task, seriesExposure, stage, focusIndex, markedTargets, markedLinks, reviewAnswer, flashChallenge, reviewFocus, pathResult;
 let mode = 'train', queue, current, phase, picked, results, started, timer, shown;
@@ -916,7 +912,6 @@ function drawPathMap() {
 function render() {
  shown=phase==='flash'||phase==='review'||((phase==='answer'||phase==='links')&&!seriesExposure);
  get('duration').disabled=get('exercise').disabled=mode!=='vision'&&phase!=='ready'&&phase!=='done';
- get('progress').hidden=mode!=='train';
  const status=get('status');
  const exercise=document.createElement('span');
  exercise.className='status-exercise';
@@ -1060,7 +1055,7 @@ function finishAnswer(skip=false) {
  const measured=stage===3?relationTask(current,2).links.filter(link=>!link.defence&&task.targets.includes(link.to)):task.links;
  for(const link of measured){
   const values=exerciseAxes(current,[link.from,link.to]);
-  if(assessment){
+  {
    const dx=Math.abs(link.from.charCodeAt(0)-link.to.charCodeAt(0)),dy=Math.abs(+link.from[1]-+link.to[1]);
    values.type=link.defence?'Protections':'Attaques';
    values.direction=dx===dy?'Diagonales':!dx||!dy?'Lignes droites':'Sauts de cavalier';
@@ -1074,7 +1069,7 @@ function finishAnswer(skip=false) {
   const seen=saved.assessmentSeen??={};
   seen[current.fen]=(seen[current.fen]??0)+1;
  }else if(mode==='train')saved.seen[current.fen]=(saved.seen[current.fen]??0)+1;
- if(mode!=='vision'&&results.length===queue.length){
+ if(results.length===queue.length){
   const accurate=results.filter(item=>item.ok).map(item=>item.ms).sort((a,b)=>a-b);
   const n=accurate.length;
   const axes={};
@@ -1097,7 +1092,7 @@ function finishAnswer(skip=false) {
   }
   if(mode==='test')(saved.testRuns??={})[seriesExposure]=testRuns(saved,seriesExposure)+1;
  }
- if(mode!=='vision')persist();
+ if(mode!=='vision'||results.length===queue.length)persist();
  if(mode==='test')next();
  else{picked=[];phase='review';render();}
 }
@@ -1160,49 +1155,67 @@ function assessmentPriority(reports) {
 function drawStats() {
  const root=get('stats'), cards=get('chart'), cycle=get('cycle');
  const selectedCycle=cycle.value;
- const archives=(saved.archives??[]).map((archive,index)=>({archive,index})).filter(({archive})=>archive.visits.some(isAssessment));
+ const archives=(saved.archives??[]).map((archive,index)=>({archive,index})).filter(({archive})=>archive.visits.some(visit=>isStatsSession(visit)));
  cycle.replaceChildren();
  for(const [value,label] of [['','En cours'],...archives.map(({archive,index})=>[String(index),'Cycle '+(index+1)+' · '+new Date(archive.date).toLocaleDateString('fr')])]){
   const option=document.createElement('option');option.value=value;option.textContent=label;cycle.append(option);
  }
  cycle.value=archives.some(({index})=>String(index)===selectedCycle)?selectedCycle:'';
  get('progress-filters').hidden=!archives.length;
- const reports=(cycle.value===''?saved.visits:saved.archives[Number(cycle.value)].visits).filter(isAssessment);
- const current=reports.find(report=>report===selectedReport)??reports.at(-1);
- const previous=reports.slice(0,reports.indexOf(current));
+ const reports=(cycle.value===''?saved.visits:saved.archives[Number(cycle.value)].visits).filter(visit=>isStatsSession(visit,statsMode));
+ const selected=reports.includes(selectedReport)?selectedReport:null;
+ const shownReports=selected?[selected]:reports;
  root.replaceChildren();cards.replaceChildren();
- drawVolumes(current?[current]:[]);
- get('progress-context').textContent=current?'Bilan du '+new Date(current.date).toLocaleDateString('fr')+' · 8 positions par exercice · pièces visibles':'Termine les quatre étapes puis le bilan final pour voir tes progrès.';
- if(!current)return;
- const average=previous.length?previous.reduce((sum,report)=>sum+report.correct,0)/previous.length:null;
- const round=value=>Number(value.toFixed(1)).toLocaleString('fr');
- const diff=average===null?null:current.correct-average;
+ drawVolumes(shownReports);
+ get('progress-context').textContent=selected?sessionLabel(selected):reports.length?reports.length+' session'+(reports.length>1?'s terminées':' terminée'):'Aucune session terminée pour ce filtre.';
+ if(!reports.length)return;
+ const totals=shownReports.reduce((sum,report)=>({
+  correct:sum.correct+report.correct,total:sum.total+report.total,falseCount:sum.falseCount+(report.falseCount??0)
+ }),{correct:0,total:0,falseCount:0});
  const overview=document.createElement('div');overview.className='assessment-cards';
- for(const [label,value,detail] of [
-  [current===reports.at(-1)?'Dernier parcours':'Parcours sélectionné',current.correct+'/32','Positions entièrement réussies'],
-  ['Ta moyenne précédente',average===null?'—':round(average)+'/32',diff===null?'Disponible au deuxième bilan':previous.length+' bilan(s) · '+(diff>0?'+':'')+round(diff)+' position(s)'],
-  ['Fausses alertes',String(current.falseCount),'Réponses signalées à tort'],
-  ['À travailler',assessmentPriority([...previous,current]),'Les liens qui te posent le plus de difficultés']
+ for(const [label,value,style] of [
+  ['Positions exactes',totals.correct+'/'+totals.total,''],
+  ['Fausses alertes',String(totals.falseCount),totals.falseCount?'feedback-false':''],
+  ['À travailler',assessmentPriority(shownReports),'']
  ]){
-  const card=document.createElement('div'), amount=document.createElement('strong'), note=document.createElement('small');
-  amount.textContent=value;note.textContent=detail;
-  card.append(label,amount,note);overview.append(card);
+  const card=document.createElement('div'), amount=document.createElement('strong');
+  amount.textContent=value;amount.className=style;
+  card.append(label,amount);overview.append(card);
  }
  cards.append(overview);
- const heading=document.createElement('h2');heading.textContent='Parcours terminés';root.append(heading);
+ const heading=document.createElement('h2');heading.textContent='Sessions terminées';root.append(heading);
  const list=document.createElement('ul');list.className='assessment-history';
- for(const report of reports.slice().reverse()){
+ for(const report of reports.slice(-12).reverse()){
   const entry=document.createElement('li'), button=document.createElement('button');
   button.type='button';
-  button.textContent=new Date(report.date).toLocaleDateString('fr')+' · '+report.correct+'/32 positions réussies · '+report.falseCount+' fausses alertes';
-  button.setAttribute('aria-pressed',String(report===current));
-  button.addEventListener('click',()=>{selectedReport=report;drawStats();root.querySelector('button[aria-pressed="true"]').focus();});
+  button.textContent=sessionLabel(report)+' · '+report.correct+'/'+report.total+' positions exactes';
+  button.setAttribute('aria-pressed',String(report===selected));
+  button.addEventListener('click',()=>{
+   const index=[...list.children].indexOf(entry);
+   selectedReport=selected===report?null:report;
+   drawStats();root.querySelectorAll('button')[index]?.focus();
+  });
   entry.append(button);list.append(entry);
  }
  root.append(list);
 }
-function isAssessment(visit) {
- return visit?.mode==='assessment'&&visit.total===32&&Number.isInteger(visit.correct)&&visit.correct>=0&&visit.correct<=32;
+function isStatsSession(visit, filter='all') {
+ if(!visit||!['assessment','train','vision'].includes(visit.mode)||!Number.isInteger(visit.total)||visit.total<=0||!Number.isInteger(visit.correct)||visit.correct<0||visit.correct>visit.total)return false;
+ return filter==='all'||(visit.mode==='vision'?'vision':'train')===filter;
+}
+function sessionLabel(report){
+ const date=new Date(report.date).toLocaleDateString('fr');
+ if(report.mode==='assessment')return date+' · Bilan du parcours';
+ const mode=report.mode==='vision'?'Jeu libre':'Parcours';
+ return [date,mode,exerciseNames[report.stage],report.exposure==null?'':durationName(report.exposure)].filter(Boolean).join(' · ');
+}
+for(const button of get('stats-modes').querySelectorAll('button')){
+ button.addEventListener('click',()=>{
+  statsMode=button.dataset.statsMode;
+  selectedReport=null;
+  for(const choice of get('stats-modes').querySelectorAll('button'))choice.setAttribute('aria-pressed',String(choice===button));
+  drawStats();
+ });
 }
 
 get('action').addEventListener('click',()=>{
@@ -1265,7 +1278,7 @@ get('restart-path').addEventListener('click',()=>{
  get('action').focus();
 });
 get('archive-cycle').addEventListener('click',()=>{
- if(!saved.visits.some(isAssessment)) {get('cycle-status').textContent='Aucun bilan terminé à archiver.';return;}
+ if(!saved.visits.some(visit=>isStatsSession(visit))) {get('cycle-status').textContent='Aucune session terminée à archiver.';return;}
  (saved.archives??=[]).push({date:new Date().toISOString(),visits:saved.visits});
  saved.visits=[];
  saved.seen={};
