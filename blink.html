@@ -109,7 +109,9 @@ main{width:100%;box-sizing:border-box}
 .review-targets{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .review-targets button{padding:5px 8px}
 #test-review p{margin:var(--play-space) 0 0;font-size:.875rem}
-#play-panel .flash-challenge{display:block;width:fit-content;max-width:100%;margin:var(--play-space) auto 0;min-height:42px;text-align:center;background:#303c48;border-color:#769ec4;color:#dbeeff;font-weight:650}
+#play-panel .play-actions:has(.flash-challenge){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+#play-panel .flash-challenge{min-height:44px;text-align:center;background:#303c48;border-color:#769ec4;color:#dbeeff;font-weight:650}
+#play-panel .play-actions:has(.flash-challenge) button{min-width:0;padding-inline:6px;font-size:.9rem;line-height:1.2}
 nav[aria-label="Navigation du jeu"]{display:grid;grid-template-columns:repeat(3,max-content) 36px;align-items:center;gap:5px;margin:0}
 nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:5px 7px;min-height:36px;white-space:nowrap;font-size:.88rem}
 .play-sidebar{min-width:0;--play-space:10px}
@@ -565,7 +567,8 @@ function flashButton(level,ms) {
  const button=document.createElement('button');
  button.type='button';
  button.className='flash-challenge';
- button.textContent='Défi flash facultatif · '+durationName(ms);
+ button.textContent='Défi flash · '+durationName(ms);
+ button.setAttribute('aria-label','Défi flash facultatif · '+durationName(ms));
  button.addEventListener('click',()=>start('train',{stage:level,ms}));
  return button;
 }
@@ -1013,17 +1016,19 @@ function render() {
  if(mode==='train'&&phase==='done'&&results.length)get('progress').open=true;
  const review=get('test-review');
  review.replaceChildren();
+ const primaryAction=get('action');
+ primaryAction.parentElement.querySelector('.flash-challenge')?.remove();
  if(phase==='done'&&results.length&&mode==='train'&&!assessment){
   const p=pathState(saved);
   review.textContent=flashChallenge?'Défi terminé. Tu peux reprendre le parcours ou rejouer le défi.' : p.complete?
    'Les quatre étapes sont validées.' : pathResult?.advanced?'Étape validée.' : 'Étape à refaire.';
   if(pathResult?.advanced&&!p.complete){
-   review.append(flashButton(stage,stage===1||stage===4?5000:8000));
+   primaryAction.after(flashButton(stage,stage===1||stage===4?5000:8000));
   }
  }
  if(phase==='done'&&results.length&&flashChallenge){
   const accurate=results.filter(item=>item.ok).length;
-  review.append(flashButton(stage,nextFlash(stage,flashChallenge.ms,accurate,results.length)));
+  primaryAction.after(flashButton(stage,nextFlash(stage,flashChallenge.ms,accurate,results.length)));
  }
 }
 
