@@ -860,9 +860,9 @@ function drawBoard() {
  const count=get('selection-count');
  get('clear').hidden=true;
  count.textContent=selecting&&picked.length?picked.length+' '+(picked.length===1?'case sélectionnée':'cases sélectionnées'):'';
- if(selecting&&stage===4)get('action').textContent=picked.length?'Valider':'Valider sans sélection';
+ if(selecting&&stage===4)get('action').textContent=picked.length?'Valider':'Aucune réponse';
  else if(selecting)get('action').textContent=picked.length?(stage===2&&phase==='answer'?'Vérifier les liens':'Valider'):
-  'Valider sans sélection';
+  'Aucune réponse';
  get('action').disabled = phase === 'flash'||(selecting&&stage===4&&picked.length===1);
  const arrow = get('arrow');
  arrow.replaceChildren();
@@ -954,7 +954,7 @@ function render() {
  if(!current&&finishedPath)get('question').textContent=saved.assessmentDone?'Parcours terminé · bilan disponible dans Statistiques.':'Les 4 étapes sont validées. Bilan final : 32 positions, pièces visibles.';
  const answer=phase==='answer'||phase==='links';
  get('none').hidden=true;
- get('action').textContent={ready:'Afficher',flash:'Observe',answer:picked.length?'Valider':'Valider sans sélection',links:picked.length?'Valider les liens':'Valider sans sélection',review:'Suivante',done:mode==='train'?'Continuer le parcours':'Nouvelle série'}[phase];
+ get('action').textContent={ready:'Afficher',flash:'Observe',answer:picked.length?'Valider':'Aucune réponse',links:picked.length?'Valider les liens':'Aucune réponse',review:'Suivant',done:mode==='train'?'Continuer le parcours':'Nouvelle série'}[phase];
  get('play-step').textContent=answer?
   (stage===4?'Clique sur l’attaquant, puis sur sa cible.':stage===1?'Marque toutes les pièces demandées.':stage===2?'':'Marque toutes les pièces qui correspondent.'):'';
  colorRelationWords(get('question'));
