@@ -72,6 +72,8 @@ input,select{max-width:100%;box-sizing:border-box}
 .play-actions button:not(#action){flex:1 1 auto;min-height:40px}
 #feedback{display:grid;gap:4px;background:#211e1b;border-radius:4px;padding:10px 12px;font-variant-numeric:tabular-nums}
 .feedback-goal{display:block;font-size:.82rem;color:#c4bbb1}
+:root{--false-pick:#ffd34f}
+.feedback-false{color:var(--false-pick)}
 .feedback-good{color:#a9d799}.feedback-bad{color:#ffaaa1}
 .play-guide{font-size:.875rem;color:#c8bfb5}.play-guide p{margin:8px 0 0}
 @media(max-width:760px){#play-panel{padding:12px}}
@@ -98,7 +100,7 @@ input,select{max-width:100%;box-sizing:border-box}
 .focus-square .coord{z-index:3;padding:0 2px;border-radius:2px;background:#65301b;color:#fff1d9}
 .focus-square::after{content:'';position:absolute;inset:0;z-index:2;box-sizing:border-box;border:clamp(5px,1vw,8px) solid #65301b;border-radius:3px;pointer-events:none}
 .missed-square{box-shadow:inset 0 0 0 3px #c38116}
-.false-square{box-shadow:inset 0 0 0 3px #ae3131}
+.false-square{outline:3px solid var(--false-pick);outline-offset:-3px}
 .correct-square{box-shadow:inset 0 0 0 3px #527f2b}
 #exercise{width:100%;min-width:0}
 .progress-controls{align-items:center;gap:8px 16px}
@@ -802,15 +804,18 @@ function drawBoard() {
  const linkBoard=phase==='links'?piecesFromFen(current.fen):null;
  const focus=stage===1?task?.focus:stage===2&&phase==='links'?linkTargets[focusIndex]:null;
  const order = squareOrder();
+ const reviewing=phase==='review'&&reviewAnswer;
+ const falseLinks=reviewing?reviewAnswer.linkCheck.false.map(key=>({from:key.slice(0,2),to:key.slice(2,4),falsePick:true})):[];
+ const falseSquares=new Set(reviewing?[...reviewAnswer.false,...falseLinks.map(link=>link.from)]:[]);
  get('board').replaceChildren(...order.map((square, index) => {
   const button = document.createElement('button');
   button.className = 'sq' + ((index + Math.floor(index/8)) % 2 ? ' dark' : '');
   button.disabled = phase !== 'answer' && phase !== 'links';
-  if(square===focus||(phase==='review'&&!reviewAnswer?.ok&&square===reviewFocus))button.classList.add('focus-square');
+  if(square===focus&&!reviewing)button.classList.add('focus-square');
   if(phase==='review'&&reviewAnswer?.missed.includes(square))button.classList.add('missed-square');
-  if(phase==='review'&&reviewAnswer?.false.includes(square))button.classList.add('false-square');
-  if(phase==='review'&&!reviewAnswer?.ok&&reviewAnswer?.correct.includes(square))button.classList.add('correct-square');
-  button.setAttribute('aria-pressed', String(picked.includes(square)));
+  if(falseSquares.has(square))button.classList.add('false-square');
+  if(reviewing&&!reviewAnswer.missed.length&&reviewAnswer.correct.includes(square))button.classList.add('correct-square');
+  button.setAttribute('aria-pressed', String(!reviewing&&picked.includes(square)));
   if(phase==='links'&&picked.includes(square))button.classList.add(isFriendlyPiece(linkBoard[square])?'picked-protector':'picked-attacker');
   const piece = data[square];
   button.setAttribute('aria-label', square + (piece ? ' ' + names[' pnbrqk'.indexOf(piece.toLowerCase())] +
@@ -858,15 +863,16 @@ function drawBoard() {
   const missed=stage===3
    ? task.allLinks.filter(link=>!link.defence&&reviewAnswer.missed.includes(link.to))
    : task.links.filter(link=>reviewAnswer.linkCheck.missed.includes(linkKey(link)+(stage===2?(link.defence?'d':'a'):'')));
-  for(const link of missed){
+  for(const link of [...missed,...falseLinks]){
    const from=order.indexOf(link.from),to=order.indexOf(link.to);
    const x=from%8+.5,y=Math.floor(from/8)+.5;
    const tx=to%8+.5,ty=Math.floor(to/8)+.5;
    const length=Math.hypot(tx-x,ty-y),dx=(tx-x)/length,dy=(ty-y)/length;
+   if(!length)continue;
    const baseX=tx-.43*dx,baseY=ty-.43*dy;
    const group=document.createElementNS(ns,'g');
-   const color=link.defence?'#15781b':'#a32727';
-   group.setAttribute('opacity','.62');
+   const color=link.falsePick?'var(--false-pick)':link.defence?'#15781b':'#a32727';
+   group.setAttribute('opacity',link.falsePick?'.95':'.62');
    const shaft=document.createElementNS(ns,'path');
    shaft.setAttribute('d','M'+x+' '+y+' L'+baseX+' '+baseY);
    shaft.setAttribute('stroke',color);
@@ -945,27 +951,27 @@ function render() {
  if(!get('source').hidden)get('source').href=current.source;
  const feedback=get('feedback');
  feedback.replaceChildren();
- function addResult(label,value,status,goal){
+ function addResult(label,value,status,goal,falsePick=false){
   const row=document.createElement('div');
   const amount=document.createElement('strong');
-  amount.className=status?'feedback-good':'feedback-bad';
+  amount.className=falsePick&&value>0?'feedback-false':status?'feedback-good':'feedback-bad';
   amount.textContent=value;
   row.append(label+' : ',amount);
   if(goal){
    const objective=document.createElement('span');
-   objective.className='feedback-goal';objective.textContent=goal;row.append(objective);
+   objective.className='feedback-goal'+(!status?' feedback-bad':'');objective.textContent=goal;row.append(objective);
   }
   feedback.append(row);
  }
  if(phase==='links'){
   const check=evaluateSet(task.targets,markedTargets);
   addResult('Pièces repérées',check.correct.length+'/'+task.targets.length,!check.missed.length);
-  addResult('Signalées à tort',check.false.length,!check.false.length);
+  addResult('Signalées à tort',check.false.length,!check.false.length,undefined,true);
  }
  if(phase==='review'){
   const {found,expected,falseCount,attack,defence}=reviewAnswer;
   addResult('Trouvés',found+'/'+expected,found===expected);
-  addResult('Signalés à tort',falseCount,falseCount===0);
+  addResult('Signalés à tort',falseCount,falseCount===0,undefined,true);
   if(task.links.length){
    for(const [label,value] of [['Attaques',attack],['Protections',defence]]){
     const [correct,possible]=value.split('/');
@@ -977,11 +983,11 @@ function render() {
   const found=total('found'),expected=total('expected'),falseCount=total('falseCount');
   const exact=results.filter(item=>item.ok).length;
   if(pathResult){
-   for(const {label,value,goal,met} of pathResult.objectives)addResult(label,value,met,goal);
+   for(const {label,value,goal,met} of pathResult.objectives)addResult(label,value,met,goal,label==='Fausses alertes');
   }else{
    addResult('Positions exactes',exact+'/'+results.length,exact===results.length);
    addResult('Trouvés',found+'/'+expected,found===expected);
-   addResult('Signalés à tort',falseCount,falseCount===0);
+   addResult('Signalés à tort',falseCount,falseCount===0,undefined,true);
   }
  }
  drawBoard();
@@ -1085,7 +1091,7 @@ function finishAnswer(skip=false) {
  }
  if(mode!=='vision')persist();
  if(mode==='test')next();
- else{phase='review';render();}
+ else{picked=[];phase='review';render();}
 }
 
 function drawVolumes(visits) {
