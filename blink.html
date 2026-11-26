@@ -52,10 +52,10 @@ input,select{max-width:100%;box-sizing:border-box}
  #chart th,#chart td{font-size:.78rem}
 }
 .account-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.topbar{display:flex;align-items:center;gap:20px;margin-bottom:12px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;width:var(--board-width);margin-bottom:12px}
 .topbar h1,.account-heading h2{margin:0}
 main{width:100%;box-sizing:border-box}
-@media(max-width:760px){.topbar{display:grid;gap:10px;width:min(100%,560px);margin-inline:auto}}
+@media(max-width:760px){.topbar{gap:6px;width:min(100%,560px);margin-inline:auto}.topbar h1{font-size:1.35rem}}
 #account,#rewards{width:min(640px,calc(100% - 32px));max-height:85vh;box-sizing:border-box;padding:20px;background:#2b2723;color:#e4dfd7;border:1px solid #51483f;border-radius:8px}
 #account::backdrop,#rewards::backdrop{background:#000a}.account-heading{margin-bottom:18px}
 .after-game{margin-top:16px;display:grid;gap:8px}.progress-controls{margin-top:10px}
@@ -109,14 +109,14 @@ main{width:100%;box-sizing:border-box}
 .review-targets button{padding:5px 8px}
 #test-review p{margin:var(--play-space) 0 0;font-size:.875rem}
 #play-panel .flash-challenge{display:block;width:fit-content;max-width:100%;margin:var(--play-space) auto 0;min-height:42px;text-align:center;background:#303c48;border-color:#769ec4;color:#dbeeff;font-weight:650}
-nav[aria-label="Navigation du jeu"]{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 44px;align-items:center;gap:6px;margin:0}
-nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:6px 8px;min-height:42px;white-space:nowrap;font-size:1rem}
+nav[aria-label="Navigation du jeu"]{display:grid;grid-template-columns:repeat(3,max-content) 36px;align-items:center;gap:5px;margin:0}
+nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:5px 7px;min-height:36px;white-space:nowrap;font-size:.88rem}
 .play-sidebar{min-width:0;--play-space:10px}
 #restart-path{box-sizing:border-box;width:100%;font-size:.875rem;padding:8px;margin-top:var(--play-space)}
 #path-map{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));list-style:none;padding:0;margin:0 0 6px;gap:4px}
 #open-rewards{display:grid;place-items:center;color:#fff}
-#open-rewards svg{width:24px;height:24px}
-@media(max-width:760px){nav[aria-label="Navigation du jeu"] button{padding-inline:2px;font-size:clamp(.8rem,4vw,1rem)}}
+#open-rewards svg{width:21px;height:21px}
+@media(max-width:760px){nav[aria-label="Navigation du jeu"]{grid-template-columns:repeat(3,max-content) 30px;gap:3px}nav[aria-label="Navigation du jeu"] button{padding:4px;min-height:32px;font-size:clamp(.68rem,3.1vw,.85rem)}#open-rewards svg{width:18px;height:18px}}
 #path-map[hidden]{display:none}
 #path-map li{min-width:0;overflow-wrap:anywhere;padding:5px 7px;border:1px solid #51483f;border-radius:5px;font-size:.8rem;color:#c8bfb5}
 #path-map li[aria-current=step]{border-color:#83acda;background:#293a4a;color:#f1f6fa}
@@ -174,7 +174,7 @@ nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:6p
  <button id="train" aria-pressed="true">Parcours</button>
  <button id="vision" aria-pressed="false">Jeu libre</button>
  <button id="open-account" type="button">Mon compte</button>
- <button id="open-rewards" type="button" aria-label="Récompenses" title="Récompenses"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0V4ZM7 6H4v2a3 3 0 0 0 3 3m10-5h3v2a3 3 0 0 1-3 3m-5 3v5m-4 1h8"/></svg></button>
+ <button id="open-rewards" type="button" aria-label="Récompenses" title="Récompenses"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 3h12v2h3v2a6 6 0 0 1-4.62 5.84A6.02 6.02 0 0 1 13 15.92V19h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-3.08a6.02 6.02 0 0 1-3.38-3.08A6 6 0 0 1 3 7V5h3V3Zm0 4H5a4 4 0 0 0 1.44 3.07A6 6 0 0 1 6 8V7Zm12 0v1c0 .73-.15 1.42-.44 2.07A4 4 0 0 0 19 7h-1Z" clip-rule="evenodd"/></svg></button>
 </nav>
 </header>
 <dialog id="rewards" aria-labelledby="rewards-title">
