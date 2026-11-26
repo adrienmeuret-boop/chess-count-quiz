@@ -925,7 +925,7 @@ function drawPathMap() {
 }
 function colorRelationWords(element){
  const text=element.textContent;
- const relation=/\b(attaquants?|attaques?|attaqu[ée]e?s?|protège|protections?|défenseurs?|défense|en échec|cibles?)\b/gi;
+ const relation=/\b(attaquants?|attaques?|attaqu[ée]e?s?|protège|protections?|défenseurs?|défense|cibles?)\b/gi;
  const parts=text.split(relation);
  if(parts.length===1)return;
  element.replaceChildren(...parts.map((part,index)=>{
