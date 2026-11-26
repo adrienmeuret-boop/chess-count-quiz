@@ -97,7 +97,8 @@ main{width:100%;box-sizing:border-box}
 .sq.picked-protector[aria-pressed=true]{box-shadow:inset 0 0 0 4px #427a41;background:#aacc97}
 .focus-square .coord{z-index:3;padding:0 2px;border-radius:2px;background:#65301b;color:#fff1d9}
 .focus-square::after{content:'';position:absolute;inset:0;z-index:2;box-sizing:border-box;border:clamp(5px,1vw,8px) solid #65301b;border-radius:3px;pointer-events:none}
-.missed-square{box-shadow:inset 0 0 0 3px #c38116}
+.missed-square::after{content:'';position:absolute;inset:0;z-index:2;border:3px solid #b72f37;pointer-events:none}
+.missed-square.false-square::after{inset:3px}
 .false-square{outline:3px solid var(--false-pick);outline-offset:-3px}
 .correct-square{box-shadow:inset 0 0 0 3px #527f2b}
 #exercise{width:100%;min-width:0}
