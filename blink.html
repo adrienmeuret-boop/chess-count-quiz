@@ -62,19 +62,19 @@ input,select{max-width:100%;box-sizing:border-box}
 #account::backdrop{background:#000a}.account-heading{margin-bottom:18px}
 .after-game{margin-top:16px;display:grid;gap:8px}.progress-controls{margin-top:10px}
 @media(max-width:760px){.position-heading{min-height:0}}
-#play-panel{display:grid;gap:10px;align-content:start;padding:14px}
+#play-panel{display:grid;gap:var(--play-space);align-content:start;padding:14px}
 #play-panel [hidden]{display:none!important}
-.play-setup{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-bottom:12px;border-bottom:1px solid #51483f}
+.play-setup{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--play-space);padding-bottom:var(--play-space);border-bottom:1px solid #51483f}
 .play-setup label{font-size:.9rem;color:#c8bfb5}
 #play-step,#feedback{margin:0;min-height:0}
 #play-step:empty,#feedback:empty,#test-review:empty{display:none}
-.play-actions{display:flex;gap:8px;margin:0}
+.play-actions{display:flex;gap:var(--play-space);margin:0}
 #action{flex:1 0 100%;min-height:44px}
 .play-actions button:not(#action){flex:1 1 auto;min-height:40px}
 #feedback{display:grid;gap:4px;background:#211e1b;border-radius:4px;padding:10px 12px;font-variant-numeric:tabular-nums}
 .feedback-good{color:#a9d799}.feedback-bad{color:#ffaaa1}
 .play-guide{font-size:.875rem;color:#c8bfb5}.play-guide p{margin:8px 0 0}
-@media(max-width:760px){#play-panel{padding:12px;gap:10px}}
+@media(max-width:760px){#play-panel{padding:12px}}
 .camp-dot{display:inline-block;width:.9em;height:.9em;box-sizing:border-box;vertical-align:-.06em;border:1px solid #aaa;border-radius:50%}
 .camp-dot-white{background-color:#fff}
 .camp-dot-black{background-color:#000}
@@ -107,12 +107,13 @@ input,select{max-width:100%;box-sizing:border-box}
 #selection-count{margin:0;font-size:.85rem}#selection-count:empty{display:none}
 .review-targets{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .review-targets button{padding:5px 8px}
-#test-review p{margin:8px 0 0;font-size:.875rem}
+#test-review p{margin:var(--play-space) 0 0;font-size:.875rem}
+#play-panel .flash-challenge{display:block;width:fit-content;max-width:100%;margin:var(--play-space) auto 0;min-height:42px;text-align:center;background:#303c48;border-color:#769ec4;color:#dbeeff;font-weight:650}
 nav[aria-label="Mode"]{width:var(--board-width);box-sizing:border-box}
 nav[aria-label="Mode"]{gap:4px}
 nav[aria-label="Mode"] button{min-width:0;max-width:100%;padding:6px 8px;overflow-wrap:anywhere}
-.play-sidebar{min-width:0}
-#restart-path{box-sizing:border-box;width:100%;font-size:.875rem;padding:8px;margin-top:6px}
+.play-sidebar{min-width:0;--play-space:10px}
+#restart-path{box-sizing:border-box;width:100%;font-size:.875rem;padding:8px;margin-top:var(--play-space)}
 #path-map{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));list-style:none;padding:0;margin:0 0 6px;gap:4px}
 @media(max-width:760px){nav[aria-label="Mode"]{width:min(100%,560px);margin-inline:auto}}
 #path-map[hidden]{display:none}
@@ -205,6 +206,7 @@ nav[aria-label="Mode"] button{min-width:0;max-width:100%;padding:6px 8px;overflo
   <div id="feedback" aria-live="polite"></div>
   <a id="source" target="_blank" rel="noopener" hidden>Revoir la partie</a>
   <div id="test-review"></div>
+  <button id="restart-stage" type="button" hidden>Recommencer l’étape</button>
   <details class="play-guide"><summary>Comment jouer</summary><p id="help" class="muted"></p></details>
  </section>
  <button id="restart-path" type="button" hidden>Recommencer le parcours</button>
@@ -569,6 +571,7 @@ function nextFlash(level,ms,exact,total) {
 function flashButton(level,ms) {
  const button=document.createElement('button');
  button.type='button';
+ button.className='flash-challenge';
  button.textContent='Défi flash facultatif · '+durationName(ms);
  button.addEventListener('click',()=>start('train',{stage:level,ms}));
  return button;
@@ -891,6 +894,7 @@ function drawPathMap() {
  const map=get('path-map');
  map.hidden=mode!=='train';
  get('restart-path').hidden=map.hidden;
+ get('restart-stage').hidden=map.hidden||assessment||Boolean(flashChallenge)||!current||results.length>=queue.length;
  if(map.hidden)return;
  const path=pathState(saved);
  const active=pathOrder.indexOf(path.stage);
@@ -984,12 +988,12 @@ function render() {
    pathResult?.passed?'Première série validée. Une deuxième réussite fait avancer.':
    'Étape à refaire · '+(pathResult?.reasons.join(' · ')||'fais une nouvelle série.');
   if(pathResult?.advanced&&!p.complete){
-   review.append(document.createElement('br'),flashButton(stage,stage===1||stage===4?5000:8000));
+   review.append(flashButton(stage,stage===1||stage===4?5000:8000));
   }
  }
  if(phase==='done'&&results.length&&flashChallenge){
   const accurate=results.filter(item=>item.ok).length;
-  review.append(document.createElement('br'),flashButton(stage,nextFlash(stage,flashChallenge.ms,accurate,results.length)));
+  review.append(flashButton(stage,nextFlash(stage,flashChallenge.ms,accurate,results.length)));
  }
 }
 
@@ -1234,6 +1238,7 @@ get('pgn').addEventListener('change',async event=>{
 });
 get('open-account').addEventListener('click',()=>get('account').showModal());
 get('cycle').addEventListener('change',()=>{selectedReport=null;drawStats();});
+get('restart-stage').addEventListener('click',()=>{start('train');get('action').focus();});
 get('restart-path').addEventListener('click',()=>{
  saved.path=pathState({});
  saved.assessmentDone=false;
