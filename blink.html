@@ -922,7 +922,7 @@ function render() {
    'Une de tes pièces est-elle attaquée par '+([4,5].includes(current.attacker)?'une ':'un ')+names[current.attacker]+' adverse ?'):
   stage===1?(piecesFromFen(current.fen)[task.focus]?.toLowerCase()==='k'?'Qui met ton roi en échec ?':'Qui attaque ou protège la pièce entourée en '+task.focus+' ?'):
   stage===3?'Quelles sont tes pièces attaquées et sans défense ?':
-  'Quelles sont tes pièces attaquées, pions compris ?';
+  'Marque les pièces/pions attaqués.';
  if(phase==='links'){
   const attack=document.createElement('strong'),defence=document.createElement('strong');
   attack.className='feedback-bad';attack.textContent='attaquants';
@@ -935,7 +935,7 @@ function render() {
  get('none').hidden=true;
  get('action').textContent={ready:'Afficher',flash:'Observe',answer:picked.length?'Valider':stage===1?'Aucun lien':'Aucune pièce',links:picked.length?'Valider les liens':'Aucun lien',review:'Suivante',done:mode==='train'?'Continuer le parcours':'Nouvelle série'}[phase];
  get('play-step').textContent=answer?
-  (stage===4?'Clique sur l’attaquant, puis sur sa cible, ou choisis Aucun lien.':stage===1?'Marque toutes les pièces demandées.':phase==='links'?'' : stage===2?'Marque toutes tes pièces attaquées, pions compris.':'Marque toutes les pièces qui correspondent.'):'';
+  (stage===4?'Clique sur l’attaquant, puis sur sa cible, ou choisis Aucun lien.':stage===1?'Marque toutes les pièces demandées.':stage===2?'':'Marque toutes les pièces qui correspondent.'):'';
  get('action').hidden=phase==='done'&&((mode==='test'&&!results.length)||(finishedPath&&saved.assessmentDone));
  if(phase==='done'&&mode==='train'&&!assessment&&!flashChallenge&&pathResult&&!pathResult.passed)get('action').textContent='Recommencer l’étape';
  if(phase==='done'&&finishedPath&&!saved.assessmentDone)get('action').textContent='Commencer le bilan final';
