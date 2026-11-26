@@ -95,6 +95,7 @@ input,select{max-width:100%;box-sizing:border-box}
 @media(max-width:540px){.account-grid{grid-template-columns:1fr}#account .account-heading{padding:0;gap:8px}#account .account-heading form{position:static}}
 .sq.picked-attacker[aria-pressed=true]{box-shadow:inset 0 0 0 4px #a73538;background:#e5a098}
 .sq.picked-protector[aria-pressed=true]{box-shadow:inset 0 0 0 4px #427a41;background:#aacc97}
+.focus-square .coord{z-index:3;padding:0 2px;border-radius:2px;background:#65301b;color:#fff1d9}
 .focus-square::after{content:'';position:absolute;inset:0;z-index:2;box-sizing:border-box;border:clamp(5px,1vw,8px) solid #65301b;border-radius:3px;pointer-events:none}
 .missed-square{box-shadow:inset 0 0 0 3px #c38116}
 .false-square{box-shadow:inset 0 0 0 3px #ae3131}
