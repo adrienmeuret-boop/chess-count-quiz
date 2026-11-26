@@ -998,14 +998,19 @@ function render() {
  }
  if(phase==='review'){
   const {found,expected,falseCount,attack,defence}=reviewAnswer;
-  addResult('Trouvés',found+'/'+expected,found===expected);
-  addResult('Signalés à tort',falseCount,falseCount===0,undefined,true);
+  addResult(stage===2?'Score':'Trouvés',found+'/'+expected,found===expected);
+  if(stage===2){
+   const foundPieces=reviewAnswer.correct.length;
+   const expectedPieces=foundPieces+reviewAnswer.missed.length;
+   addResult('Pièces/pions trouvés',foundPieces+'/'+expectedPieces,foundPieces===expectedPieces);
+  }
   if(task.links.length){
    for(const [label,value] of [['Attaques',attack],['Protections',defence]]){
     const [correct,possible]=value.split('/');
     if(Number(possible))addResult(label,value,correct===possible);
    }
   }
+  addResult('Signalés à tort',falseCount,falseCount===0,undefined,true);
  }else if(phase==='done'&&results.length){
   const total=key=>results.reduce((sum,item)=>sum+item[key],0);
   const found=total('found'),expected=total('expected'),falseCount=total('falseCount');
