@@ -796,7 +796,7 @@ function relationTask(item,level) {
  if(level===4&&item.noLink)return {focus:null,targets:[],links:[],allLinks:links};
  if(level===4)return {focus,targets:[],links:links.filter(link=>!link.defence&&link.from===item.link[0]),allLinks:links};
  return {focus, targets:level===3?exposed:attacked,links:level===1?links.filter(link=>link.to===focus):
-  level===2?links.filter(link=>attacked.includes(link.to)):[],allLinks:links};
+  level===2?links.filter(link=>attacked.includes(link.to)&&board[link.to].toLowerCase()!=='k'):[],allLinks:links};
 }
 
 function evaluateSet(expected, guessed) {
@@ -960,10 +960,7 @@ function render() {
   stage===3?'Quelles sont tes pièces attaquées et sans défense ?':
   'Marque tes pièces et pions attaqués.';
  get('question').hidden=phase==='links-ready';
- if(phase==='links'){
-  const target=linkTargets[focusIndex];
-  get('question').textContent=piecesFromFen(current.fen)[target]?.toLowerCase()==='k'?'Qui met ton roi en échec ?':'Marque les attaquants et les défenseurs';
- }
+ if(phase==='links')get('question').textContent='Marque les attaquants et les défenseurs';
  const finishedPath=mode==='train'&&pathState(saved).complete;
  if(!current&&finishedPath)get('question').textContent=saved.assessmentDone?'Parcours terminé · bilan disponible dans Statistiques.':'Les 4 étapes sont validées. Bilan final : 32 positions, pièces visibles.';
  const answer=phase==='answer'||phase==='links';
@@ -1055,7 +1052,8 @@ function render() {
 function finishAnswer(skip=false) {
  if(!skip&&phase==='answer'&&stage===2&&picked.length){
   markedTargets=[...picked];
-  linkTargets=task.targets.filter(square=>markedTargets.includes(square));
+  const verifiableTargets=new Set(task.links.map(link=>link.to));
+  linkTargets=task.targets.filter(square=>markedTargets.includes(square)&&verifiableTargets.has(square));
   if(linkTargets.length){picked=[];phase='links-ready';render();return;}
  }
  if(phase==='links'&&!skip){
