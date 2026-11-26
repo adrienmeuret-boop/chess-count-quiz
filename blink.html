@@ -529,7 +529,7 @@ const exerciseNames={1:'Attaques et protections',4:'Relier deux pièces',2:'Bala
 function pathState(player) {
  const p=player.path;
  return p && pathOrder.includes(p.stage) && exposureSteps.includes(p.ms)
-  ? {stage:p.stage,ms:0,passed:p.ms===0&&p.passed===1?1:0,complete:p.complete===true} : {stage:1,ms:0,passed:0,complete:false};
+  ? {stage:p.stage,ms:0,complete:p.complete===true} : {stage:1,ms:0,complete:false};
 }
 function testRuns(player,ms) {
  const n=player.testRuns?.[ms];
@@ -547,9 +547,7 @@ function stageObjectives(exact,total,found,expected,falseCount) {
 function progressPath(player, objectives) {
  const p=pathState(player);
  const passed=objectives.every(row=>row.met);
- if(!passed) p.passed=0;
- else if(++p.passed===2){
-  p.passed=0;
+ if(passed&&!p.complete){
   const next=pathOrder[pathOrder.indexOf(p.stage)+1];
   if(next)p.stage=next;
   else p.complete=true;
@@ -939,7 +937,7 @@ function render() {
   get('question').replaceChildren('Marque les ',attack,' et les ',defence);
  }
  const finishedPath=mode==='train'&&pathState(saved).complete;
- if(!current&&finishedPath)get('question').textContent=saved.assessmentDone?'Parcours terminé · bilan disponible dans Progrès.':'Les 4 étapes sont validées. Bilan final : 32 positions, pièces visibles.';
+ if(!current&&finishedPath)get('question').textContent=saved.assessmentDone?'Parcours terminé · bilan disponible dans Statistiques.':'Les 4 étapes sont validées. Bilan final : 32 positions, pièces visibles.';
  const answer=phase==='answer'||phase==='links';
  get('none').hidden=true;
  get('action').textContent={ready:'Afficher',flash:'Observe',answer:picked.length?'Valider':stage===1?'Aucun lien':'Aucune pièce',links:picked.length?'Valider les liens':'Aucun lien',review:'Suivante',done:mode==='train'?'Continuer le parcours':'Nouvelle série'}[phase];
@@ -947,6 +945,7 @@ function render() {
   (stage===4?'Clique sur l’attaquant, puis sur sa cible, ou choisis Aucun lien.':stage===1?'Marque toutes les pièces demandées.':stage===2?'':'Marque toutes les pièces qui correspondent.'):'';
  get('action').hidden=phase==='done'&&((mode==='test'&&!results.length)||(finishedPath&&saved.assessmentDone));
  if(phase==='done'&&mode==='train'&&!assessment&&!flashChallenge&&pathResult&&!pathResult.passed)get('action').textContent='Recommencer l’étape';
+ if(phase==='done'&&pathResult?.advanced&&!finishedPath)get('action').textContent='Passer à '+exerciseNames[pathState(saved).stage];
  if(phase==='done'&&finishedPath&&!saved.assessmentDone)get('action').textContent='Commencer le bilan final';
  get('clear').hidden=true;
  get('skip').hidden=!answer||mode==='train';
@@ -1001,9 +1000,7 @@ function render() {
  if(phase==='done'&&results.length&&mode==='train'&&!assessment){
   const p=pathState(saved);
   review.textContent=flashChallenge?'Défi terminé. Tu peux reprendre le parcours ou rejouer le défi.' : p.complete?
-   'Parcours terminé.' : pathResult?.advanced?'Étape validée. À suivre : '+exerciseNames[p.stage]+'.':
-   pathResult?.passed?'Première série validée. Une deuxième réussite fait avancer.':
-   'Étape à refaire.';
+   'Les quatre étapes sont validées.' : pathResult?.advanced?'Étape validée.' : 'Étape à refaire.';
   if(pathResult?.advanced&&!p.complete){
    review.append(flashButton(stage,stage===1||stage===4?5000:8000));
   }
