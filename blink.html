@@ -72,6 +72,7 @@ input,select{max-width:100%;box-sizing:border-box}
 #action{flex:1 0 100%;min-height:44px}
 .play-actions button:not(#action){flex:1 1 auto;min-height:40px}
 #feedback{display:grid;gap:4px;background:#211e1b;border-radius:4px;padding:10px 12px;font-variant-numeric:tabular-nums}
+.feedback-goal{display:block;font-size:.82rem;color:#c4bbb1}
 .feedback-good{color:#a9d799}.feedback-bad{color:#ffaaa1}
 .play-guide{font-size:.875rem;color:#c8bfb5}.play-guide p{margin:8px 0 0}
 @media(max-width:760px){#play-panel{padding:12px}}
@@ -550,9 +551,18 @@ function testRuns(player,ms) {
  const n=player.testRuns?.[ms];
  return Number.isInteger(n)&&n>=0 ? Math.min(2,n) : 0;
 }
-function progressPath(player, exact, total, found, expected, falseCount) {
+function stageObjectives(exact,total,found,expected,falseCount) {
+ const exactMin=Math.ceil(total*.75), foundMin=Math.ceil(expected*.85), falseMax=Math.floor(total/4);
+ return [
+  {label:'Positions exactes',value:exact+'/'+total,goal:'Objectif : au moins '+exactMin+'/'+total,met:exact>=exactMin},
+  ...(expected?[{label:'Relations ou cibles repérées',value:found+'/'+expected,goal:'Objectif : au moins '+foundMin+'/'+expected,met:found>=foundMin}]:[]),
+  {label:'Fausses alertes',value:falseCount,goal:'Objectif : '+falseMax+' max.',met:falseCount<=falseMax},
+  ...(total<6?[{label:'Positions jouées',value:total,goal:'Objectif : au moins 6',met:false}]:[])
+ ];
+}
+function progressPath(player, objectives) {
  const p=pathState(player);
- const passed=total>=6 && exact/total>=.75 && (!expected||found/expected>=.85) && falseCount<=Math.floor(total/4);
+ const passed=objectives.every(row=>row.met);
  if(!passed) p.passed=0;
  else if(++p.passed===2){
   p.passed=0;
@@ -945,12 +955,16 @@ function render() {
  get('play-step').className=phase==='links'?(linkDefence?'feedback-good':'feedback-bad'):'';
  const feedback=get('feedback');
  feedback.replaceChildren();
- function addResult(label,value,status){
+ function addResult(label,value,status,goal){
   const row=document.createElement('div');
   const amount=document.createElement('strong');
   amount.className=status?'feedback-good':'feedback-bad';
   amount.textContent=value;
   row.append(label+' : ',amount);
+  if(goal){
+   const objective=document.createElement('span');
+   objective.className='feedback-goal';objective.textContent=goal;row.append(objective);
+  }
   feedback.append(row);
  }
  if(phase==='links'){
@@ -972,9 +986,13 @@ function render() {
   const total=key=>results.reduce((sum,item)=>sum+item[key],0);
   const found=total('found'),expected=total('expected'),falseCount=total('falseCount');
   const exact=results.filter(item=>item.ok).length;
-  addResult('Trouvés',found+'/'+expected,found===expected);
-  addResult('Signalés à tort',falseCount,falseCount===0);
-  addResult('Positions exactes',exact+'/'+results.length,exact===results.length);
+  if(pathResult){
+   for(const {label,value,goal,met} of pathResult.objectives)addResult(label,value,met,goal);
+  }else{
+   addResult('Positions exactes',exact+'/'+results.length,exact===results.length);
+   addResult('Trouvés',found+'/'+expected,found===expected);
+   addResult('Signalés à tort',falseCount,falseCount===0);
+  }
  }
  drawBoard();
  drawStats();
@@ -986,7 +1004,7 @@ function render() {
   review.textContent=flashChallenge?'Défi terminé. Tu peux reprendre le parcours ou rejouer le défi.' : p.complete?
    'Parcours terminé.' : pathResult?.advanced?'Étape validée. À suivre : '+exerciseNames[p.stage]+'.':
    pathResult?.passed?'Première série validée. Une deuxième réussite fait avancer.':
-   'Étape à refaire · '+(pathResult?.reasons.join(' · ')||'fais une nouvelle série.');
+   'Étape à refaire.';
   if(pathResult?.advanced&&!p.complete){
    review.append(flashButton(stage,stage===1||stage===4?5000:8000));
   }
@@ -1069,14 +1087,10 @@ function finishAnswer(skip=false) {
    ms:n?(accurate[Math.floor((n-1)/2)]+accurate[Math.floor(n/2)])/2:null});
   if(mode==='train'&&!flashChallenge&&!assessment){
    const total=results.length;
-   const reasons=[];
-   if(total<6)reasons.push('au moins 6 positions nécessaires');
-   if(n/total<.75)reasons.push('positions exactes : '+n+'/'+total+' (objectif '+Math.ceil(total*.75)+')');
-   if(expected&&found/expected<.85)reasons.push('relations ou cibles repérées : '+found+'/'+expected+' (objectif '+Math.ceil(expected*.85)+')');
-   if(falseCount>Math.floor(total/4))reasons.push('fausses alertes : '+falseCount+' (maximum '+Math.floor(total/4)+')');
-   const passed=progressPath(saved,n,total,found,expected,falseCount);
+   const objectives=stageObjectives(n,total,found,expected,falseCount);
+   const passed=progressPath(saved,objectives);
    const path=pathState(saved);
-   pathResult={passed,advanced:path.stage!==stage||path.complete,reasons};
+   pathResult={passed,advanced:path.stage!==stage||path.complete,objectives};
   }
   if(mode==='test')(saved.testRuns??={})[seriesExposure]=testRuns(saved,seriesExposure)+1;
  }
