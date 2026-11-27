@@ -143,6 +143,7 @@ nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:5p
 .assessment-history{list-style:none;padding:0;display:grid;gap:4px}
 .assessment-history button{width:100%;text-align:left}
 .game-purpose{margin-top:16px;color:#c4bbb1;font-size:.875rem;line-height:1.45}
+.rewards-levels{display:grid;gap:6px;padding-inline-start:1.4rem}
 </style>
 
 <dialog id="account" aria-labelledby="account-title">
@@ -186,7 +187,7 @@ nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:5p
 </header>
 <dialog id="rewards" aria-labelledby="rewards-title">
  <div class="account-heading"><h2 id="rewards-title">Récompenses</h2><form method="dialog"><button>Fermer</button></form></div>
- <p>Les récompenses seront disponibles ici.</p>
+ <div id="reward-levels"></div>
 </dialog>
 <p id="status"></p>
 <main>
@@ -531,11 +532,13 @@ function weakAxes(player, currentMode) {
 }
 const exposureSteps=[0,5000,1500,1000];
 const pathOrder=[1,4,2,3];
+const maxLevel=10;
 const exerciseNames={1:'Attaques et protections',4:'Relier deux pièces',2:'Balayer l’échiquier',3:'Pièces exposées'};
 function pathState(player) {
  const p=player.path;
+ const level=Number.isInteger(p?.level)?Math.min(maxLevel,Math.max(1,p.level)):1;
  return p && pathOrder.includes(p.stage) && exposureSteps.includes(p.ms)
-  ? {stage:p.stage,ms:0,complete:p.complete===true,pieceTotals:p.pieceTotals??{},trackedStages:p.trackedStages??0} : {stage:1,ms:0,complete:false,pieceTotals:{},trackedStages:0};
+  ? {level,stage:p.stage,ms:0,complete:p.complete===true,pieceTotals:p.pieceTotals??{},trackedStages:p.trackedStages??0} : {level:1,stage:1,ms:0,complete:false,pieceTotals:{},trackedStages:0};
 }
 function testRuns(player,ms) {
  const n=player.testRuns?.[ms];
@@ -584,6 +587,28 @@ function flashButton(level,ms) {
 }
 function durationName(ms) {return ms ? (ms/1000).toLocaleString('fr')+' s' : 'Pièces visibles';}
 
+function advanceLevel(player){
+ const path=pathState(player);
+ if(!path.complete||path.level>=maxLevel)return false;
+ player.path={...pathState({}),level:path.level+1};
+ return true;
+}
+function levelBank(bank,stage,level){
+ const rank=item=>{
+  const task=relationTask(item,stage);
+  const load=(stage===2||stage===3?task.targets.length:0)+task.links.length;
+  const pieces=Object.keys(piecesFromFen(item.fen)).length;
+  return {item,load,targets:task.targets.length,score:load*8+pieces*.35+(Number(item.distance)||0)};
+ };
+ const ranked=[...new Map(bank.map(item=>[item.fen,item])).values()].map(rank).sort((a,b)=>a.score-b.score);
+ if(stage===2&&level===1){
+  const easy=ranked.filter(row=>row.targets<=2&&row.load<=5);
+  return easy.map(row=>row.item);
+ }
+ const width=Math.min(48,ranked.length);
+ const offset=Math.round((ranked.length-width)*(level-1)/(maxLevel-1));
+ return ranked.slice(offset,offset+width).map(row=>row.item);
+}
 function start(nextMode, challenge=null) {
  clearTimeout(timer);
  flashChallenge=challenge;
@@ -598,7 +623,14 @@ function start(nextMode, challenge=null) {
   get('duration').value='0';
  }
  for(const option of get('duration').options)option.hidden=mode==='test'&&!exposureSteps.includes(Number(option.value));
- const bank = saved.useBank && saved.bank.length ? saved.bank.slice() : positions.filter(item => !item.reserve);
+ const defaultBank=positions.filter(item=>!item.reserve);
+ let bank=saved.useBank&&saved.bank.length?saved.bank.slice():defaultBank;
+ const standard=mode==='train'&&!challenge;
+ const seriesLimit=standard&&stage===2&&path.level===1?6:limit;
+ if(mode==='train'&&(!path.complete||challenge)){
+  const candidates=levelBank(bank,stage,path.level);
+  bank=candidates.length>=seriesLimit?candidates:levelBank([...bank,...defaultBank],stage,path.level);
+ }
  if(mode==='train'&&!challenge&&path.complete){
   queue=[];
  }else if (mode === 'test') {
@@ -621,9 +653,9 @@ function start(nextMode, challenge=null) {
   const hasPractice=Object.values(totals).some(row=>row.total>=5&&row.correct/row.total<.7);
   const long=ranked.length||hasPractice ? queue.slice().sort((a,b)=>
    ((matching(b)?1:0)+scores.get(b))-((matching(a)?1:0)+scores.get(a))
-  ).filter(item=>matching(item)||scores.get(item)>0).slice(0,6) :
+  ).filter(item=>matching(item)||scores.get(item)>0).slice(0,Math.min(6,seriesLimit-1)) :
    queue.filter(item => item.distance >= 4 && [3,5].includes(item.attacker)).slice(0,4);
-  queue = [...long,...queue.filter(item => !long.includes(item)).slice(0,limit-long.length)]
+  queue = [...long,...queue.filter(item => !long.includes(item)).slice(0,seriesLimit-long.length)]
    .sort((a,b) => random.get(a)-random.get(b));
  }
 
@@ -921,7 +953,7 @@ function render() {
  exercise.className='status-exercise';
  exercise.textContent=flashChallenge?'Défi flash · '+exerciseNames[stage]:exerciseNames[stage];
  exercise.title=exerciseNames[stage];
- status.replaceChildren(mode==='train'?'Niveau 1 · ':'',exercise,' · ',seriesExposure?durationName(seriesExposure):'Visible');
+ status.replaceChildren(mode==='train'?'Niveau '+pathState(saved).level+' · ':'',exercise,' · ',seriesExposure?durationName(seriesExposure):'Visible');
  drawPathMap();
  if(current){
   const dot=document.createElement('span');
@@ -938,8 +970,9 @@ function render() {
   'Marque tes pièces et pions attaqués.';
  get('question').hidden=phase==='links-ready';
  if(phase==='links')get('question').textContent='Marque les attaquants et les défenseurs';
- const finishedPath=mode==='train'&&pathState(saved).complete;
- if(!current&&finishedPath)get('question').textContent='Niveau 1 terminé';
+ const pathLevel=pathState(saved);
+ const finishedPath=mode==='train'&&pathLevel.complete;
+ if(!current&&finishedPath)get('question').textContent=pathLevel.level===maxLevel?'Parcours terminé · Niveau 10 validé':'Niveau '+pathLevel.level+' terminé';
  const answer=phase==='answer'||phase==='links';
  get('none').hidden=true;
  get('action').textContent={ready:'Afficher',flash:'Observe',answer:picked.length?'Valider':'Aucune réponse','links-ready':'Vérifier attaquants/défenseurs',links:picked.length?'Valider les liens':'Aucune réponse',review:'Suivant',done:mode==='train'?'Continuer le parcours':'Nouvelle série'}[phase];
@@ -947,9 +980,10 @@ function render() {
   (stage===4?'Clique sur l’attaquant, puis sur toutes ses cibles.':stage===1?'Marque toutes les pièces demandées.':''):'';
  if(stage!==2||phase==='links')colorRelationWords(get('question'));
  colorRelationWords(get('play-step'));
- get('action').hidden=phase==='done'&&((mode==='test'&&!results.length)||(finishedPath&&!flashChallenge));
+ get('action').hidden=phase==='done'&&((mode==='test'&&!results.length)||(finishedPath&&!flashChallenge&&pathLevel.level===maxLevel));
  if(phase==='done'&&mode==='train'&&!flashChallenge&&pathResult&&!pathResult.passed)get('action').textContent='Recommencer l’étape';
  if(phase==='done'&&pathResult?.advanced&&!finishedPath)get('action').textContent='Passer à '+exerciseNames[pathState(saved).stage];
+ if(phase==='done'&&finishedPath&&!flashChallenge&&pathLevel.level<maxLevel)get('action').textContent='Passer au niveau '+(pathLevel.level+1);
  if(phase==='done'&&flashChallenge)get('action').textContent='Reprendre le parcours';
  get('clear').hidden=true;
  get('skip').hidden=!answer||mode==='train';
@@ -1104,13 +1138,14 @@ function finishAnswer(skip=false) {
 
   const flashObjectives=flashChallenge?stageObjectives(n,results.length,found,expected,falseCount):null;
   if(flashObjectives)pathResult={objectives:flashObjectives,passed:flashObjectives.every(row=>row.met)};
-  saved.visits.push({flashPassed:flashObjectives?pathResult.passed:undefined,mode,stage,exposure:seriesExposure,axes,found,expected,falseCount,emptyResponses:emptyResponses(results),correct:n,total:results.length,date:new Date().toISOString(),
+  saved.visits.push({flashPassed:flashObjectives?pathResult.passed:undefined,mode,stage,level:mode==='train'?pathState(saved).level:undefined,exposure:seriesExposure,axes,found,expected,falseCount,emptyResponses:emptyResponses(results),correct:n,total:results.length,date:new Date().toISOString(),
    ms:n?(accurate[Math.floor((n-1)/2)]+accurate[Math.floor(n/2)])/2:null});
   if(mode==='train'&&!flashChallenge){
    const total=results.length;
    const objectives=stageObjectives(n,total,found,expected,falseCount);
    const passed=progressPath(saved,objectives,axes);
    const path=pathState(saved);
+   if(passed&&path.complete)saved.visits.at(-1).completedLevel=path.level;
    pathResult={passed,advanced:path.stage!==stage||path.complete,objectives};
   }
   if(mode==='test')(saved.testRuns??={})[seriesExposure]=testRuns(saved,seriesExposure)+1;
@@ -1230,7 +1265,7 @@ function isStatsSession(visit, filter='all') {
 function sessionLabel(report){
  const date=new Date(report.date).toLocaleDateString('fr');
  if(report.mode==='assessment')return date+' · Bilan du parcours';
- const mode=report.mode==='vision'?'Jeu libre':'Parcours';
+ const mode=report.mode==='vision'?'Jeu libre':report.level?'Parcours · Niveau '+report.level:'Parcours';
  return [date,mode,exerciseNames[report.stage],report.exposure==null?'':durationName(report.exposure)].filter(Boolean).join(' · ');
 }
 for(const button of get('stats-modes').querySelectorAll('button')){
@@ -1251,7 +1286,10 @@ get('action').addEventListener('click',()=>{
  }else if(phase==='links-ready'){phase='links';render();}
  else if(phase==='answer'||phase==='links')finishAnswer();
  else if(phase==='review')next();
- else if(phase==='done')start(mode);
+ else if(phase==='done'){
+  if(mode==='train'&&!flashChallenge&&advanceLevel(saved))persist();
+  start(mode);
+ }
  if(!get('action').disabled&&!get('action').hidden)get('action').focus();
 });
 get('clear').addEventListener('click',()=>{picked=[];render();});
@@ -1291,7 +1329,22 @@ get('pgn').addEventListener('change',async event=>{
  } catch(error) { get('profile-status').textContent='Import PGN impossible. Vérifie la connexion et le fichier. '+error.message; }
  finally { event.target.value=''; get('pgn').disabled=false; }
 });
-get('open-rewards').addEventListener('click',()=>get('rewards').showModal());
+get('open-rewards').addEventListener('click',()=>{
+ const path=pathState(saved), list=document.createElement('ol');
+ list.className='rewards-levels';
+ const visits=[...(saved.archives??[]).flatMap(cycle=>cycle.visits??[]),...saved.visits];
+ for(let level=1;level<=maxLevel;level++){
+  const item=document.createElement('li');
+  const done=level<path.level||(level===path.level&&path.complete)||visits.some(visit=>visit.completedLevel===level||visit.level>level);
+  const flashes=new Set(visits.filter(v=>v.level===level&&v.flashPassed).map(v=>v.stage));
+  item.textContent='Niveau '+level+' · '+(done?'Validé':level===path.level?'En cours':'À débloquer')+
+   (flashes.size?' · Flash : '+[...flashes].map(stage=>exerciseNames[stage]).join(', '):'');
+  if(done)item.className='feedback-good';
+  list.append(item);
+ }
+ get('reward-levels').replaceChildren(list);
+ get('rewards').showModal();
+});
 get('open-account').addEventListener('click',()=>get('account').showModal());
 get('cycle').addEventListener('change',()=>{selectedReport=null;drawStats();});
 get('restart-stage').addEventListener('click',()=>{start('train');get('action').focus();});
