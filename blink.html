@@ -989,10 +989,10 @@ function render() {
   addResult('Signalés à tort',falseCount,falseCount===0,undefined,true);
  }else if(phase==='done'&&finishedPath&&!flashChallenge){
   const path=pathState(saved);
-  feedback.append(path.trackedStages===4?'Relations manquées par type de pièce':'Relations manquées par type de pièce · étapes enregistrées depuis la mise à jour');
+  feedback.append(path.trackedStages===4?'Relations repérées par type de pièce':'Relations repérées par type de pièce · étapes enregistrées depuis la mise à jour');
   for(const name of names.slice(1)){
    const row=path.pieceTotals[name];
-   addResult(name[0].toUpperCase()+name.slice(1),row?.total?(row.total-row.correct)+'/'+row.total:'Aucun exemple',!row||row.correct===row.total);
+   addResult(name[0].toUpperCase()+name.slice(1),row?.total?Math.round(100*row.correct/row.total)+' % · '+(row.total-row.correct)+' manquée'+(row.total-row.correct>1?'s':'')+' sur '+row.total:'Aucun exemple',!row||row.correct===row.total);
   }
  }else if(phase==='done'&&results.length){
   const total=key=>results.reduce((sum,item)=>sum+item[key],0);
@@ -1070,7 +1070,9 @@ function finishAnswer(skip=false) {
  reviewAnswer={...targetCheck,ok,found,expected,falseCount,linkCheck,attack:stat(false),defence:stat(true)};
  reviewFocus=stage===1||stage===4?task.focus:(targetCheck.missed[0]??targetCheck.false[0]??task.targets[0]??null);
  const axes=[];
- const measured=stage===3?relationTask(current,2).links.filter(link=>!link.defence&&task.targets.includes(link.to)):task.links;
+ const measured=stage===3?task.allLinks.filter(link=>!link.defence&&task.targets.includes(link.to)):
+  stage===2?task.allLinks.filter(link=>task.targets.includes(link.to)&&(!link.defence||targetCheck.correct.includes(link.to))):task.links;
+ const verifiedLinks=new Set(task.links.map(answerKey));
  for(const link of measured){
   const values=exerciseAxes(current,[link.from,link.to]);
   {
@@ -1079,7 +1081,9 @@ function finishAnswer(skip=false) {
    values.direction=dx===dy?'Diagonales':!dx||!dy?'Lignes droites':'Sauts de cavalier';
    values.priority=[values.piece,values.direction,values.distance].join('~');
   }
-  axes.push({values,ok:stage===3?targetCheck.correct.includes(link.to):linkCheck.correct.includes(answerKey(link))});
+  const ok=stage===3||(stage===2&&!verifiedLinks.has(answerKey(link)))?
+   targetCheck.correct.includes(link.to):linkCheck.correct.includes(answerKey(link));
+  axes.push({values,ok});
  }
  if(!axes.length)axes.push({values:{color:current.white?'Blancs':'Noirs'},ok});
  const emptyResponse=!skip&&!markedTargets.length&&!markedLinks.length;
