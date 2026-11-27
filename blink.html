@@ -73,7 +73,6 @@ main{width:100%;box-sizing:border-box}
 :root{--false-pick:#ffd34f}
 .feedback-false{color:var(--false-pick)}
 .feedback-good{color:#a9d799}.feedback-bad{color:#ffaaa1}
-.play-guide{font-size:.875rem;color:#c8bfb5}.play-guide p{margin:8px 0 0}
 @media(max-width:760px){#play-panel{padding:12px}}
 .camp-dot{display:inline-block;width:.9em;height:.9em;box-sizing:border-box;vertical-align:-.06em;border:1px solid #aaa;border-radius:50%}
 .camp-dot-white{background-color:#fff}
@@ -117,6 +116,7 @@ main{width:100%;box-sizing:border-box}
 #play-panel .play-actions:has(.flash-challenge) button{min-width:0;padding-inline:6px;font-size:.9rem;line-height:1.2}
 nav[aria-label="Navigation du jeu"]{display:grid;grid-template-columns:repeat(3,max-content) 36px;align-items:center;gap:5px;margin:0}
 nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:5px 7px;min-height:36px;white-space:nowrap;font-size:.88rem}
+#flash-mode{margin:0 0 8px;color:#a8cbf2;font-weight:700}
 .play-sidebar{min-width:0;--play-space:10px}
 #restart-path{box-sizing:border-box;width:100%;font-size:.875rem;padding:8px;margin-top:var(--play-space)}
 #path-map{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));list-style:none;padding:0;margin:0 0 6px;gap:4px}
@@ -193,10 +193,11 @@ nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:5p
   <div id="frame"><div id="board" aria-label="Échiquier"></div><svg id="arrow" viewBox="0 0 8 8" aria-hidden="true"></svg></div>
  </section>
  <div class="play-sidebar">
+ <p id="flash-mode" hidden></p>
  <ol id="path-map" aria-label="Étapes du parcours"></ol>
  <section id="play-panel" aria-label="Commandes de jeu">
   <div class="play-setup" id="options">
-   <label id="exercise-label" for="exercise">Exercice</label><select id="exercise"><option value="1">Attaques et protections</option><option value="4">Relier deux pièces · deux clics</option><option value="2">Balayer l’échiquier</option><option value="3">Repérer les pièces exposées</option></select>
+   <label id="exercise-label" for="exercise">Exercice</label><select id="exercise"><option value="1">Attaques et protections</option><option value="4">Relier deux pièces · deux clics</option><option value="2">Balayer l’échiquier</option><option value="3">Pièces exposées</option></select>
    <label for="duration">Temps d’exposition</label>
    <select id="duration"><option value="0" selected>Pièces toujours visibles</option><option value="1000">1 s</option><option value="1500">1,5 s</option><option value="2000">2 s</option><option value="2500">2,5 s</option><option value="3000">3 s</option><option value="3500">3,5 s</option><option value="4000">4 s</option><option value="4500">4,5 s</option><option value="5000">5 s</option></select>
   </div>
@@ -213,7 +214,6 @@ nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:5p
   <a id="source" target="_blank" rel="noopener" hidden>Revoir la partie</a>
   <div id="test-review"></div>
   <button id="restart-stage" type="button" hidden>Recommencer l’étape</button>
-  <details class="play-guide"><summary>Comment jouer</summary><p id="help" class="muted"></p></details>
  </section>
  <button id="restart-path" type="button" hidden>Recommencer le parcours</button>
  </div>
@@ -531,7 +531,7 @@ function weakAxes(player, currentMode) {
 }
 const exposureSteps=[0,5000,1500,1000];
 const pathOrder=[1,4,2,3];
-const exerciseNames={1:'Attaques et protections',4:'Relier deux pièces',2:'Balayer l’échiquier',3:'Repérer les pièces exposées'};
+const exerciseNames={1:'Attaques et protections',4:'Relier deux pièces',2:'Balayer l’échiquier',3:'Pièces exposées'};
 function pathState(player) {
  const p=player.path;
  return p && pathOrder.includes(p.stage) && exposureSteps.includes(p.ms)
@@ -564,11 +564,6 @@ function progressPath(player, objectives) {
  }
  player.path=p;
  return passed;
-}
-function nextFlash(level,ms,exact,total) {
- if(exact/total>=.85)return Math.max(level===1?1000:2000,ms-500);
- if(exact/total<.65)return Math.min(10000,ms+500);
- return ms;
 }
 function flashButton(level,ms) {
  const button=document.createElement('button');
@@ -671,7 +666,6 @@ function start(nextMode, challenge=null, finalAssessment=false) {
  get('vision').setAttribute('aria-pressed', String(mode === 'vision'));
  get('options').hidden = mode === 'train';
  get('exercise').hidden=get('exercise-label').hidden=mode!=='vision';
- get('help').textContent='Une attaque ou une protection est un lien direct entre deux pièces. Une pièce entre les deux bloque la ligne. Une pièce clouée peut encore contrôler une case.';
  next();
 }
 
@@ -907,8 +901,11 @@ function drawBoard() {
 
 function drawPathMap() {
  const map=get('path-map');
- map.hidden=mode!=='train';
- get('restart-path').hidden=map.hidden;
+ const banner=get('flash-mode');
+ banner.hidden=!flashChallenge;
+ banner.textContent=flashChallenge?'Défi flash · '+exerciseNames[stage]:'';
+ map.hidden=mode!=='train'||Boolean(flashChallenge)||assessment;
+ get('restart-path').hidden=mode!=='train';
  get('restart-stage').hidden=map.hidden||assessment||Boolean(flashChallenge)||!current||results.length>=queue.length;
  if(map.hidden)return;
  const path=pathState(saved);
@@ -942,9 +939,9 @@ function render() {
  const status=get('status');
  const exercise=document.createElement('span');
  exercise.className='status-exercise';
- exercise.textContent=assessment?'Bilan final':exerciseNames[stage];
+ exercise.textContent=assessment?'Bilan final · '+exerciseNames[stage]:flashChallenge?'Défi flash · '+exerciseNames[stage]:exerciseNames[stage];
  exercise.title=exerciseNames[stage];
- status.replaceChildren(exercise,' · ',seriesExposure?durationName(seriesExposure):'Visible');
+ status.replaceChildren(mode==='train'?'Niveau 1 · ':'',exercise,' · ',seriesExposure?durationName(seriesExposure):'Visible');
  drawPathMap();
  if(current){
   const dot=document.createElement('span');
@@ -962,18 +959,19 @@ function render() {
  get('question').hidden=phase==='links-ready';
  if(phase==='links')get('question').textContent='Marque les attaquants et les défenseurs';
  const finishedPath=mode==='train'&&pathState(saved).complete;
- if(!current&&finishedPath)get('question').textContent=saved.assessmentDone?'Parcours terminé · bilan disponible dans Statistiques.':'Les 4 étapes sont validées. Bilan final : 32 positions, pièces visibles.';
+ if(!current&&finishedPath)get('question').textContent=saved.assessmentDone?'Parcours terminé · bilan disponible dans Statistiques.':'Les 4 étapes sont validées. Bilan final : 32 positions des quatre exercices, pièces visibles.';
  const answer=phase==='answer'||phase==='links';
  get('none').hidden=true;
  get('action').textContent={ready:'Afficher',flash:'Observe',answer:picked.length?'Valider':'Aucune réponse','links-ready':'Vérifier attaquants/défenseurs',links:picked.length?'Valider les liens':'Aucune réponse',review:'Suivant',done:mode==='train'?'Continuer le parcours':'Nouvelle série'}[phase];
  get('play-step').textContent=answer?
-  (stage===4?'Clique sur l’attaquant, puis sur toutes ses cibles.':stage===1?'Marque toutes les pièces demandées.':stage===2?'':'Marque toutes les pièces qui correspondent.'):'';
+  (stage===4?'Clique sur l’attaquant, puis sur toutes ses cibles.':stage===1?'Marque toutes les pièces demandées.':''):'';
  if(stage!==2||phase==='links')colorRelationWords(get('question'));
  colorRelationWords(get('play-step'));
  get('action').hidden=phase==='done'&&((mode==='test'&&!results.length)||(finishedPath&&saved.assessmentDone));
  if(phase==='done'&&mode==='train'&&!assessment&&!flashChallenge&&pathResult&&!pathResult.passed)get('action').textContent='Recommencer l’étape';
  if(phase==='done'&&pathResult?.advanced&&!finishedPath)get('action').textContent='Passer à '+exerciseNames[pathState(saved).stage];
  if(phase==='done'&&finishedPath&&!saved.assessmentDone)get('action').textContent='Commencer le bilan final';
+ if(phase==='done'&&flashChallenge)get('action').textContent='Reprendre le parcours';
  get('clear').hidden=true;
  get('skip').hidden=!answer||mode==='train';
  get('source').hidden=phase!=='review'||!current?.source;
@@ -1037,15 +1035,16 @@ function render() {
  primaryAction.parentElement.querySelector('.flash-challenge')?.remove();
  if(phase==='done'&&results.length&&mode==='train'&&!assessment){
   const p=pathState(saved);
-  review.textContent=flashChallenge?'Défi terminé. Tu peux reprendre le parcours ou rejouer le défi.' : p.complete?
+  review.textContent=flashChallenge?(pathResult?.passed?'Défi réussi.':'Défi manqué.') : p.complete?
    'Les quatre étapes sont validées.' : pathResult?.advanced?'Étape validée.' : 'Étape à refaire.';
-  if(pathResult?.advanced&&!p.complete){
-   primaryAction.after(flashButton(stage,stage===1||stage===4?5000:8000));
+  if(pathResult?.advanced&&!p.complete&&(stage===1||stage===4)){
+   primaryAction.after(flashButton(stage,5000));
   }
  }
- if(phase==='done'&&results.length&&flashChallenge){
-  const accurate=results.filter(item=>item.ok).length;
-  primaryAction.after(flashButton(stage,nextFlash(stage,flashChallenge.ms,accurate,results.length)));
+ if(phase==='done'&&flashChallenge&&pathResult&&!pathResult.passed){
+  const retry=flashButton(stage,flashChallenge.ms);
+  retry.textContent='Refaire le défi';retry.removeAttribute('aria-label');
+  primaryAction.after(retry);
  }
 }
 
@@ -1117,7 +1116,9 @@ function finishAnswer(skip=false) {
   get('cycle').value='';
 
   if(assessment){saved.assessmentDone=true;selectedReport=null;}
-  saved.visits.push({mode:assessment?'assessment':mode,stage,exposure:seriesExposure,axes,found,expected,falseCount,emptyResponses:emptyResponses(results),correct:n,total:results.length,date:new Date().toISOString(),
+  const flashObjectives=flashChallenge?stageObjectives(n,results.length,found,expected,falseCount):null;
+  if(flashObjectives)pathResult={objectives:flashObjectives,passed:flashObjectives.every(row=>row.met)};
+  saved.visits.push({flashPassed:flashObjectives?pathResult.passed:undefined,mode:assessment?'assessment':mode,stage,exposure:seriesExposure,axes,found,expected,falseCount,emptyResponses:emptyResponses(results),correct:n,total:results.length,date:new Date().toISOString(),
    ms:n?(accurate[Math.floor((n-1)/2)]+accurate[Math.floor(n/2)])/2:null});
   if(mode==='train'&&!flashChallenge&&!assessment){
    const total=results.length;
