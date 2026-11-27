@@ -285,7 +285,7 @@ try {
  else Object.assign(family.players[0], JSON.parse(localStorage.getItem(key)) ?? {});
 } catch {}
 let saved = family.players[family.active] ?? family.players[0];
-let assessment=false, selectedReport=null, statsMode='all';
+let selectedReport=null, statsMode='all';
 let linkTargets;
 let task, seriesExposure, stage, focusIndex, markedTargets, markedLinks, reviewAnswer, flashChallenge, reviewFocus, pathResult;
 let mode = 'train', queue, current, phase, picked, results, started, timer, shown;
@@ -344,8 +344,6 @@ function cleanProfile(input) {
  player.testOffset = Number.isInteger(input.testOffset) ? Math.max(0,Math.min(testBank.length,input.testOffset)) : 0;
  player.useBank = Boolean(input.useBank && player.bank.length);
  player.path=pathState(input);
- player.assessmentDone=input.assessmentDone===true;
- player.assessmentSeen=Object.fromEntries(Object.entries(input.assessmentSeen??{}).filter(([fen,n])=>validFen(fen)&&Number.isInteger(n)&&n>0));
  player.testRuns=Object.fromEntries([0,5000,1500,1000].map(ms=>[ms,testRuns(input,ms)]));
  player.archives=Array.isArray(input.archives) ? input.archives.slice(-30).filter(a=>a&&typeof a.date==='string'&&Array.isArray(a.visits)) : [];
  if(input.diagnostic?.annotated && Number.isInteger(input.diagnostic.games) && input.diagnostic.games>=50 && input.diagnostic.counts && typeof input.diagnostic.counts==='object') player.diagnostic=input.diagnostic;
@@ -535,7 +533,7 @@ const exerciseNames={1:'Attaques et protections',4:'Relier deux pièces',2:'Bala
 function pathState(player) {
  const p=player.path;
  return p && pathOrder.includes(p.stage) && exposureSteps.includes(p.ms)
-  ? {stage:p.stage,ms:0,complete:p.complete===true} : {stage:1,ms:0,complete:false};
+  ? {stage:p.stage,ms:0,complete:p.complete===true,pieceTotals:p.pieceTotals??{},trackedStages:p.trackedStages??0} : {stage:1,ms:0,complete:false,pieceTotals:{},trackedStages:0};
 }
 function testRuns(player,ms) {
  const n=player.testRuns?.[ms];
@@ -554,10 +552,18 @@ function stageObjectives(exact,total,found,expected,falseCount) {
   ...(total<6?[{label:'Positions jouées',value:total,goal:'Objectif : au moins 6',met:false}]:[])
  ];
 }
-function progressPath(player, objectives) {
+function progressPath(player, objectives, axes) {
  const p=pathState(player);
  const passed=objectives.every(row=>row.met);
  if(passed&&!p.complete){
+  p.pieceTotals={...p.pieceTotals};
+  for(const name of names.slice(1)){
+   const row=axes['piece|'+name];
+   if(!row)continue;
+   const before=p.pieceTotals[name]??{correct:0,total:0};
+   p.pieceTotals[name]={correct:before.correct+row.correct,total:before.total+row.total};
+  }
+  p.trackedStages++;
   const next=pathOrder[pathOrder.indexOf(p.stage)+1];
   if(next)p.stage=next;
   else p.complete=true;
@@ -576,8 +582,7 @@ function flashButton(level,ms) {
 }
 function durationName(ms) {return ms ? (ms/1000).toLocaleString('fr')+' s' : 'Pièces visibles';}
 
-function start(nextMode, challenge=null, finalAssessment=false) {
- assessment=finalAssessment;
+function start(nextMode, challenge=null) {
  clearTimeout(timer);
  flashChallenge=challenge;
  pathResult=null;
@@ -592,9 +597,7 @@ function start(nextMode, challenge=null, finalAssessment=false) {
  }
  for(const option of get('duration').options)option.hidden=mode==='test'&&!exposureSteps.includes(Number(option.value));
  const bank = saved.useBank && saved.bank.length ? saved.bank.slice() : positions.filter(item => !item.reserve);
- if(assessment){
-  queue=assessmentQueue();
- }else if(mode==='train'&&!challenge&&path.complete){
+ if(mode==='train'&&!challenge&&path.complete){
   queue=[];
  }else if (mode === 'test') {
   const run=testRuns(saved,seriesExposure);
@@ -622,7 +625,7 @@ function start(nextMode, challenge=null, finalAssessment=false) {
    .sort((a,b) => random.get(a)-random.get(b));
  }
 
- if(!assessment&&stage===1&&queue.length){
+ if(stage===1&&queue.length){
   const index=queue.findIndex(item=>{
    const board=piecesFromFen(item.fen);
    const king=Object.keys(board).find(square=>board[square]===(item.white?'K':'k'));
@@ -635,7 +638,7 @@ function start(nextMode, challenge=null, finalAssessment=false) {
    queue[index]={...item,focus};
   }
  }
- if(!assessment&&stage===3&&queue.length>=6) {
+ if(stage===3&&queue.length>=6) {
   const lookup=new Map();
   const noTarget=item=>{
    if(!lookup.has(item))lookup.set(item,relationTask(item,3).targets.length===0);
@@ -652,11 +655,11 @@ function start(nextMode, challenge=null, finalAssessment=false) {
   }
   queue=selected;
  }
- if(mode==='train'&&!assessment&&(!path.complete||challenge)&&queue.length<6) {
+ if(mode==='train'&&(!path.complete||challenge)&&queue.length<6) {
   const backup=positions.filter(item=>!item.reserve&&!queue.some(existing=>existing.fen===item.fen));
   queue.push(...backup.slice(0,6-queue.length));
  }
- if(!assessment&&mode!=='test'&&queue.length&&!queue.some(item=>isEmptyExercise(item,stage))){
+ if(mode!=='test'&&queue.length&&!queue.some(item=>isEmptyExercise(item,stage))){
   const candidates=emptyExercisePool(stage).filter(item=>!item.reserve&&!queue.some(other=>other.fen===item.fen));
   const ranked=candidates.map(item=>({item,tie:Math.random()})).sort((a,b)=>
    (saved.seen[a.item.fen]??0)-(saved.seen[b.item.fen]??0)||a.tie-b.tie);
@@ -698,34 +701,9 @@ function isEmptyExercise(item,level){
  const task=relationTask(item,level);
  return !(level===1||level===4?task.links.length:task.targets.length);
 }
-function assessmentQueue() {
- const chosen=new Set();
- const available=[...new Map(positions.map(item=>[item.fen,item])).values()];
- const seen=saved.assessmentSeen??{};
- const random=new Map(available.map(item=>[item.fen,Math.random()]));
- const ranked=available.sort((a,b)=>(seen[a.fen]??0)-(seen[b.fen]??0)||
-  Number(Boolean(saved.seen[a.fen]))-Number(Boolean(saved.seen[b.fen]))||
-  Number(b.reserve)-Number(a.reserve)||random.get(a.fen)-random.get(b.fen));
- return pathOrder.flatMap(level=>{
-  const pick=(predicate,pool=ranked)=>{
-   const candidate=pool.find(item=>!chosen.has(item.fen)&&predicate(item))??ranked.find(item=>!chosen.has(item.fen));
-   chosen.add(candidate.fen);
-   return {...candidate,assessmentLevel:level};
-  };
-  const order=new Map(ranked.map((item,index)=>[item.fen,index]));
-  const negatives=emptyExercisePool(level).slice().sort((a,b)=>order.get(a.fen)-order.get(b.fen));
-  const emptySlot=Math.floor(Math.random()*8);
-  return Array.from({length:8},(_,index)=>pick(item=>{
-   if(item.white!==(index%2===0))return false;
-   if(index===emptySlot)return true;
-   return !isEmptyExercise(item,level)&&(level===3||(item.distance>=4)===(index<2));
-  },index===emptySlot?negatives:ranked));
- });
-}
 function next() {
  if(mode==='vision'&&queue.length&&results.length===queue.length){start('vision');return;}
  current = queue[results.length];
- if(assessment&&current)stage=current.assessmentLevel;
  picked = [];
  focusIndex=0;
  markedTargets=[];
@@ -904,9 +882,9 @@ function drawPathMap() {
  const banner=get('flash-mode');
  banner.hidden=!flashChallenge;
  banner.textContent=flashChallenge?'Défi flash · '+exerciseNames[stage]:'';
- map.hidden=mode!=='train'||Boolean(flashChallenge)||assessment;
+ map.hidden=mode!=='train'||Boolean(flashChallenge);
  get('restart-path').hidden=mode!=='train';
- get('restart-stage').hidden=map.hidden||assessment||Boolean(flashChallenge)||!current||results.length>=queue.length;
+ get('restart-stage').hidden=map.hidden||Boolean(flashChallenge)||!current||results.length>=queue.length;
  if(map.hidden)return;
  const path=pathState(saved);
  const active=pathOrder.indexOf(path.stage);
@@ -939,7 +917,7 @@ function render() {
  const status=get('status');
  const exercise=document.createElement('span');
  exercise.className='status-exercise';
- exercise.textContent=assessment?'Bilan final · '+exerciseNames[stage]:flashChallenge?'Défi flash · '+exerciseNames[stage]:exerciseNames[stage];
+ exercise.textContent=flashChallenge?'Défi flash · '+exerciseNames[stage]:exerciseNames[stage];
  exercise.title=exerciseNames[stage];
  status.replaceChildren(mode==='train'?'Niveau 1 · ':'',exercise,' · ',seriesExposure?durationName(seriesExposure):'Visible');
  drawPathMap();
@@ -959,7 +937,7 @@ function render() {
  get('question').hidden=phase==='links-ready';
  if(phase==='links')get('question').textContent='Marque les attaquants et les défenseurs';
  const finishedPath=mode==='train'&&pathState(saved).complete;
- if(!current&&finishedPath)get('question').textContent=saved.assessmentDone?'Parcours terminé · bilan disponible dans Statistiques.':'Les 4 étapes sont validées. Bilan final : 32 positions des quatre exercices, pièces visibles.';
+ if(!current&&finishedPath)get('question').textContent='Niveau 1 terminé';
  const answer=phase==='answer'||phase==='links';
  get('none').hidden=true;
  get('action').textContent={ready:'Afficher',flash:'Observe',answer:picked.length?'Valider':'Aucune réponse','links-ready':'Vérifier attaquants/défenseurs',links:picked.length?'Valider les liens':'Aucune réponse',review:'Suivant',done:mode==='train'?'Continuer le parcours':'Nouvelle série'}[phase];
@@ -967,10 +945,9 @@ function render() {
   (stage===4?'Clique sur l’attaquant, puis sur toutes ses cibles.':stage===1?'Marque toutes les pièces demandées.':''):'';
  if(stage!==2||phase==='links')colorRelationWords(get('question'));
  colorRelationWords(get('play-step'));
- get('action').hidden=phase==='done'&&((mode==='test'&&!results.length)||(finishedPath&&saved.assessmentDone));
- if(phase==='done'&&mode==='train'&&!assessment&&!flashChallenge&&pathResult&&!pathResult.passed)get('action').textContent='Recommencer l’étape';
+ get('action').hidden=phase==='done'&&((mode==='test'&&!results.length)||(finishedPath&&!flashChallenge));
+ if(phase==='done'&&mode==='train'&&!flashChallenge&&pathResult&&!pathResult.passed)get('action').textContent='Recommencer l’étape';
  if(phase==='done'&&pathResult?.advanced&&!finishedPath)get('action').textContent='Passer à '+exerciseNames[pathState(saved).stage];
- if(phase==='done'&&finishedPath&&!saved.assessmentDone)get('action').textContent='Commencer le bilan final';
  if(phase==='done'&&flashChallenge)get('action').textContent='Reprendre le parcours';
  get('clear').hidden=true;
  get('skip').hidden=!answer||mode==='train';
@@ -1010,6 +987,13 @@ function render() {
    }
   }
   addResult('Signalés à tort',falseCount,falseCount===0,undefined,true);
+ }else if(phase==='done'&&finishedPath&&!flashChallenge){
+  const path=pathState(saved);
+  feedback.append(path.trackedStages===4?'Relations manquées par type de pièce':'Relations manquées par type de pièce · étapes enregistrées depuis la mise à jour');
+  for(const name of names.slice(1)){
+   const row=path.pieceTotals[name];
+   addResult(name[0].toUpperCase()+name.slice(1),row?.total?(row.total-row.correct)+'/'+row.total:'Aucun exemple',!row||row.correct===row.total);
+  }
  }else if(phase==='done'&&results.length){
   const total=key=>results.reduce((sum,item)=>sum+item[key],0);
   const found=total('found'),expected=total('expected'),falseCount=total('falseCount');
@@ -1033,10 +1017,10 @@ function render() {
  review.replaceChildren();
  const primaryAction=get('action');
  primaryAction.parentElement.querySelector('.flash-challenge')?.remove();
- if(phase==='done'&&results.length&&mode==='train'&&!assessment){
+ if(phase==='done'&&results.length&&mode==='train'){
   const p=pathState(saved);
   review.textContent=flashChallenge?(pathResult?.passed?'Défi réussi.':'Défi manqué.') : p.complete?
-   'Les quatre étapes sont validées.' : pathResult?.advanced?'Étape validée.' : 'Étape à refaire.';
+   '' : pathResult?.advanced?'Étape validée.' : 'Étape à refaire.';
   if(pathResult?.advanced&&!p.complete&&(stage===1||stage===4)){
    primaryAction.after(flashButton(stage,5000));
   }
@@ -1100,10 +1084,7 @@ function finishAnswer(skip=false) {
  if(!axes.length)axes.push({values:{color:current.white?'Blancs':'Noirs'},ok});
  const emptyResponse=!skip&&!markedTargets.length&&!markedLinks.length;
  results.push({ok,emptyResponse,found,expected,falseCount,axes,ms:Math.max(0,performance.now()-started-seriesExposure)});
- if(assessment){
-  const seen=saved.assessmentSeen??={};
-  seen[current.fen]=(seen[current.fen]??0)+1;
- }else if(mode==='train')saved.seen[current.fen]=(saved.seen[current.fen]??0)+1;
+ if(mode==='train')saved.seen[current.fen]=(saved.seen[current.fen]??0)+1;
  if(results.length===queue.length){
   const accurate=results.filter(item=>item.ok).map(item=>item.ms).sort((a,b)=>a-b);
   const n=accurate.length;
@@ -1115,15 +1096,14 @@ function finishAnswer(skip=false) {
   const found=sum('found'),expected=sum('expected'),falseCount=sum('falseCount');
   get('cycle').value='';
 
-  if(assessment){saved.assessmentDone=true;selectedReport=null;}
   const flashObjectives=flashChallenge?stageObjectives(n,results.length,found,expected,falseCount):null;
   if(flashObjectives)pathResult={objectives:flashObjectives,passed:flashObjectives.every(row=>row.met)};
-  saved.visits.push({flashPassed:flashObjectives?pathResult.passed:undefined,mode:assessment?'assessment':mode,stage,exposure:seriesExposure,axes,found,expected,falseCount,emptyResponses:emptyResponses(results),correct:n,total:results.length,date:new Date().toISOString(),
+  saved.visits.push({flashPassed:flashObjectives?pathResult.passed:undefined,mode,stage,exposure:seriesExposure,axes,found,expected,falseCount,emptyResponses:emptyResponses(results),correct:n,total:results.length,date:new Date().toISOString(),
    ms:n?(accurate[Math.floor((n-1)/2)]+accurate[Math.floor(n/2)])/2:null});
-  if(mode==='train'&&!flashChallenge&&!assessment){
+  if(mode==='train'&&!flashChallenge){
    const total=results.length;
    const objectives=stageObjectives(n,total,found,expected,falseCount);
-   const passed=progressPath(saved,objectives);
+   const passed=progressPath(saved,objectives,axes);
    const path=pathState(saved);
    pathResult={passed,advanced:path.stage!==stage||path.complete,objectives};
   }
@@ -1265,7 +1245,7 @@ get('action').addEventListener('click',()=>{
  }else if(phase==='links-ready'){phase='links';render();}
  else if(phase==='answer'||phase==='links')finishAnswer();
  else if(phase==='review')next();
- else if(phase==='done')start(mode,null,mode==='train'&&pathState(saved).complete&&!saved.assessmentDone);
+ else if(phase==='done')start(mode);
  if(!get('action').disabled&&!get('action').hidden)get('action').focus();
 });
 get('clear').addEventListener('click',()=>{picked=[];render();});
@@ -1311,7 +1291,6 @@ get('cycle').addEventListener('change',()=>{selectedReport=null;drawStats();});
 get('restart-stage').addEventListener('click',()=>{start('train');get('action').focus();});
 get('restart-path').addEventListener('click',()=>{
  saved.path=pathState({});
- saved.assessmentDone=false;
  persist();
  start('train');
  get('action').focus();
@@ -1322,7 +1301,6 @@ get('archive-cycle').addEventListener('click',()=>{
  saved.visits=[];
  saved.seen={};
  saved.path=pathState({});
- saved.assessmentDone=false;
  selectedReport=null;
  get('cycle').value='';
  const stored=persist();
