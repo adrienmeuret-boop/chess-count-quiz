@@ -8,7 +8,7 @@
 .man{position:absolute;inset:8%;display:grid;place-items:center;z-index:3;border-radius:50%;background:radial-gradient(circle,var(--halo),transparent 71%)}.man img{width:95%;height:95%;filter:drop-shadow(0 1px 1px #b7bcca)}.glyph{font:clamp(22px,7vw,54px)/1 Georgia,serif;color:#eff5fb;text-shadow:0 1px 2px #121923}.coord{position:absolute;z-index:4;bottom:1%;left:4%;font:600 clamp(8px,1.25vw,11px) system-ui;color:#eef7ffcf;text-shadow:0 1px 2px black;pointer-events:none}
 svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}aside{background:#1b2431;border:1px solid #344150;border-radius:8px;padding:18px}h2{font-size:18px;margin:0 0 8px}p{margin:8px 0 15px}button,select{font:inherit}.action,select{color:#edf4fb;background:#2a3848;border:1px solid #4b5b6e;border-radius:6px;padding:8px 12px;cursor:pointer}.action:disabled{opacity:.45}.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}.key{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px}.w{background:#56cfff}.b{background:#ff974b}.legend{font-size:14px;color:#cfdae7}.legend span{white-space:nowrap}.rule{border-top:1px solid #344150;padding-top:12px}select{width:100%;margin-top:4px}#detail{min-height:2.9em}dialog{background:#202e40;color:white;border:1px solid #657488;border-radius:10px}dialog::backdrop{background:#080c12bc}
 @media(max-width:680px){article{grid-template-columns:1fr;gap:10px}aside{padding:12px}header{margin-bottom:8px}#detail{min-height:0}}
-.warm{background:#ffad59}.cool{background:#78caff}.man img{filter:drop-shadow(0 1px 1px #b7bcca) drop-shadow(0 0 3px var(--halo))}.man:after{content:'';position:absolute;inset:2.5%;background:var(--tint);opacity:var(--amount);mask:var(--sprite) center/contain no-repeat;pointer-events:none}.glyph:after{display:none}.glyph{color:var(--glyph,#f4f6fa)}.man.on-axis{background:radial-gradient(ellipse at 50% 80%,var(--king-light),transparent 64%),radial-gradient(circle,var(--halo),transparent 71%)}.man.on-axis img{filter:drop-shadow(0 0 2px var(--king-light)) drop-shadow(0 0 3px var(--halo))}.man.pinned{outline:2px dashed var(--pin);outline-offset:-1px}aside label{display:block;margin-top:10px} .sq:before{pointer-events:none}
+.warm{background:#ffad59}.cool{background:#78caff}.man img{filter:drop-shadow(0 1px 1px #b7bcca) drop-shadow(0 0 3px var(--halo))}.man:after{content:'';position:absolute;inset:2.5%;background:var(--tint);opacity:var(--amount);mask:var(--sprite) center/contain no-repeat;pointer-events:none}.glyph:after{display:none}.glyph{color:var(--glyph,#f4f6fa)}.man.pinned{background:radial-gradient(circle at var(--px) var(--py),var(--attacker-light),transparent 69%),radial-gradient(circle at var(--kx) var(--ky),var(--royal-light),transparent 69%),radial-gradient(circle,var(--halo),transparent 71%)}.man.pinned img{filter:drop-shadow(0 0 3px var(--attacker-light)) drop-shadow(0 0 3px var(--royal-light))}aside label{display:block;margin-top:10px} .sq:before{pointer-events:none}
 .sq:before{display:none}.field{position:absolute;inset:0;pointer-events:none}.field.white{clip-path:polygon(0 0,100% 0,0 100%);mask-image:linear-gradient(135deg,#000 20%,#0009 52%)}.field.black{clip-path:polygon(100% 0,100% 100%,0 100%);mask-image:linear-gradient(315deg,#000 20%,#0009 52%)}details{font-size:14px;color:#cfdae7;margin:.8em 0}summary{cursor:pointer}#palette{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:9px 0}.swatch{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:2px}#plate .sq{overflow:hidden}
 .light-lost{animation:light-out .42s both;stroke-dasharray:.10 .08}.light-gained{animation:light-in .85s both}@keyframes light-out{from{opacity:.8}to{opacity:0}}@keyframes light-in{0%{opacity:0}45%{opacity:.85}100%{opacity:0}}@media(prefers-reduced-motion:reduce){.light-lost,.light-gained{display:none}}
 </style><main><header><h1>Blink <span style="color:#82d9fb">Lumière</span></h1><small>Échiquier libre</small></header>
@@ -1951,11 +1951,16 @@ function draw(){
    man.style.setProperty('--halo','hsla('+hue(p.color,p.type)+',94%,65%,'+strength(n)+')');
    man.style.setProperty('--tint',pigment);man.style.setProperty('--amount',strength(n)*.82);
    if(n)man.style.setProperty('--glyph','color-mix(in srgb,'+pigment+' '+Math.round(strength(n)*80)+'%, '+(p.color==='w'?'white':'#252933')+')');
-   if(axes.some(r=>r.side===p.color&&r.path.includes(s))){
-    man.classList.add('on-axis');
-    man.style.setProperty('--king-light','hsl('+hue(p.color,'k')+' 78% 70% / .28)');
+   if(pin){
+    man.classList.add('pinned');
+    const [x,y]=point(s);
+    for(const [source,light,cx,cy] of [[pin.from,'attacker-light','px','py'],[pin.king,'royal-light','kx','ky']]){
+     const p=game.get(source),[sx,sy]=point(source);
+     man.style.setProperty('--'+light,'hsl('+hue(p.color,p.type)+' 96% 70% / .94)');
+     man.style.setProperty('--'+cx,(50+35*Math.sign(sx-x))+'%');
+     man.style.setProperty('--'+cy,(50+35*Math.sign(sy-y))+'%');
+    }
    }
-   if(pin){man.classList.add('pinned');man.style.setProperty('--pin','hsl('+hue(pin.side,game.get(pin.from).type)+' 95% 72%)')}
    img.alt='';img.draggable=false;img.onerror=()=>{man.classList.add('glyph');man.textContent=symbols[p.color]['pnbrqk'.indexOf(p.type)]};
    img.src='https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/piece/cburnett/'+p.color+p.type.toUpperCase()+'.svg';man.style.setProperty('--sprite','url("'+img.src+'")');man.append(img);b.append(man);
   }
@@ -1964,7 +1969,7 @@ function draw(){
  }
  el('grid').replaceChildren(...squares);const svg=el('rays');svg.replaceChildren();
  const openAxes=axes.filter(r=>r.clear>0).map(r=>({...r,to:r.path[r.clear-1],open:true}));
- const beams=[...axes,...openAxes,...(!selected?changes:[]),...pins.map(p=>({...p,to:p.king,pin:true}))];
+ const beams=[...axes,...openAxes,...(!selected?changes:[])];
  for(const ray of beams){
   const c=ray.side??game.get(ray.from)?.color;if(!c||(mode!=='both'&&mode!==c))continue;
   const [x1,y1]=point(ray.from),[x2,y2]=point(ray.to);
@@ -1976,7 +1981,7 @@ function draw(){
    line.setAttribute('opacity',ray.open?.18+.48*openness:.12);
   }
   if(ray.transition)line.setAttribute('class','light-'+ray.transition);
-  if(ray.pin)line.setAttribute('stroke-dasharray','.13 .09');svg.append(line);
+  svg.append(line);
  }
  if(visible(turn))for(const castle of castleLights(game)){
   const [x1,y]=point(castle.king),[x2]=point(castle.rook);
@@ -1989,7 +1994,7 @@ for(const t of ['q','r','b','n']){
  const b=document.createElement('button');b.className='action';b.textContent=names[t];
  b.onclick=()=>{el('promotion').close();play(...pending,t);pending=null};el('choices').append(b);
 }
-const scenes={castle:['4kr2/8/8/8/8/8/8/R3K2R w KQ - 0 1','Le grand roque est possible. La tour noire contrôle f1, donc le petit roque ne s’allume pas.'],pin:['4r1k1/8/8/8/8/8/4N3/4K3 w - - 0 1','La tour e8 cloue le cavalier e2 au roi e1. Le pointillé prolonge la ligne derrière le cavalier.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Les cases au-delà de la dame reçoivent aussi la lumière du fou.']};
+const scenes={castle:['4kr2/8/8/8/8/8/8/R3K2R w KQ - 0 1','Le grand roque est possible. La tour noire contrôle f1, donc le petit roque ne s’allume pas.'],pin:['4r1k1/8/8/8/8/8/4N3/4K3 w - - 0 1','La tour e8 cloue le cavalier e2 au roi e1. Le cavalier reçoit la lumière du roi et celle de la tour adverse.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Les cases au-delà de la dame reçoivent aussi la lumière du fou.']};
  el('scene').onchange=()=>{clearLightChanges();const scene=scenes[el('scene').value];game=scene?new Chess(scene[0]):freeGame;caption=scene?scene[1]:'Partie libre · sélectionne une pièce.';map=influence(game);selected=null;lines=[];draw()};
  el('axes').onchange=draw;el('side').onchange=()=>{showPalette();draw()};showPalette();el('filter').onchange=draw;el('demo').onclick=()=>play('e2','e4');
 el('undo').onclick=()=>{clearLightChanges();game.undo();map=influence(game);lines=[];selected=null;caption='Coup annulé.';draw()};draw();
