@@ -1912,7 +1912,7 @@ function draw(){
    if(n)man.style.setProperty('--glyph','color-mix(in srgb,'+pigment+' '+Math.round(strength(n)*80)+'%, '+(p.color==='w'?'white':'#252933')+')');
    if(axes.some(r=>r.side===p.color&&r.path.includes(s))){
     man.classList.add('on-axis');
-    man.style.setProperty('--king-light','hsl('+hue(p.color,'k')+' 96% 73% / .70)');
+    man.style.setProperty('--king-light','hsl('+hue(p.color,'k')+' 78% 70% / .28)');
    }
    if(pin){man.classList.add('pinned');man.style.setProperty('--pin','hsl('+hue(pin.side,game.get(pin.from).type)+' 95% 72%)')}
    img.alt='';img.draggable=false;img.onerror=()=>{man.classList.add('glyph');man.textContent=symbols[p.color]['pnbrqk'.indexOf(p.type)]};
@@ -1928,7 +1928,7 @@ function draw(){
   const [x1,y1]=point(ray.from),[x2,y2]=point(ray.to);
   const line=document.createElementNS('http://www.w3.org/2000/svg','line');
   for(const [k,v] of Object.entries({x1,y1,x2,y2,stroke:'hsl('+hue(c,game.get(ray.from).type)+' 95% 74%)','stroke-width':.075,'stroke-linecap':'round',opacity:.88}))line.setAttribute(k,v);
-  if(ray.axis){line.setAttribute('stroke-width','.095');line.setAttribute('opacity','.33')}
+  if(ray.axis){line.setAttribute('stroke-width','.055');line.setAttribute('opacity','.18')}
   if(ray.pin)line.setAttribute('stroke-dasharray','.13 .09');svg.append(line);
  }
 }
