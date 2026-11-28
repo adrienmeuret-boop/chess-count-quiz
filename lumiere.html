@@ -1920,7 +1920,7 @@ function fieldPaint(own,opponent,batterySupport,ownSide,whiteShare){
  const share=whiteShare==null?own/total:(ownSide==='w'?whiteShare:1-whiteShare);
  if(share===0)return cool;
  if(share===1)return warm;
- if(Math.abs(share-.5)<1e-8)return gradient+warm+' -18%,'+violet+' 32%,'+violet+' 68%,'+cool+' 118%)';
+ if(Math.abs(share-.5)<1e-8)return violet;
  const boundary=100*share;
  const fade=Math.min(23,.8*boundary,.8*(100-boundary));
  return gradient+warm+' '+(boundary-fade)+'%,'+violet+' '+boundary+'%,'+cool+' '+(boundary+fade)+'%)';
