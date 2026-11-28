@@ -1969,7 +1969,11 @@ function draw(){
  }
  el('grid').replaceChildren(...squares);const svg=el('rays');svg.replaceChildren();
  const openAxes=axes.filter(r=>r.clear>0).map(r=>({...r,to:r.path[r.clear-1],open:true}));
- const beams=[...axes,...openAxes,...(!selected?changes:[])];
+ const castles=visible(turn)?castleLights(game):[];
+ const royalAxes=[...axes,...openAxes].filter(ray=>!castles.some(castle=>
+  ray.from===castle.king&&ray.to[1]===castle.king[1]&&
+  Math.sign(files.indexOf(ray.to[0])-files.indexOf(ray.from[0]))===Math.sign(files.indexOf(castle.rook[0])-files.indexOf(castle.king[0]))));
+ const beams=[...royalAxes,...(!selected?changes:[])];
  for(const ray of beams){
   const c=ray.side??game.get(ray.from)?.color;if(!c||(mode!=='both'&&mode!==c))continue;
   const [x1,y1]=point(ray.from),[x2,y2]=point(ray.to);
@@ -1983,11 +1987,24 @@ function draw(){
   if(ray.transition)line.setAttribute('class','light-'+ray.transition);
   svg.append(line);
  }
- if(visible(turn))for(const castle of castleLights(game)){
+ for(const castle of castles){
   const [x1,y]=point(castle.king),[x2]=point(castle.rook);
-  const beam=document.createElementNS('http://www.w3.org/2000/svg','line');
-  for(const [key,value] of Object.entries({x1,x2,y1:y+.24,y2:y+.24,stroke:'#df9bff','stroke-width':.09,'stroke-linecap':'round'}))beam.setAttribute(key,value);
-  svg.append(beam);
+  const id='castle-'+castle.rook;
+  const make=(tag,attrs)=>{
+   const node=document.createElementNS('http://www.w3.org/2000/svg',tag);
+   for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);
+   return node;
+  };
+  const gradient=make('linearGradient',{id,gradientUnits:'userSpaceOnUse',x1,x2,y1:y,y2:y});
+  for(const [offset,type] of [['0%','k'],['100%','r']])
+   gradient.append(make('stop',{offset,'stop-color':'hsl('+hue(turn,type)+' 95% 66%)'}));
+  svg.append(gradient);
+  const beam={x1,x2,y1:y,y2:y,'stroke-linecap':'round'};
+  svg.append(
+   make('line',{...beam,stroke:'url(#'+id+')','stroke-width':.22,opacity:.35,style:'filter:blur(4px)'}),
+   make('line',{...beam,stroke:'url(#'+id+')','stroke-width':.12}),
+   make('line',{...beam,stroke:'#fff','stroke-width':.026,opacity:.7})
+  );
  }
 }
 for(const t of ['q','r','b','n']){
