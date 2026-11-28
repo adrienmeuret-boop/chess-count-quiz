@@ -1961,7 +1961,7 @@ function draw(){
   b.dataset.square=s;b.dataset.movable=String(p?.color===turn);b.onclick=event=>{if(!suppressClick||event.detail===0)inspectSquare(s)};squares.push(b);
  }
  el('grid').replaceChildren(...squares);const svg=el('rays');svg.replaceChildren();
- const openAxes=axes.filter(r=>r.clear>0).map(r=>({...r,to:r.path[r.clear-1],open:true}));
+ const openAxes=axes.filter(r=>r.clear>0).map(r=>({...r,to:r.path[Math.min(r.clear,r.path.length-1)],open:true}));
  const castles=visible(turn)?castleLights(game):[];
  const royalAxes=[...axes,...openAxes].filter(ray=>!castles.some(castle=>
   ray.from===castle.king&&ray.to[1]===castle.king[1]&&
@@ -1969,7 +1969,11 @@ function draw(){
  const beams=[...royalAxes,...(!selected?changes:[])];
  for(const ray of beams){
   const c=ray.side??game.get(ray.from)?.color;if(!c||(mode!=='both'&&mode!==c))continue;
-  const [x1,y1]=point(ray.from),[x2,y2]=point(ray.to);
+  const [x1,y1]=point(ray.from);
+  let [x2,y2]=point(ray.to);
+  if(ray.axis&&(!ray.open||ray.clear===ray.path.length)){
+   x2+=.5*Math.sign(x2-x1);y2+=.5*Math.sign(y2-y1);
+  }
   const color='hsl('+hue(c)+' 95% 74%)';
   if(ray.transition&&ray.type==='n'){
    const ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
@@ -1982,8 +1986,9 @@ function draw(){
   for(const [k,v] of Object.entries({x1,y1,x2,y2,stroke:'hsl('+hue(c,ray.type??game.get(ray.from).type)+' 95% 74%)','stroke-width':.075,'stroke-linecap':'round',opacity:.88}))line.setAttribute(k,v);
   if(ray.axis){
    const openness=ray.open?ray.clear/7:0;
-   line.setAttribute('stroke-width',.045+.08*openness);
-   line.setAttribute('opacity',ray.open?.18+.48*openness:.12);
+   line.setAttribute('stroke-width',.045+.08*openness+(c==='b'?.017:0));
+   line.setAttribute('opacity',ray.open?(c==='b'?.46:.22)+.43*openness:c==='b'?.32:.15);
+   if(c==='b')line.setAttribute('stroke','#23469c');
   }
   line.setAttribute('class','soft-ray'+(ray.transition?' light-'+ray.transition:''));
   svg.append(line);
