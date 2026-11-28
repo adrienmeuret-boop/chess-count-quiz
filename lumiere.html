@@ -11,6 +11,7 @@ svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:no
 .warm{background:#ffad59}.cool{background:#78caff}.man img{filter:drop-shadow(0 1px 1px #b7bcca) drop-shadow(0 0 var(--spread,0px) var(--halo)) drop-shadow(0 0 var(--spread,0px) var(--halo))}.man:after{content:'';position:absolute;inset:2.5%;background:radial-gradient(ellipse at 33% 22%,#fff 0%,#fffd 7%,transparent 40%),linear-gradient(155deg,var(--tint),transparent 195%);opacity:var(--amount);mask:var(--sprite) center/contain no-repeat;pointer-events:none}.glyph:after{display:none}.glyph{color:var(--glyph,#f4f6fa)}.man.pinned{background:none}.man.pinned:before{content:'';position:absolute;inset:-9%;border-radius:50%;pointer-events:none;background:radial-gradient(circle at var(--px) var(--py),var(--attacker-light),transparent 63%),radial-gradient(circle at var(--kx) var(--ky),var(--royal-light),transparent 63%);mask-image:radial-gradient(circle,#000 19%,#000b 43%,transparent 71%);filter:blur(clamp(2px,.6vw,6px))}.man.pinned img{position:relative;filter:drop-shadow(0 0 var(--spread,0px) var(--halo))}aside label{display:block;margin-top:10px} .sq:before{pointer-events:none}
 .sq:before{display:none}.field{position:absolute;inset:0;pointer-events:none}.field.white{clip-path:polygon(0 0,100% 0,0 100%);mask-image:linear-gradient(135deg,#000 20%,#0009 52%)}.field.black{clip-path:polygon(100% 0,100% 100%,0 100%);mask-image:linear-gradient(315deg,#000 20%,#0009 52%)}details{font-size:14px;color:#cfdae7;margin:.8em 0}summary{cursor:pointer}#palette{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:9px 0}.swatch{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:2px}#plate .sq{overflow:hidden}
 .light-lost{animation:light-out .42s both;stroke-dasharray:.10 .08}.light-gained{animation:light-in .85s both}@keyframes light-out{from{opacity:.8}to{opacity:0}}@keyframes light-in{0%{opacity:0}45%{opacity:.85}100%{opacity:0}}@media(prefers-reduced-motion:reduce){.light-lost,.light-gained{display:none}}
+#grid{touch-action:none;user-select:none}.sq[data-movable=true]{cursor:grab}.sq.drag-source .man{visibility:hidden}.drag-piece{position:fixed;pointer-events:none;z-index:20;transform:translate(-50%,-50%);display:grid;place-items:center}.drag-piece img{width:95%;height:95%}
 </style><main><header><h1>Blink <span style="color:#82d9fb">Lumière</span></h1><small>Échiquier libre</small></header>
 <article><div id="plate"><div id="grid" role="group" aria-label="Échiquier"></div><svg id="rays" viewBox="0 0 8 8" aria-hidden="true"></svg></div>
 <aside><h2 id="turn" aria-live="polite"></h2><p id="detail" aria-live="polite">Joue e2–e4 pour ouvrir les diagonales du fou et de la dame.</p>
@@ -1959,7 +1960,7 @@ function draw(){
    img.src='https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/piece/cburnett/'+p.color+p.type.toUpperCase()+'.svg';man.style.setProperty('--sprite','url("'+img.src+'")');man.append(img);b.append(man);
   }
   const label=document.createElement('small');label.className='coord';label.textContent=s;b.append(label);
-  b.onclick=()=>pick(s);squares.push(b);
+  b.dataset.square=s;b.dataset.movable=String(p?.color===turn);b.onclick=event=>{if(!suppressClick||event.detail===0)pick(s)};squares.push(b);
  }
  el('grid').replaceChildren(...squares);const svg=el('rays');svg.replaceChildren();
  const openAxes=axes.filter(r=>r.clear>0).map(r=>({...r,to:r.path[r.clear-1],open:true}));
@@ -2008,5 +2009,41 @@ for(const t of ['q','r','b','n']){
 const scenes={castle:['4kr2/8/8/8/8/8/8/R3K2R w KQ - 0 1','Le grand roque est possible. La tour noire contrôle f1, donc le petit roque ne s’allume pas.'],pin:['4r1k1/8/8/8/8/8/4N3/4K3 w - - 0 1','La tour e8 cloue le cavalier e2 au roi e1. Le cavalier reçoit la lumière du roi et celle de la tour adverse.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Les cases au-delà de la dame reçoivent aussi la lumière du fou.']};
  el('scene').onchange=()=>{clearLightChanges();const scene=scenes[el('scene').value];game=scene?new Chess(scene[0]):freeGame;caption=scene?scene[1]:'Partie libre · sélectionne une pièce.';map=influence(game);selected=null;lines=[];draw()};
  el('axes').onchange=draw;el('side').onchange=draw;el('filter').onchange=draw;el('demo').onclick=()=>play('e2','e4');
+const grid=el('grid');
+let drag=null,suppressClick=false;
+grid.addEventListener('pointerdown',event=>{
+ if(drag||!event.isPrimary||event.button!==0)return;
+ suppressClick=false;
+ const tile=event.target.closest('[data-movable=true]');
+ if(tile)drag={id:event.pointerId,tile,x:event.clientX,y:event.clientY};
+});
+window.addEventListener('pointermove',event=>{
+ if(drag?.id!==event.pointerId)return;
+ if(!drag.ghost){
+  if(Math.hypot(event.clientX-drag.x,event.clientY-drag.y)<6)return;
+  const ghost=document.createElement('div'),piece=drag.tile.querySelector('.man');
+  ghost.className='drag-piece glyph';ghost.setAttribute('aria-hidden','true');
+  const size=drag.tile.getBoundingClientRect().width;
+  ghost.style.width=ghost.style.height=size+'px';
+  ghost.append(...Array.from(piece.childNodes,node=>node.cloneNode(true)));
+  document.body.append(ghost);drag.ghost=ghost;
+  drag.tile.classList.add('drag-source');
+ }
+ drag.ghost.style.left=event.clientX+'px';drag.ghost.style.top=event.clientY+'px';
+});
+function endDrag(event){
+ if(drag?.id!==event.pointerId)return;
+ const {ghost,tile}=drag;drag=null;
+ if(!ghost)return;
+ ghost.remove();tile.classList.remove('drag-source');suppressClick=true;
+ if(event.type!=='pointerup')return;
+ const target=document.elementFromPoint(event.clientX,event.clientY)?.closest('.sq[data-square]');
+ if(!target||!grid.contains(target)||target===tile)return;
+ const from=tile.dataset.square,to=target.dataset.square;
+ if(!game.moves({square:from,verbose:true}).some(move=>move.to===to))return;
+ selected=from;pick(to);
+}
+window.addEventListener('pointerup',endDrag);
+window.addEventListener('pointercancel',endDrag);
 el('undo').onclick=()=>{clearLightChanges();game.undo();map=influence(game);lines=[];selected=null;caption='Coup annulé.';draw()};draw();
 </script></html>
