@@ -13,7 +13,7 @@ svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:no
 </style><main><header><h1>Blink <span style="color:#82d9fb">Lumière</span></h1><small>Échiquier libre</small></header>
 <article><div id="plate"><div id="grid" role="group" aria-label="Échiquier"></div><svg id="rays" viewBox="0 0 8 8" aria-hidden="true"></svg></div>
 <aside><h2 id="turn" aria-live="polite"></h2><p id="detail" aria-live="polite">Joue e2–e4 pour ouvrir les diagonales du fou et de la dame.</p>
-<div class="legend"><span><i class="key warm"></i>Mon camp</span> &nbsp; <span><i class="key cool"></i>Camp adverse</span><p>Chaque pièce éclaire les cases qu’elle contrôle. Chaque protection renforce la teinte de la pièce défendue. Les faisceaux fins des rois traversent les pièces jusqu’au bord.</p></div>
+<div class="legend"><span><i class="key warm"></i>Mon camp</span> &nbsp; <span><i class="key cool"></i>Camp adverse</span><p>Chaque pièce éclaire les cases qu’elle contrôle. Chaque protection renforce la teinte de la pièce défendue. Les axes du roi brillent davantage à mesure que les cases devant lui se dégagent. Un filet discret continue derrière les pièces.</p></div>
 <label for="side">Mon camp</label><select id="side"><option value="w">Blancs</option><option value="b">Noirs</option></select><details><summary>Teintes des pièces</summary><div id="palette"></div><small>Sur une case, chaque bande représente un type de pièce. Sa largeur indique sa part des contrôles de son camp.</small></details><label><input id="axes" type="checkbox" checked> Lumière longue des rois</label><label for="filter">Afficher le contrôle</label><select id="filter"><option value="both">Des deux camps</option><option value="w">Des Blancs</option><option value="b">Des Noirs</option></select>
 <div class="actions"><button class="action" id="demo">Jouer 1.e4</button><button class="action" id="undo">Annuler le coup</button></div><label for="scene">Échiquier</label><select id="scene"><option value="free">Partie libre</option><option value="pin">Exemple · clouage</option><option value="battery">Exemple · batterie</option></select></aside></article>
 <dialog id="promotion"><h2>Promouvoir le pion</h2><div class="actions" id="choices"></div></dialog></main>
@@ -1853,7 +1853,10 @@ function kingRays(game){
    if(!dx&&!dy)continue;
    const path=[];
    for(let i=1;i<8;i++){const to=square(files.indexOf(from[0])+dx*i,Number(from[1])-1+dy*i);if(!to)break;path.push(to)}
-   if(path.length)rays.push({from,to:path[path.length-1],path,side,axis:true});
+   if(!path.length)continue;
+   const blocker=path.findIndex(s=>game.get(s));
+   const clear=blocker<0?path.length:blocker;
+   rays.push({from,to:path[path.length-1],path,side,axis:true,clear});
   }
  }
  return rays;
@@ -1922,13 +1925,18 @@ function draw(){
   b.onclick=()=>pick(s);squares.push(b);
  }
  el('grid').replaceChildren(...squares);const svg=el('rays');svg.replaceChildren();
- const beams=[...axes,...(!selected?lines:[]),...pins.map(p=>({...p,to:p.king,pin:true})),...batteries.map(b=>({...b,battery:true}))];
+ const openAxes=axes.filter(r=>r.clear>0).map(r=>({...r,to:r.path[r.clear-1],open:true}));
+ const beams=[...axes,...openAxes,...(!selected?lines:[]),...pins.map(p=>({...p,to:p.king,pin:true})),...batteries.map(b=>({...b,battery:true}))];
  for(const ray of beams){
   const c=game.get(ray.from)?.color;if(!c||(mode!=='both'&&mode!==c))continue;
   const [x1,y1]=point(ray.from),[x2,y2]=point(ray.to);
   const line=document.createElementNS('http://www.w3.org/2000/svg','line');
   for(const [k,v] of Object.entries({x1,y1,x2,y2,stroke:'hsl('+hue(c,game.get(ray.from).type)+' 95% 74%)','stroke-width':.075,'stroke-linecap':'round',opacity:.88}))line.setAttribute(k,v);
-  if(ray.axis){line.setAttribute('stroke-width','.055');line.setAttribute('opacity','.18')}
+  if(ray.axis){
+   const openness=ray.open?ray.clear/7:0;
+   line.setAttribute('stroke-width',.045+.08*openness);
+   line.setAttribute('opacity',ray.open?.18+.48*openness:.12);
+  }
   if(ray.pin)line.setAttribute('stroke-dasharray','.13 .09');svg.append(line);
  }
 }
