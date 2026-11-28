@@ -12,6 +12,7 @@ svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:no
 .sq:before{display:none}.field{position:absolute;inset:0;pointer-events:none}.field.white{clip-path:polygon(0 0,100% 0,0 100%);mask-image:linear-gradient(135deg,#000 20%,#0009 52%)}.field.black{clip-path:polygon(100% 0,100% 100%,0 100%);mask-image:linear-gradient(315deg,#000 20%,#0009 52%)}details{font-size:14px;color:#cfdae7;margin:.8em 0}summary{cursor:pointer}#palette{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:9px 0}.swatch{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:2px}#plate .sq{overflow:hidden}
 .light-lost{animation:light-out .42s both;stroke-dasharray:.10 .08}.light-gained{animation:light-in .85s both}@keyframes light-out{from{opacity:.8}to{opacity:0}}@keyframes light-in{0%{opacity:0}45%{opacity:.85}100%{opacity:0}}@media(prefers-reduced-motion:reduce){.light-lost,.light-gained{display:none}}
 #grid{touch-action:none;user-select:none}.sq[data-movable=true]{cursor:grab}.sq.drag-source .man{visibility:hidden}.drag-piece{position:fixed;pointer-events:none;z-index:20;transform:translate(-50%,-50%);display:grid;place-items:center}.drag-piece img{width:95%;height:95%}
+.soft-ray{filter:drop-shadow(0 0 1.5px var(--ray-light))}.light-ring{filter:drop-shadow(0 0 1px var(--ray-light));transform-box:fill-box;transform-origin:center}.light-ring.light-gained{animation:ring-in .85s both}@keyframes ring-in{0%{opacity:0;transform:scale(.55)}45%{opacity:.85}100%{opacity:0;transform:scale(1.18)}}
 </style><main><header><h1>Blink <span style="color:#82d9fb">Lumière</span></h1><small>Échiquier libre</small></header>
 <article><div id="plate"><div id="grid" role="group" aria-label="Échiquier"></div><svg id="rays" viewBox="0 0 8 8" aria-hidden="true"></svg></div>
 <aside><h2 id="turn" aria-live="polite"></h2><p id="detail" aria-live="polite">Joue e2–e4 pour ouvrir les diagonales du fou et de la dame.</p>
@@ -1969,14 +1970,22 @@ function draw(){
  for(const ray of beams){
   const c=ray.side??game.get(ray.from)?.color;if(!c||(mode!=='both'&&mode!==c))continue;
   const [x1,y1]=point(ray.from),[x2,y2]=point(ray.to);
+  const color='hsl('+hue(c)+' 95% 74%)';
+  if(ray.transition&&ray.type==='n'){
+   const ring=document.createElementNS('http://www.w3.org/2000/svg','circle');
+   for(const [key,value] of Object.entries({cx:x2,cy:y2,r:.23,fill:'none',stroke:color,'stroke-width':.06,class:'light-ring light-'+ray.transition}))ring.setAttribute(key,value);
+   ring.style.setProperty('--ray-light',color);
+   svg.append(ring);continue;
+  }
   const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.style.setProperty('--ray-light',color);
   for(const [k,v] of Object.entries({x1,y1,x2,y2,stroke:'hsl('+hue(c,ray.type??game.get(ray.from).type)+' 95% 74%)','stroke-width':.075,'stroke-linecap':'round',opacity:.88}))line.setAttribute(k,v);
   if(ray.axis){
    const openness=ray.open?ray.clear/7:0;
    line.setAttribute('stroke-width',.045+.08*openness);
    line.setAttribute('opacity',ray.open?.18+.48*openness:.12);
   }
-  if(ray.transition)line.setAttribute('class','light-'+ray.transition);
+  line.setAttribute('class','soft-ray'+(ray.transition?' light-'+ray.transition:''));
   svg.append(line);
  }
  for(const castle of castles){
