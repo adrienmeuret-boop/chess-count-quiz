@@ -15,7 +15,7 @@ svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:no
 <aside><h2 id="turn" aria-live="polite"></h2><p id="detail" aria-live="polite">Joue e2–e4 pour ouvrir les diagonales du fou et de la dame.</p>
 <div class="legend"><span><i class="key warm"></i>Mon camp</span> &nbsp; <span><i class="key cool"></i>Camp adverse</span><p>Une case est chaude si ton camp la contrôle davantage, froide si l’adversaire domine, grise à égalité. Plus le total des contrôles est élevé, plus la lumière est dense. Chaque protection renforce la teinte de la pièce défendue. Les axes du roi brillent davantage à mesure que les cases devant lui se dégagent. Un filet discret continue derrière les pièces.</p></div>
 <label for="side">Mon camp</label><select id="side"><option value="w">Blancs</option><option value="b">Noirs</option></select><details><summary>Teintes des pièces</summary><div id="palette"></div><small>Les teintes des pièces restent visibles sur leurs halos et leurs faisceaux. Clique sur une case pour connaître ses contrôleurs.</small></details><label><input id="axes" type="checkbox" checked> Lumière longue des rois</label><label for="filter">Afficher le contrôle</label><select id="filter"><option value="both">Des deux camps</option><option value="w">Des Blancs</option><option value="b">Des Noirs</option></select>
-<div class="actions"><button class="action" id="demo">Jouer 1.e4</button><button class="action" id="undo">Annuler le coup</button></div><label for="scene">Échiquier</label><select id="scene"><option value="free">Partie libre</option><option value="pin">Exemple · clouage</option><option value="battery">Exemple · batterie</option></select></aside></article>
+<div class="actions"><button class="action" id="demo">Jouer 1.e4</button><button class="action" id="undo">Annuler le coup</button></div><label for="scene">Échiquier</label><select id="scene"><option value="free">Partie libre</option><option value="castle">Exemple · roques</option><option value="pin">Exemple · clouage</option><option value="battery">Exemple · batterie</option></select></aside></article>
 <dialog id="promotion"><h2>Promouvoir le pion</h2><div class="actions" id="choices"></div></dialog></main>
 <script>/*
  * Copyright (c) 2020, Jeff Hlywa (jhlywa@gmail.com)
@@ -1877,6 +1877,22 @@ function alignments(game,map){
  }
  return {pins,batteries};
 }
+function castleLights(game,map){
+ const [,turn,rights]=game.fen().split(' ');
+ const rank=turn==='w'?'1':'8',enemy=turn==='w'?'b':'w',king='e'+rank;
+ const legal=game.moves({verbose:true});
+ return [
+  {right:'k',rook:'h',empty:'fg',path:'efg'},
+  {right:'q',rook:'a',empty:'dcb',path:'edc'}
+ ].flatMap(({right,rook,empty,path})=>{
+  const flag=turn==='w'?right.toUpperCase():right;
+  if(!rights.includes(flag)||[...empty].some(file=>game.get(file+rank)))return [];
+  const allowed=legal.some(move=>move.flags.includes(right));
+  const gaps=[...path].filter(file=>map[file+rank][enemy].length);
+  if(!allowed&&!gaps.length)return [];
+  return [{king,rook:rook+rank,gaps:allowed?[]:gaps,allowed}];
+ });
+}
 function draw(){
  const turn=game.turn(),mode=el('filter').value;
  el('turn').textContent=game.in_checkmate()?'Échec et mat':game.in_draw()?'Partie nulle':(turn==='w'?'Trait aux blancs':'Trait aux noirs')+(game.in_check()?' · Échec':'');
@@ -1931,12 +1947,27 @@ function draw(){
   }
   if(ray.pin)line.setAttribute('stroke-dasharray','.13 .09');svg.append(line);
  }
+ if(visible(turn))for(const castle of castleLights(game,map)){
+  const [x1,y]=point(castle.king),[x2]=point(castle.rook);
+  const breaks=castle.gaps.map(file=>files.indexOf(file)+.5).sort((a,b)=>a-b);
+  let start=Math.min(x1,x2);
+  const end=Math.max(x1,x2);
+  for(const gap of [...breaks,end+.43]){
+   const stop=Math.min(end,gap-.43);
+   if(stop>start){
+    const beam=document.createElementNS('http://www.w3.org/2000/svg','line');
+    for(const [key,value] of Object.entries({x1:start,x2:stop,y1:y+.24,y2:y+.24,stroke:'#df9bff','stroke-width':.09,'stroke-linecap':'round',opacity:castle.allowed?1:.48}))beam.setAttribute(key,value);
+    svg.append(beam);
+   }
+   start=gap+.43;
+  }
+ }
 }
 for(const t of ['q','r','b','n']){
  const b=document.createElement('button');b.className='action';b.textContent=names[t];
  b.onclick=()=>{el('promotion').close();play(...pending,t);pending=null};el('choices').append(b);
 }
-const scenes={pin:['4r1k1/8/8/8/8/8/4N3/4K3 w - - 0 1','La tour e8 cloue le cavalier e2 au roi e1. Le pointillé prolonge la ligne derrière le cavalier.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Leurs deux cases brillent davantage.']};
+const scenes={castle:['4kr2/8/8/8/8/8/8/R3K2R w KQ - 0 1','Le grand roque est possible. La tour noire contrôle f1 et coupe le lien du petit roque.'],pin:['4r1k1/8/8/8/8/8/4N3/4K3 w - - 0 1','La tour e8 cloue le cavalier e2 au roi e1. Le pointillé prolonge la ligne derrière le cavalier.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Leurs deux cases brillent davantage.']};
  el('scene').onchange=()=>{const scene=scenes[el('scene').value];game=scene?new Chess(scene[0]):freeGame;caption=scene?scene[1]:'Partie libre · sélectionne une pièce.';map=influence(game);selected=null;lines=[];draw()};
  el('axes').onchange=draw;el('side').onchange=()=>{showPalette();draw()};showPalette();el('filter').onchange=draw;el('demo').onclick=()=>play('e2','e4');
 el('undo').onclick=()=>{game.undo();map=influence(game);lines=[];selected=null;caption='Coup annulé.';draw()};draw();
