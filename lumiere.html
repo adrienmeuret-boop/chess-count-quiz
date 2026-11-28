@@ -19,7 +19,7 @@ svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:no
 <aside><h2 id="turn" aria-live="polite"></h2><p id="detail" aria-live="polite"></p>
 <div class="legend"><span><i class="key warm"></i>Mon camp</span> &nbsp; <span><i class="key cool"></i>Camp adverse</span></div>
 <label for="side">Mon camp</label><select id="side"><option value="w">Blancs</option><option value="b">Noirs</option></select><label><input id="axes" type="checkbox" checked> Lumière longue des rois</label><label for="filter">Afficher le contrôle</label><select id="filter"><option value="both">Des deux camps</option><option value="w">Des Blancs</option><option value="b">Des Noirs</option></select>
-<div class="actions"><button class="action" id="undo">Annuler le coup</button></div><label for="scene">Échiquier</label><select id="scene"><option value="free">Partie libre</option><option value="castle">Exemple · roques</option><option value="pin">Exemple · clouages</option><option value="battery">Exemple · batterie</option></select></aside></article>
+<div class="actions"><button class="action" id="undo">Annuler le coup</button></div><label for="scene">Échiquier</label><select id="scene"><option value="free">Partie libre</option><option value="control">Exemple · contrôle des cases</option><option value="castle">Exemple · roques</option><option value="pin">Exemple · clouages</option><option value="battery">Exemple · batterie</option></select></aside></article>
 <dialog id="promotion"><h2>Promouvoir le pion</h2><div class="actions" id="choices"></div></dialog></main>
 <script>/*
  * Copyright (c) 2020, Jeff Hlywa (jhlywa@gmail.com)
@@ -1837,15 +1837,20 @@ function inspectSquare(s){
 function hue(side){return side===el('side').value?27:205}
 function strength(n){return 1-Math.exp(-.49*n)}
 const typeOrder=['p','n','b','r','q','k'];
-function fieldPaint(own,opponent){
+function fieldPaint(own,opponent,batterySupport){
  const total=own+opponent;
  if(!total)return 'transparent';
- const balance=(own-opponent)/total;
- const violet=[155,82,230], dominant=balance>=0?[255,128,20]:[12,140,255];
- const channels=violet.map((channel,i)=>Math.round(channel+(dominant[i]-channel)*Math.abs(balance)));
- return 'rgba('+channels.join(',')+','+strength(total)+')';
+ const alpha=strength(total+batterySupport);
+ const warm='rgba(255,128,20,'+alpha+')';
+ const cool='rgba(12,140,255,'+alpha+')';
+ const violet='rgba(149,72,226,'+alpha+')';
+ if(!opponent)return warm;
+ if(!own)return cool;
+ if(own===opponent)return 'linear-gradient(90deg,'+warm+' -24%,'+violet+' 14%,'+violet+' 86%,'+cool+' 124%)';
+ const boundary=100*own/total;
+ const fade=Math.min(10,boundary/2,(100-boundary)/2);
+ return 'linear-gradient(90deg,'+warm+' '+(boundary-fade)+'%,'+violet+' '+boundary+'%,'+cool+' '+(boundary+fade)+'%)';
 }
-
 function kingRays(game){
  const rays=[];
  for(const side of ['w','b']){
@@ -1938,7 +1943,8 @@ function draw(){
   b.style.setProperty('--base',(x+y)%2?'#b8b8b8':'#797979');
   const own=el('side').value,opponent=own==='w'?'b':'w';
   const field=document.createElement('span');field.className='field';
-  field.style.background=fieldPaint(visible(own)?c[own].length+xray[s][own].length:0,visible(opponent)?c[opponent].length+xray[s][opponent].length:0);
+  field.style.background=fieldPaint(visible(own)?c[own].length:0,visible(opponent)?c[opponent].length:0,
+   (visible(own)?xray[s][own].length:0)+(visible(opponent)?xray[s][opponent].length:0));
   b.append(field);
   const visiblePins=pins.filter(r=>r.to===s&&visible(r.side));
   const pin=visiblePins[0];
@@ -2035,7 +2041,7 @@ for(const t of ['q','r','b','n']){
  const b=document.createElement('button');b.className='action';b.textContent=names[t];
  b.onclick=()=>{el('promotion').close();play(...pending,t);pending=null};el('choices').append(b);
 }
-const scenes={castle:['r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1','Les deux camps peuvent roquer des deux côtés.'],pin:['4k3/3n4/8/1B6/1b6/8/3N4/4K3 w - - 0 1','Chaque fou cloue le cavalier adverse à son roi.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Les cases au-delà de la dame reçoivent aussi la lumière du fou.']};
+const scenes={control:['3k1bn1/2qb4/1p1Np2r/2np1ppp/3p2PP/1P1BPP1R/P2QK3/1R1N4 b - - 0 30','Contrôles blancs/noirs · c4 : 3/1 · a5 : 1/1 · c8 : 1/3 · e4 : 3/3.'],castle:['r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1','Les deux camps peuvent roquer des deux côtés.'],pin:['4k3/3n4/8/1B6/1b6/8/3N4/4K3 w - - 0 1','Chaque fou cloue le cavalier adverse à son roi.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Les cases au-delà de la dame reçoivent aussi la lumière du fou.']};
  el('scene').onchange=()=>{clearLightChanges();const scene=scenes[el('scene').value];game=scene?new Chess(scene[0]):freeGame;caption=scene?scene[1]:'Partie libre · sélectionne une pièce.';map=influence(game);selected=null;lines=[];draw()};
  el('axes').onchange=draw;el('side').onchange=draw;el('filter').onchange=draw;
 const grid=el('grid');
