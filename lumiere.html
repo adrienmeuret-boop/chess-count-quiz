@@ -13,8 +13,8 @@ svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:no
 .sq:before{display:none}.field{position:absolute;inset:0;pointer-events:none}.field.white{clip-path:polygon(0 0,100% 0,0 100%);mask-image:linear-gradient(135deg,#000 20%,#0009 52%)}.field.black{clip-path:polygon(100% 0,100% 100%,0 100%);mask-image:linear-gradient(315deg,#000 20%,#0009 52%)}details{font-size:14px;color:#cfdae7;margin:.8em 0}summary{cursor:pointer}#palette{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:9px 0}.swatch{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:2px}#plate .sq{overflow:hidden}
 .light-lost{animation:light-out .42s both;stroke-dasharray:.10 .08}.light-gained{animation:light-in .85s both}@keyframes light-out{from{opacity:.8}to{opacity:0}}@keyframes light-in{0%{opacity:0}45%{opacity:.85}100%{opacity:0}}@media(prefers-reduced-motion:reduce){.light-lost,.light-gained{display:none}}
 #grid{touch-action:none;user-select:none}.sq[data-movable=true]{cursor:grab}.sq.drag-source .man{visibility:hidden}.drag-piece{position:fixed;pointer-events:none;z-index:20;transform:translate(-50%,-50%);display:grid;place-items:center}.drag-piece img{width:95%;height:95%}
-.soft-ray{filter:drop-shadow(0 0 1.5px var(--ray-light))}.light-ring{filter:drop-shadow(0 0 1px var(--ray-light));transform-box:fill-box;transform-origin:center}.light-ring.light-gained{animation:ring-in .85s both}@keyframes ring-in{0%{opacity:0;transform:scale(.55)}45%{opacity:.85}100%{opacity:0;transform:scale(1.18)}}
-#detail:empty{display:none}</style><main><header><h1>Light</h1><small>Échiquier libre</small></header>
+.soft-ray{shape-rendering:geometricPrecision}.light-ring{transform-box:fill-box;transform-origin:center}.light-ring.light-gained{animation:ring-in .85s both}@keyframes ring-in{0%{opacity:0;transform:scale(.55)}45%{opacity:.85}100%{opacity:0;transform:scale(1.18)}}
+#detail:empty{display:none}</style><main><header><h1>Light</h1></header>
 <article><div id="plate"><div id="grid" role="group" aria-label="Échiquier"></div><svg id="rays" viewBox="0 0 8 8" aria-hidden="true"></svg></div>
 <aside><h2 id="turn" aria-live="polite"></h2><p id="detail" aria-live="polite"></p>
 <div class="legend"><span><i class="key warm"></i>Mon camp</span> &nbsp; <span><i class="key cool"></i>Camp adverse</span></div>
@@ -1832,9 +1832,9 @@ function play(from,to,promotion){
 function inspectSquare(s){
  const fmt=c=>map[s][c].length+' ('+(map[s][c].map(from=>names[game.get(from).type].toLowerCase()+' '+from).join(', ')||'—')+')';
  caption=s+' · Blancs '+fmt('w')+' · Noirs '+fmt('b');
- const xr=batteryInfluence(game,map)[s];
+ const xr=positionView().xray[s];
  if(xr.w.length||xr.b.length)caption+=' · Rayon X : '+[...xr.w,...xr.b].join(', ');
- draw();
+ el('detail').textContent=caption;
 }
 function hue(side){return side===el('side').value?27:205}
 function strength(n){return 1-Math.exp(-.49*n)}
@@ -1906,27 +1906,33 @@ function alignments(game,map){
  }
  return pins;
 }
-function castleLights(game,side){
- let position=game;
- if(side!==game.turn()){
-  const fields=game.fen().split(' ');fields[1]=side;fields[3]='-';
-  position=new Chess(fields.join(' '));
- }
- const rank=side==='w'?'1':'8';
- return position.moves({verbose:true}).flatMap(move=>{
-  if(move.flags.includes('k'))return [{king:move.from,rook:'h'+rank}];
-  if(move.flags.includes('q'))return [{king:move.from,rook:'a'+rank}];
-  return [];
+function castleLights(game,side,control){
+ const rank=side==='w'?'1':'8', enemy=side==='w'?'b':'w';
+ const rights=game.fen().split(' ')[2];
+ return [['k','h','fg','efg'],['q','a','bcd','edc']].flatMap(([flag,file,empty,path])=>{
+  if(!rights.includes(side==='w'?flag.toUpperCase():flag))return [];
+  if([...empty].some(f=>game.get(f+rank))||[...path].some(f=>control[f+rank][enemy].length))return [];
+  return [{king:'e'+rank,rook:file+rank,side}];
  });
 }
+let cachedView;
+function positionView(){
+ if(cachedView?.map===map)return cachedView;
+ const turn=game.turn();
+ cachedView={map,pins:alignments(game,map),xray:batteryInfluence(game,map),axes:kingRays(game),
+ castles:['w','b'].flatMap(side=>castleLights(game,side,map)),
+ status:game.in_checkmate()?'Échec et mat':game.in_draw()?'Partie nulle':(turn==='w'?'Trait aux blancs':'Trait aux noirs')+(game.in_check()?' · Échec':''),
+ canUndo:game.history().length>0};
+ return cachedView;
+}
 function draw(){
- const turn=game.turn(),mode=el('filter').value;
- el('turn').textContent=game.in_checkmate()?'Échec et mat':game.in_draw()?'Partie nulle':(turn==='w'?'Trait aux blancs':'Trait aux noirs')+(game.in_check()?' · Échec':'');
- el('detail').textContent=caption;el('undo').disabled=!game.history().length;
+ const turn=game.turn(),mode=el('filter').value,view=positionView();
+ el('turn').textContent=view.status;
+ el('detail').textContent=caption;el('undo').disabled=!view.canUndo;
  const legal=new Set(selected?game.moves({square:selected,verbose:true}).map(m=>m.to):[]);
  const visible=c=>mode==='both'||mode===c;
- const pins=alignments(game,map), xray=batteryInfluence(game,map);
- const axes=el('axes').checked?kingRays(game).filter(r=>visible(r.side)):[];
+ const {pins,xray}=view;
+ const axes=el('axes').checked?view.axes.filter(r=>visible(r.side)):[];
  const squares=[];
  for(let y=7;y>=0;y--)for(let x=0;x<8;x++){
   const s=square(x,y),p=game.get(s),c=map[s],b=document.createElement('button');
@@ -1968,7 +1974,7 @@ function draw(){
  }
  el('grid').replaceChildren(...squares);const svg=el('rays');svg.replaceChildren();
  const openAxes=axes.filter(r=>r.clear>0).map(r=>({...r,to:r.path[Math.min(r.clear,r.path.length-1)],open:true}));
- const castles=['w','b'].filter(visible).flatMap(side=>castleLights(game,side));
+ const castles=view.castles.filter(c=>visible(c.side));
  const royalAxes=[...axes,...openAxes].filter(ray=>!castles.some(castle=>
   ray.from===castle.king&&ray.to[1]===castle.king[1]&&
   Math.sign(files.indexOf(ray.to[0])-files.indexOf(ray.from[0]))===Math.sign(files.indexOf(castle.rook[0])-files.indexOf(castle.king[0]))));
@@ -1992,8 +1998,8 @@ function draw(){
   for(const [k,v] of Object.entries({x1,y1,x2,y2,stroke:'hsl('+hue(c,ray.type??game.get(ray.from).type)+' 95% 74%)','stroke-width':.075,'stroke-linecap':'round',opacity:.88}))line.setAttribute(k,v);
   if(ray.axis){
    const openness=ray.open?ray.clear/7:0;
-   line.setAttribute('stroke-width',.045+.08*openness+(c==='b'?.017:0));
-   line.setAttribute('opacity',ray.open?(c==='b'?.46:.22)+.43*openness:c==='b'?.32:.15);
+   line.setAttribute('stroke-width',.045+.08*openness);
+   line.setAttribute('opacity',ray.open?.34+.43*openness:.20);
    if(c==='b')line.setAttribute('stroke','#23469c');
   }
   line.setAttribute('class','soft-ray'+(ray.transition?' light-'+ray.transition:''));
@@ -2017,7 +2023,7 @@ function draw(){
   svg.append(gloss);
   const beam={x1,x2,y1:y,y2:y,'stroke-linecap':'round'};
   svg.append(
-   make('line',{...beam,stroke:'url(#'+id+')','stroke-width':.22,opacity:.35,style:'filter:blur(4px)'}),
+   make('line',{...beam,stroke:'url(#'+id+')','stroke-width':.22,opacity:.35,'stroke-opacity':.65}),
    make('line',{...beam,stroke:'url(#'+id+')','stroke-width':.12}),
    make('line',{...beam,stroke:'url(#'+id+'-gloss)','stroke-width':.052})
   );
@@ -2050,7 +2056,7 @@ window.addEventListener('pointermove',event=>{
   document.body.append(ghost);drag.ghost=ghost;
   drag.tile.classList.add('drag-source');
  }
- drag.ghost.style.left=event.clientX+'px';drag.ghost.style.top=event.clientY+'px';
+ drag.ghost.style.left='0';drag.ghost.style.top='0';drag.ghost.style.transform='translate3d('+event.clientX+'px,'+event.clientY+'px,0) translate(-50%,-50%)';
 });
 function endDrag(event){
  if(drag?.id!==event.pointerId)return;
