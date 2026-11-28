@@ -8,7 +8,7 @@
 .man{position:absolute;inset:8%;display:grid;place-items:center;z-index:3;border-radius:50%;background:none}.man img{width:95%;height:95%;filter:drop-shadow(0 1px 1px #b7bcca)}.glyph{font:clamp(22px,7vw,54px)/1 Georgia,serif;color:#eff5fb;text-shadow:0 1px 2px #121923}.coord{position:absolute;z-index:4;bottom:1%;left:4%;font:600 clamp(8px,1.25vw,11px) system-ui;color:#eef7ffcf;text-shadow:0 1px 2px black;pointer-events:none}
 svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}aside{background:#1b2431;border:1px solid #344150;border-radius:8px;padding:18px}h2{font-size:18px;margin:0 0 8px}p{margin:8px 0 15px}button,select{font:inherit}.action,select{color:#edf4fb;background:#2a3848;border:1px solid #4b5b6e;border-radius:6px;padding:8px 12px;cursor:pointer}.action:disabled{opacity:.45}.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}.key{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px}.w{background:#56cfff}.b{background:#ff974b}.legend{font-size:14px;color:#cfdae7}.legend span{white-space:nowrap}.rule{border-top:1px solid #344150;padding-top:12px}select{width:100%;margin-top:4px}#detail{min-height:2.9em}dialog{background:#202e40;color:white;border:1px solid #657488;border-radius:10px}dialog::backdrop{background:#080c12bc}
 @media(max-width:680px){article{grid-template-columns:1fr;gap:10px}aside{padding:12px}header{margin-bottom:8px}#detail{min-height:0}}
-.warm{background:#ffad59}.cool{background:#78caff}.man img{filter:drop-shadow(0 1px 1px #b7bcca) drop-shadow(0 0 var(--spread,0px) var(--halo)) drop-shadow(0 0 var(--spread,0px) var(--halo))}.man:after{content:'';position:absolute;inset:2.5%;background:radial-gradient(ellipse at 33% 22%,var(--gloss,#fff) 0%,var(--gloss,#fffd) 7%,transparent 40%),linear-gradient(155deg,var(--tint),transparent 195%);opacity:var(--amount);mask:var(--sprite) center/contain no-repeat;pointer-events:none}.glyph:after{display:none}.glyph{color:var(--glyph,#f4f6fa)}.man.pinned{background:none}.man.pinned:before{content:'';position:absolute;inset:-9%;border-radius:50%;pointer-events:none;background:radial-gradient(circle at var(--px) var(--py),var(--attacker-light),transparent 63%),radial-gradient(circle at var(--kx) var(--ky),var(--royal-light),transparent 63%);mask-image:radial-gradient(circle,#000 19%,#000b 43%,transparent 71%);filter:blur(clamp(2px,.6vw,6px))}.man.pinned img{position:relative;filter:drop-shadow(0 0 var(--spread,0px) var(--halo))}aside label{display:block;margin-top:10px} .sq:before{pointer-events:none}
+.warm{background:#ffad59}.cool{background:#78caff}.man img{filter:drop-shadow(0 1px 1px #b7bcca) drop-shadow(0 0 var(--spread,0px) var(--halo)) drop-shadow(0 0 var(--spread,0px) var(--halo))}.man:after{content:'';position:absolute;inset:2.5%;background:radial-gradient(ellipse at 33% 22%,var(--gloss,#fff) 0%,var(--gloss,#fffd) 7%,transparent 40%),linear-gradient(155deg,var(--tint),transparent 195%);opacity:var(--amount);mask:var(--sprite) center/contain no-repeat;pointer-events:none}.glyph:after{display:none}.glyph{color:var(--glyph,#f4f6fa)}.man.pinned{background:none}.man.pinned:before{content:'';position:absolute;inset:calc(-1 * var(--pin-size,16%));border-radius:50%;pointer-events:none;background:radial-gradient(circle at var(--px) var(--py),var(--attacker-light),transparent 63%),radial-gradient(circle at var(--kx) var(--ky),var(--royal-light),transparent 63%);mask-image:radial-gradient(circle,#000 19%,#000b 43%,transparent 71%);filter:blur(clamp(2px,.6vw,6px));opacity:var(--pin-glow,1)}.man.pinned img{position:relative;filter:drop-shadow(0 0 var(--spread,0px) var(--halo))}aside label{display:block;margin-top:10px} .sq:before{pointer-events:none}
 .sq:before{display:none}.field{position:absolute;inset:0;pointer-events:none}.field.white{clip-path:polygon(0 0,100% 0,0 100%);mask-image:linear-gradient(135deg,#000 20%,#0009 52%)}.field.black{clip-path:polygon(100% 0,100% 100%,0 100%);mask-image:linear-gradient(315deg,#000 20%,#0009 52%)}details{font-size:14px;color:#cfdae7;margin:.8em 0}summary{cursor:pointer}#palette{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:9px 0}.swatch{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:2px}#plate .sq{overflow:hidden}
 .light-lost{animation:light-out .42s both;stroke-dasharray:.10 .08}.light-gained{animation:light-in .85s both}@keyframes light-out{from{opacity:.8}to{opacity:0}}@keyframes light-in{0%{opacity:0}45%{opacity:.85}100%{opacity:0}}@media(prefers-reduced-motion:reduce){.light-lost,.light-gained{display:none}}
 #grid{touch-action:none;user-select:none}.sq[data-movable=true]{cursor:grab}.sq.drag-source .man{visibility:hidden}.drag-piece{position:fixed;pointer-events:none;z-index:20;transform:translate(-50%,-50%);display:grid;place-items:center}.drag-piece img{width:95%;height:95%}
@@ -1929,11 +1929,12 @@ function draw(){
   const field=document.createElement('span');field.className='field';
   field.style.background=fieldPaint(visible(own)?c[own].length+xray[s][own].length:0,visible(opponent)?c[opponent].length+xray[s][opponent].length:0);
   b.append(field);
-  const pin=pins.find(r=>r.to===s&&visible(r.side));
+  const visiblePins=pins.filter(r=>r.to===s&&visible(r.side));
+  const pin=visiblePins[0];
   b.setAttribute('aria-label',s+(p?' '+names[p.type]+' '+(p.color==='w'?'camp blanc':'camp noir'):'')+', contrôles blancs '+c.w.length+', noirs '+c.b.length);
   if(p){
    const man=document.createElement('span'),img=new Image();man.className='man';
-   const n=mode==='both'||mode===p.color?c[p.color].length:0;
+   const n=p.type!=='k'&&visible(p.color)?c[p.color].length:0;
    const protectionHue=p.color==='w'?46:221;
    const pigment='hsl('+protectionHue+' '+Math.round(55+45*strength(n))+'% 59%)';
    man.style.setProperty('--spread',n?'clamp(2px,'+(.35+1.15*strength(n))+'cqw,9px)':'0px');
@@ -1943,10 +1944,12 @@ function draw(){
    if(n)man.style.setProperty('--glyph','color-mix(in srgb,'+pigment+' '+Math.round(strength(n)*80)+'%, '+(p.color==='w'?'white':'#252933')+')');
    if(pin){
     man.classList.add('pinned');
+    man.style.setProperty('--pin-glow',1);
+    man.style.setProperty('--pin-size',Math.min(21,13+3*visiblePins.length)+'%');
     const [x,y]=point(s);
     for(const [source,light,cx,cy] of [[pin.from,'attacker-light','px','py'],[pin.king,'royal-light','kx','ky']]){
      const p=game.get(source),[sx,sy]=point(source);
-     man.style.setProperty('--'+light,'hsl('+hue(p.color,p.type)+' 90% 72% / .82)');
+     man.style.setProperty('--'+light,'hsl('+hue(p.color,p.type)+' 100% '+Math.min(82,74+3*visiblePins.length)+'% / '+Math.min(1,.94+.02*visiblePins.length)+')');
      man.style.setProperty('--'+cx,(50+17*Math.sign(sx-x))+'%');
      man.style.setProperty('--'+cy,(50+17*Math.sign(sy-y))+'%');
     }
