@@ -1896,20 +1896,12 @@ function alignments(game,map){
  }
  return {pins,batteries};
 }
-function castleLights(game,map){
- const [,turn,rights]=game.fen().split(' ');
- const rank=turn==='w'?'1':'8',enemy=turn==='w'?'b':'w',king='e'+rank;
- const legal=game.moves({verbose:true});
- return [
-  {right:'k',rook:'h',empty:'fg',path:'efg'},
-  {right:'q',rook:'a',empty:'dcb',path:'edc'}
- ].flatMap(({right,rook,empty,path})=>{
-  const flag=turn==='w'?right.toUpperCase():right;
-  if(!rights.includes(flag)||[...empty].some(file=>game.get(file+rank)))return [];
-  const allowed=legal.some(move=>move.flags.includes(right));
-  const gaps=[...path].filter(file=>map[file+rank][enemy].length);
-  if(!allowed&&!gaps.length)return [];
-  return [{king,rook:rook+rank,gaps:allowed?[]:gaps,allowed}];
+function castleLights(game){
+ const rank=game.turn()==='w'?'1':'8';
+ return game.moves({verbose:true}).flatMap(move=>{
+  if(move.flags.includes('k'))return [{king:move.from,rook:'h'+rank}];
+  if(move.flags.includes('q'))return [{king:move.from,rook:'a'+rank}];
+  return [];
  });
 }
 function draw(){
@@ -1967,27 +1959,18 @@ function draw(){
   if(ray.transition)line.setAttribute('class','light-'+ray.transition);
   if(ray.pin)line.setAttribute('stroke-dasharray','.13 .09');svg.append(line);
  }
- if(visible(turn))for(const castle of castleLights(game,map)){
+ if(visible(turn))for(const castle of castleLights(game)){
   const [x1,y]=point(castle.king),[x2]=point(castle.rook);
-  const breaks=castle.gaps.map(file=>files.indexOf(file)+.5).sort((a,b)=>a-b);
-  let start=Math.min(x1,x2);
-  const end=Math.max(x1,x2);
-  for(const gap of [...breaks,end+.43]){
-   const stop=Math.min(end,gap-.43);
-   if(stop>start){
-    const beam=document.createElementNS('http://www.w3.org/2000/svg','line');
-    for(const [key,value] of Object.entries({x1:start,x2:stop,y1:y+.24,y2:y+.24,stroke:'#df9bff','stroke-width':.09,'stroke-linecap':'round',opacity:castle.allowed?1:.48}))beam.setAttribute(key,value);
-    svg.append(beam);
-   }
-   start=gap+.43;
-  }
+  const beam=document.createElementNS('http://www.w3.org/2000/svg','line');
+  for(const [key,value] of Object.entries({x1,x2,y1:y+.24,y2:y+.24,stroke:'#df9bff','stroke-width':.09,'stroke-linecap':'round'}))beam.setAttribute(key,value);
+  svg.append(beam);
  }
 }
 for(const t of ['q','r','b','n']){
  const b=document.createElement('button');b.className='action';b.textContent=names[t];
  b.onclick=()=>{el('promotion').close();play(...pending,t);pending=null};el('choices').append(b);
 }
-const scenes={castle:['4kr2/8/8/8/8/8/8/R3K2R w KQ - 0 1','Le grand roque est possible. La tour noire contrôle f1 et coupe le lien du petit roque.'],pin:['4r1k1/8/8/8/8/8/4N3/4K3 w - - 0 1','La tour e8 cloue le cavalier e2 au roi e1. Le pointillé prolonge la ligne derrière le cavalier.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Leurs deux cases brillent davantage.']};
+const scenes={castle:['4kr2/8/8/8/8/8/8/R3K2R w KQ - 0 1','Le grand roque est possible. La tour noire contrôle f1, donc le petit roque ne s’allume pas.'],pin:['4r1k1/8/8/8/8/8/4N3/4K3 w - - 0 1','La tour e8 cloue le cavalier e2 au roi e1. Le pointillé prolonge la ligne derrière le cavalier.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Leurs deux cases brillent davantage.']};
  el('scene').onchange=()=>{clearLightChanges();const scene=scenes[el('scene').value];game=scene?new Chess(scene[0]):freeGame;caption=scene?scene[1]:'Partie libre · sélectionne une pièce.';map=influence(game);selected=null;lines=[];draw()};
  el('axes').onchange=draw;el('side').onchange=()=>{showPalette();draw()};showPalette();el('filter').onchange=draw;el('demo').onclick=()=>play('e2','e4');
 el('undo').onclick=()=>{clearLightChanges();game.undo();map=influence(game);lines=[];selected=null;caption='Coup annulé.';draw()};draw();
