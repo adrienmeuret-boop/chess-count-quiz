@@ -2025,8 +2025,8 @@ function draw(){
    : ['#164783','#367fc4','#70b4ef','#337abc','#164783'];
   const radius=.09;
   const gradient=make('linearGradient',{id,gradientUnits:'userSpaceOnUse',x1:0,x2:0,y1:y-radius,y2:y+radius});
-  const offsets=[0,.20,.38,.72,1];
-  const opacity=[.28,.88,.96,.84,.28];
+  const offsets=[0,.18,.50,.78,1];
+  const opacity=[.18,.72,.48,.62,.18];
   tones.forEach((color,i)=>gradient.append(make('stop',{offset:offsets[i],'stop-color':color,'stop-opacity':opacity[i]})));
   svg.append(gradient,make('rect',{x:Math.min(x1,x2)-radius,y:y-radius,width:Math.abs(x2-x1)+2*radius,height:2*radius,rx:radius,fill:'url(#'+id+')'}));
  }
