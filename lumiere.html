@@ -19,7 +19,7 @@ svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:no
 <aside><h2 id="turn" aria-live="polite"></h2><p id="detail" aria-live="polite"></p>
 <div class="legend"><span><i class="key warm"></i>Mon camp</span> &nbsp; <span><i class="key cool"></i>Camp adverse</span></div>
 <label for="side">Mon camp</label><select id="side"><option value="w">Blancs</option><option value="b">Noirs</option></select><label><input id="axes" type="checkbox" checked> Lumière longue des rois</label><label for="filter">Afficher le contrôle</label><select id="filter"><option value="both">Des deux camps</option><option value="w">Des Blancs</option><option value="b">Des Noirs</option></select>
-<div class="actions"><button class="action" id="undo">Annuler le coup</button></div><label for="scene">Échiquier</label><select id="scene"><option value="free">Partie libre</option><option value="control">Exemple · contrôle des cases</option><option value="castle">Exemple · roques</option><option value="pin">Exemple · clouages</option><option value="battery">Exemple · batterie</option></select></aside></article>
+<div class="actions"><button class="action" id="undo">Annuler le coup</button></div><label for="scene">Échiquier</label><select id="scene"><option value="free">Partie libre</option><option value="exchange">Exemple · pion contre cavalier</option><option value="control">Exemple · contrôle des cases</option><option value="castle">Exemple · roques</option><option value="pin">Exemple · clouages</option><option value="battery">Exemple · batterie</option></select></aside></article>
 <dialog id="promotion"><h2>Promouvoir le pion</h2><div class="actions" id="choices"></div></dialog></main>
 <script>/*
  * Copyright (c) 2020, Jeff Hlywa (jhlywa@gmail.com)
@@ -1830,6 +1830,8 @@ function play(from,to,promotion){
 function inspectSquare(s){
  const fmt=c=>map[s][c].length+' ('+(map[s][c].map(from=>names[game.get(from).type].toLowerCase()+' '+from).join(', ')||'—')+')';
  caption=s+' · Blancs '+fmt('w')+' · Noirs '+fmt('b');
+ const share=positionView().pressure[s];
+ if(share!=null)caption+=' · Échanges locaux : '+(Math.abs(share-.5)<1e-8?'équilibrés':share>.5?'avantage blanc':'avantage noir');
  const xr=positionView().xray[s];
  if(xr.w.length||xr.b.length)caption+=' · Rayon X : '+[...xr.w,...xr.b].join(', ');
  el('detail').textContent=caption;
@@ -1837,7 +1839,62 @@ function inspectSquare(s){
 function hue(side){return side===el('side').value?27:205}
 function strength(n){return 1-Math.exp(-.49*n)}
 const typeOrder=['p','n','b','r','q','k'];
-function fieldPaint(own,opponent,batterySupport,ownSide){
+// Compare the cost of committing a controller to a contested square.
+// Both sides face the same hypothetical exchange on that square.
+const exchangeValue={p:1,n:3,b:3,r:5,q:9,k:100};
+function exchangePressure(game,map){
+ const board=Array.from({length:128},(_,i)=>i&0x88?null:game.get(square(i%16,i>>4)));
+ const directions=[1,-1,16,-16,15,-15,17,-17];
+ const jumps=[14,-14,18,-18,31,-31,33,-33];
+ const kings={};
+ board.forEach((p,i)=>{if(p?.type==='k')kings[p.color]=i});
+ const other=c=>c==='w'?'b':'w';
+ function sources(target,side){
+  const found=[];
+  for(const step of directions){
+   for(let i=target+step;!(i&0x88);i+=step){
+    const p=board[i];
+    if(!p)continue;
+    const diagonal=[15,17].includes(Math.abs(step)),near=i===target+step;
+    if(p.color===side&&(p.type==='q'||p.type===(diagonal?'b':'r')||
+      (near&&(p.type==='k'||(p.type==='p'&&diagonal&&Math.sign(step)===(side==='w'?-1:1))))))found.push(i);
+    break;
+   }
+  }
+  for(const step of jumps){
+   const i=target+step;
+   if(!(i&0x88)&&board[i]?.color===side&&board[i].type==='n')found.push(i);
+  }
+  return found.sort((a,b)=>exchangeValue[board[a].type]-exchangeValue[board[b].type]);
+ }
+ function cost(target,side,initial){
+  const victim=board[target];
+  for(const from of sources(target,side)){
+   const piece=board[from],promotes=piece.type==='p'&&[0,7].includes(target>>4);
+   board[from]=null;
+   board[target]=promotes?{type:'q',color:side}:piece;
+   const enemy=other(side);
+   const legal=!sources(piece.type==='k'?target:kings[side],enemy).length;
+   let score;
+   if(legal){
+    const reply=piece.type==='k'?0:cost(target,enemy,false);
+    score=initial?Math.max(0,reply-(promotes?8:0)):Math.max(0,exchangeValue[victim.type]+(promotes?8:0)-reply);
+   }
+   board[from]=piece;board[target]=victim;
+   if(legal)return score;
+  }
+  return initial?Infinity:0;
+ }
+ const result={};
+ for(const [sq,c] of Object.entries(map)){
+  const t=files.indexOf(sq[0])+16*(Number(sq[1])-1);
+  if(!c.w.length||!c.b.length||board[t]?.type==='k')continue;
+  const w=c.w.length/(1+cost(t,'w',true)),b=c.b.length/(1+cost(t,'b',true));
+  if(w+b)result[sq]=w/(w+b);
+ }
+ return result;
+}
+function fieldPaint(own,opponent,batterySupport,ownSide,whiteShare){
  const total=own+opponent;
  if(!total)return 'transparent';
  const alpha=strength(total+batterySupport);
@@ -1847,8 +1904,11 @@ function fieldPaint(own,opponent,batterySupport,ownSide){
  if(!opponent)return warm;
  if(!own)return cool;
  const gradient=ownSide==='w'?'linear-gradient(to top,':'linear-gradient(to bottom,';
- if(own===opponent)return gradient+warm+' -18%,'+violet+' 32%,'+violet+' 68%,'+cool+' 118%)';
- const boundary=100*own/total;
+ const share=whiteShare==null?own/total:(ownSide==='w'?whiteShare:1-whiteShare);
+ if(share===0)return cool;
+ if(share===1)return warm;
+ if(Math.abs(share-.5)<1e-8)return gradient+warm+' -18%,'+violet+' 32%,'+violet+' 68%,'+cool+' 118%)';
+ const boundary=100*share;
  const fade=Math.min(23,.8*boundary,.8*(100-boundary));
  return gradient+warm+' '+(boundary-fade)+'%,'+violet+' '+boundary+'%,'+cool+' '+(boundary+fade)+'%)';
 }
@@ -1923,7 +1983,7 @@ let cachedView;
 function positionView(){
  if(cachedView?.map===map)return cachedView;
  const turn=game.turn();
- cachedView={map,pins:alignments(game,map),xray:batteryInfluence(game,map),axes:kingRays(game),
+ cachedView={map,pressure:exchangePressure(game,map),pins:alignments(game,map),xray:batteryInfluence(game,map),axes:kingRays(game),
  castles:['w','b'].flatMap(side=>castleLights(game,side,map)),
  status:game.in_checkmate()?'Échec et mat':game.in_draw()?'Partie nulle':(turn==='w'?'Trait aux blancs':'Trait aux noirs')+(game.in_check()?' · Échec':''),
  canUndo:game.history().length>0};
@@ -1945,7 +2005,7 @@ function draw(){
   const own=el('side').value,opponent=own==='w'?'b':'w';
   const field=document.createElement('span');field.className='field';
   field.style.background=fieldPaint(visible(own)?c[own].length:0,visible(opponent)?c[opponent].length:0,
-   (visible(own)?xray[s][own].length:0)+(visible(opponent)?xray[s][opponent].length:0),own);
+   (visible(own)?xray[s][own].length:0)+(visible(opponent)?xray[s][opponent].length:0),own,view.pressure[s]);
   b.append(field);
   const visiblePins=pins.filter(r=>r.to===s&&visible(r.side));
   const pin=visiblePins[0];
@@ -2042,7 +2102,7 @@ for(const t of ['q','r','b','n']){
  const b=document.createElement('button');b.className='action';b.textContent=names[t];
  b.onclick=()=>{el('promotion').close();play(...pending,t);pending=null};el('choices').append(b);
 }
-const scenes={control:['3k1bn1/2qb4/1p1Np2r/2np1ppp/3p2PP/1P1BPP1R/P2QK3/1R1N4 b - - 0 30','Contrôles blancs/noirs · c4 : 3/1 · a5 : 1/1 · c8 : 1/3 · e4 : 3/3.'],castle:['r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1','Les deux camps peuvent roquer des deux côtés.'],pin:['4k3/3n4/8/1B6/1b6/8/3N4/4K3 w - - 0 1','Chaque fou cloue le cavalier adverse à son roi.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Les cases au-delà de la dame reçoivent aussi la lumière du fou.']};
+const scenes={exchange:['rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2','d4 · Le pion noir e5 et le cavalier blanc f3 visent la case. Le cavalier expose davantage de matériel.'],control:['3k1bn1/2qb4/1p1Np2r/2np1ppp/3p2PP/1P1BPP1R/P2QK3/1R1N4 b - - 0 30','Contrôles blancs/noirs · c4 : 3/1 · a5 : 1/1 · c8 : 1/3 · e4 : 3/3.'],castle:['r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1','Les deux camps peuvent roquer des deux côtés.'],pin:['4k3/3n4/8/1B6/1b6/8/3N4/4K3 w - - 0 1','Chaque fou cloue le cavalier adverse à son roi.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Les cases au-delà de la dame reçoivent aussi la lumière du fou.']};
  el('scene').onchange=()=>{clearLightChanges();const scene=scenes[el('scene').value];game=scene?new Chess(scene[0]):freeGame;caption=scene?scene[1]:'Partie libre · sélectionne une pièce.';map=influence(game);selected=null;lines=[];draw()};
  el('axes').onchange=draw;el('side').onchange=draw;el('filter').onchange=draw;
 const grid=el('grid');
