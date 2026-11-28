@@ -144,6 +144,7 @@ nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:5p
 .assessment-history button{width:100%;text-align:left}
 .game-purpose{margin-top:16px;color:#c4bbb1;font-size:.875rem;line-height:1.45}
 .rewards-levels{display:grid;gap:6px;padding-inline-start:1.4rem}
+#rewards{width:min(860px,calc(100% - 16px))}.galons{color:#edc274;font-weight:800;letter-spacing:.12em;transform:rotate(90deg)}.badge-levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:5px}.reward-cell{width:100%;display:grid;justify-items:center;gap:2px;padding:5px;font-size:.84rem}.shield{background:#46423e;color:#d5d0c9;clip-path:polygon(0 0,100% 0,94% 65%,50% 100%,6% 65%);width:24px;height:26px;text-align:center;font-weight:800}.rank-1 .shield{background:#ae754d;color:#261c17}.rank-2 .shield{background:#c1c9d1;color:#24303a}.rank-3 .shield{background:#e8b954;color:#453212}.reward-cell small{font-size:.72rem}.reward-scroll{overflow:auto}.reward-grid{width:100%;border-spacing:3px;font-size:.82rem}.reward-grid th{font-size:.78rem}.reward-grid td{min-width:60px}
 </style>
 
 <dialog id="account" aria-labelledby="account-title">
@@ -199,7 +200,7 @@ nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:5p
  <ol id="path-map" aria-label="Étapes du parcours"></ol>
  <section id="play-panel" aria-label="Commandes de jeu">
   <div class="play-setup" id="options">
-   <label id="exercise-label" for="exercise">Exercice</label><select id="exercise"><option value="1">Attaques et protections</option><option value="4">Relier deux pièces · deux clics</option><option value="2">Balayer l’échiquier</option><option value="3">Pièces exposées</option></select>
+   <label id="exercise-label" for="exercise">Exercice</label><select id="exercise"><option value="1">Attaques et protections</option><option value="4">Relier</option><option value="2">Balayer l’échiquier</option><option value="3">Pièces exposées</option></select>
    <label for="duration">Temps d’exposition</label>
    <select id="duration"><option value="0" selected>Pièces toujours visibles</option><option value="1000">1 s</option><option value="1500">1,5 s</option><option value="2000">2 s</option><option value="2500">2,5 s</option><option value="3000">3 s</option><option value="3500">3,5 s</option><option value="4000">4 s</option><option value="4500">4,5 s</option><option value="5000">5 s</option></select>
   </div>
@@ -290,6 +291,7 @@ try {
 let saved = family.players[family.active] ?? family.players[0];
 let selectedReport=null, statsMode='all';
 let linkTargets;
+let inputDevices=new Set();
 let task, seriesExposure, stage, focusIndex, markedTargets, markedLinks, reviewAnswer, flashChallenge, reviewFocus, pathResult;
 let mode = 'train', queue, current, phase, picked, results, started, timer, shown;
 function persist() {
@@ -346,7 +348,9 @@ function cleanProfile(input) {
   typeof v.date==='string'&&Number.isInteger(v.correct)&&Number.isInteger(v.total)&&v.total>0);
  player.testOffset = Number.isInteger(input.testOffset) ? Math.max(0,Math.min(testBank.length,input.testOffset)) : 0;
  player.useBank = Boolean(input.useBank && player.bank.length);
+ player.probes=Array.isArray(input.probes)?input.probes.filter(validFen):[];
  player.path=pathState(input);
+ player.levelSlots=Object.fromEntries(Object.entries(input.levelSlots??{}).filter(([k])=>Number(k)>=1&&Number(k)<=10).map(([k,p])=>[k,pathState({path:p})]));
  player.testRuns=Object.fromEntries([0,5000,1500,1000].map(ms=>[ms,testRuns(input,ms)]));
  player.archives=Array.isArray(input.archives) ? input.archives.slice(-30).filter(a=>a&&typeof a.date==='string'&&Array.isArray(a.visits)) : [];
  if(input.diagnostic?.annotated && Number.isInteger(input.diagnostic.games) && input.diagnostic.games>=50 && input.diagnostic.counts && typeof input.diagnostic.counts==='object') player.diagnostic=input.diagnostic;
@@ -521,7 +525,7 @@ function exerciseAxes(item, link = item.link) {
 }
 function weakAxes(player, currentMode) {
  const totals={};
- for(const visit of player.visits.filter(v=>v.mode===currentMode).slice(-10)) {
+ for(const visit of player.visits.filter(v=>v.mode===currentMode&&v.scoreVersion===2).slice(-10)) {
   for(const [key,value] of Object.entries(visit.axes??{})) {
    const row=totals[key]??={correct:0,total:0};
    row.correct+=value.correct;
@@ -533,12 +537,12 @@ function weakAxes(player, currentMode) {
 const exposureSteps=[0,5000,1500,1000];
 const pathOrder=[1,4,2,3];
 const maxLevel=10;
-const exerciseNames={1:'Attaques et protections',4:'Relier deux pièces',2:'Balayer l’échiquier',3:'Pièces exposées'};
+const exerciseNames={1:'Attaques et protections',4:'Relier',2:'Balayer l’échiquier',3:'Pièces exposées'};
 function pathState(player) {
  const p=player.path;
  const level=Number.isInteger(p?.level)?Math.min(maxLevel,Math.max(1,p.level)):1;
  return p && pathOrder.includes(p.stage) && exposureSteps.includes(p.ms)
-  ? {level,stage:p.stage,ms:0,complete:p.complete===true,pieceTotals:p.pieceTotals??{},trackedStages:p.trackedStages??0} : {level:1,stage:1,ms:0,complete:false,pieceTotals:{},trackedStages:0};
+  ? {level,stage:p.stage,ms:0,complete:p.complete===true,scoreVersion:2,pieceTotals:p.scoreVersion===2?p.pieceTotals??{}:{},trackedStages:p.scoreVersion===2?p.trackedStages??0:0} : {level:1,stage:1,ms:0,complete:false,pieceTotals:{},trackedStages:0};
 }
 function testRuns(player,ms) {
  const n=player.testRuns?.[ms];
@@ -590,7 +594,8 @@ function durationName(ms) {return ms ? (ms/1000).toLocaleString('fr')+' s' : 'Pi
 function advanceLevel(player){
  const path=pathState(player);
  if(!path.complete||path.level>=maxLevel)return false;
- player.path={...pathState({}),level:path.level+1};
+ const next=path.level+1;
+ player.path=player.levelSlots?.[next]??{...pathState({}),level:next};
  return true;
 }
 function levelBank(bank,stage,level){
@@ -613,6 +618,7 @@ function start(nextMode, challenge=null) {
  clearTimeout(timer);
  flashChallenge=challenge;
  pathResult=null;
+ inputDevices=new Set();
  mode = nextMode;
  results = [];
  const path=pathState(saved);
@@ -699,6 +705,16 @@ function start(nextMode, challenge=null) {
    (saved.seen[a.item.fen]??0)-(saved.seen[b.item.fen]??0)||a.tie-b.tie);
   if(ranked.length)queue[Math.floor(Math.random()*queue.length)]=ranked[0].item;
  }
+ if(standard&&queue.length>=6&&!path.complete){
+  const known=new Set([...(saved.probes??[]),...Object.keys(saved.seen),...saved.bank.map(p=>p.fen)]);
+  const games=new Set(defaultBank.map(p=>p.source?.split('#')[0]));
+  const candidates=reserveBank.filter(p=>!known.has(p.fen)&&!games.has(p.source?.split('#')[0])).filter(p=>{
+   const t=relationTask(p,stage),load=t.links.length+([2,3].includes(stage)?t.targets.length:0);
+   return load>0&&load<=(stage===2?5:3);
+  });
+  const slots=queue.map((p,i)=>isEmptyExercise(p,stage)?-1:i).filter(i=>i>=0);
+  if(candidates.length&&slots.length)queue[slots[Math.floor(Math.random()*slots.length)]]={...candidates[Math.floor(Math.random()*candidates.length)],probe:true};
+ }
  get('train').setAttribute('aria-pressed', String(mode === 'train'));
  get('vision').setAttribute('aria-pressed', String(mode === 'vision'));
  get('options').hidden = mode === 'train';
@@ -736,7 +752,7 @@ function isEmptyExercise(item,level){
  return !(level===1||level===4?task.links.length:task.targets.length);
 }
 function next() {
- if(mode==='vision'&&queue.length&&results.length===queue.length){start('vision');return;}
+ 
  current = queue[results.length];
  picked = [];
  focusIndex=0;
@@ -789,6 +805,28 @@ function controls(board, from, to) {
  return true;
 }
 
+function leavesKingAttacked(board,from,to){
+ const side=board[from]===board[from].toUpperCase();
+ const next={...board,[to]:board[from]};delete next[from];
+ const king=Object.keys(next).find(s=>next[s]===(side?'K':'k'));
+ return !!king&&Object.keys(next).some(s=>(next[s]===next[s].toUpperCase())!==side&&controls(next,s,king));
+}
+function batteryLinks(board,direct){
+ const extra=[];
+ for(const link of direct){
+  if(!'brq'.includes(board[link.from].toLowerCase())||board[link.to].toLowerCase()==='k')continue;
+  const dx=Math.sign(link.from.charCodeAt(0)-link.to.charCodeAt(0)),dy=Math.sign(+link.from[1]-+link.to[1]);
+  for(let n=1;n<8;n++){
+   const x=link.from.charCodeAt(0)+dx*n,y=+link.from[1]+dy*n;
+   if(x<97||x>104||y<1||y>8)break;
+   const from=String.fromCharCode(x)+y,p=board[from];
+   if(!p)continue;
+   if((p===p.toUpperCase())!==(board[link.from]===board[link.from].toUpperCase())||!(dx&&dy?'bq':'rq').includes(p.toLowerCase()))break;
+   extra.push({...link,from,battery:true});
+  }
+ }
+ return extra;
+}
 function relationTask(item,level) {
  const board=piecesFromFen(item.fen);
  const own=piece=>(piece===piece.toUpperCase())===item.white;
@@ -799,10 +837,13 @@ function relationTask(item,level) {
   .map(([from,piece])=>({from,to,defence:own(piece)})).filter(link=>board[to].toLowerCase()!=='k'||!link.defence));
  const attacked=targets.map(([sq])=>sq).filter(sq=>links.some(link=>link.to===sq&&!link.defence));
  const exposed=attacked.filter(sq=>!links.some(link=>link.to===sq&&link.defence));
- if(level===4&&item.noLink)return {focus:null,targets:[],links:[],allLinks:links};
- if(level===4)return {focus,targets:[],links:links.filter(link=>!link.defence&&link.from===item.link[0]),allLinks:links};
- return {focus, targets:level===3?exposed:attacked,links:level===1?links.filter(link=>link.to===focus):
-  level===2?links.filter(link=>attacked.includes(link.to)&&board[link.to].toLowerCase()!=='k'):[],allLinks:links};
+ if(level===4){
+  const candidates=links.filter(l=>!l.defence&&board[l.from].toLowerCase()===' pnbrqk'[item.attacker]);
+  const blocked=candidates.filter(l=>board[l.to].toLowerCase()!=='k'&&leavesKingAttacked(board,l.from,l.to));
+  return {focus:null,targets:[],links:candidates.filter(l=>!blocked.includes(l)),blocked,allLinks:links};
+ }
+ const demanded=level===1?links.filter(l=>l.to===focus):level===2?links.filter(l=>attacked.includes(l.to)&&board[l.to].toLowerCase()!=='k'):[];
+ return {focus,targets:level===3?exposed:attacked,links:[...demanded,...batteryLinks(board,demanded)],allLinks:links};
 }
 
 function evaluateSet(expected, guessed) {
@@ -838,8 +879,8 @@ function drawBoard() {
   button.setAttribute('aria-pressed', String((!reviewing||reviewAnswer.ok)&&picked.includes(square)));
   if(identifyingLinks&&picked.includes(square)&&linkBoard[square]){
    button.classList.add(isFriendlyPiece(linkBoard[square])?'picked-protector':'picked-attacker');
-  }else if((phase==='answer'||(reviewing&&reviewAnswer.ok))&&stage===4&&picked.includes(square)){
-   button.classList.add(picked[0]===square?'picked-attacker':'picked-target');
+  }else if((phase==='answer'||(reviewing&&reviewAnswer.ok))&&stage===4&&(picked.includes(square)||markedLinks.some(k=>k.slice(0,2)===square||(k.slice(2)===square&&(reviewing||k.startsWith(picked[0])))))){
+   button.classList.add((picked[0]===square||markedLinks.some(k=>k.startsWith(square)))?'picked-attacker':'picked-target');
   }
   const piece = data[square];
   button.setAttribute('aria-label', square + (piece ? ' ' + names[' pnbrqk'.indexOf(piece.toLowerCase())] +
@@ -866,7 +907,14 @@ function drawBoard() {
   }
   button.addEventListener('click', () => {
    if(square===focus)return;
-   picked = stage===4&&picked[0]===square?[]:picked.includes(square)?picked.filter(s=>s!==square):[...picked,square];
+   if(stage===4){
+    const board=piecesFromFen(current.fen);
+    if(board[square]&&!isFriendlyPiece(board[square]))picked=picked[0]===square?[]:[square];
+    else if(picked[0]){
+     const key=picked[0]+square;
+     markedLinks=markedLinks.includes(key)?markedLinks.filter(k=>k!==key):[...markedLinks,key];
+    }
+   }else picked=picked.includes(square)?picked.filter(s=>s!==square):[...picked,square];
    drawBoard();
    get('board').children[index].focus();
   });
@@ -876,10 +924,10 @@ function drawBoard() {
  const count=get('selection-count');
  get('clear').hidden=true;
  count.textContent=selecting&&picked.length?picked.length+' '+(picked.length===1?'case sélectionnée':'cases sélectionnées'):'';
- if(selecting&&stage===4)get('action').textContent=picked.length?'Valider':'Aucune réponse';
+ if(selecting&&stage===4)get('action').textContent=markedLinks.length?'Valider':'Aucune réponse';
  else if(selecting)get('action').textContent=picked.length?'Valider':
   'Aucune réponse';
- get('action').disabled = phase === 'flash'||(selecting&&stage===4&&picked.length===1);
+ get('action').disabled = phase === 'flash'||(selecting&&stage===4&&picked.length>0&&!markedLinks.some(k=>k.startsWith(picked[0])));
  const arrow = get('arrow');
  arrow.replaceChildren();
  if(phase==='review'&&reviewAnswer){
@@ -965,19 +1013,21 @@ function render() {
  get('question').textContent=!current ? (results.length?'Série terminée':'Les deux tests de cette durée sont terminés.') :
   stage===4?(current.attacker===6?'Quelles pièces le roi adverse attaque-t-il ?':
    'Quelles pièces sont attaquées par '+([4,5].includes(current.attacker)?'une ':'un ')+names[current.attacker]+' adverse ?'):
-  stage===1?(piecesFromFen(current.fen)[task.focus]?.toLowerCase()==='k'?'Qui met ton roi en échec ?':'Qui attaque ou protège la pièce entourée en '+task.focus+' ?'):
+  stage===1?(piecesFromFen(current.fen)[task.focus]?.toLowerCase()==='k'?'Qui met ton roi en échec ?':'Qui attaque, protège ou soutient en ligne la pièce en '+task.focus+' ?'):
   stage===3?'Quelles sont tes pièces attaquées et sans défense ?':
   'Marque tes pièces et pions attaqués.';
- get('question').hidden=phase==='links-ready';
- if(phase==='links')get('question').textContent='Marque les attaquants et les défenseurs';
+ if(current&&stage===4)get('question').textContent='Que '+(['','peuvent prendre les pions adverses','peuvent prendre les cavaliers adverses','peuvent prendre les fous adverses','peuvent prendre les tours adverses','peuvent prendre les dames adverses','peut prendre le roi adverse'][current.attacker])+' ?';
+  get('question').hidden=phase==='links-ready';
+ if(phase==='links')get('question').textContent='Marque les attaquants, les défenseurs et leurs soutiens en ligne';
  const pathLevel=pathState(saved);
  const finishedPath=mode==='train'&&pathLevel.complete;
+ if(!current&&mode==='vision')get('question').textContent='Série terminée';
  if(!current&&finishedPath)get('question').textContent=pathLevel.level===maxLevel?'Parcours terminé · Niveau 10 validé':'Niveau '+pathLevel.level+' terminé';
  const answer=phase==='answer'||phase==='links';
  get('none').hidden=true;
  get('action').textContent={ready:'Afficher',flash:'Observe',answer:picked.length?'Valider':'Aucune réponse','links-ready':'Vérifier attaquants/défenseurs',links:picked.length?'Valider les liens':'Aucune réponse',review:'Suivant',done:mode==='train'?'Continuer le parcours':'Nouvelle série'}[phase];
  get('play-step').textContent=answer?
-  (stage===4?'Clique sur l’attaquant, puis sur toutes ses cibles.':stage===1?'Marque toutes les pièces demandées.':''):'';
+  (stage===4?'Touche chaque attaquant puis ses cibles. Compte aussi le roi en échec.':stage===1?'Marque toutes les pièces demandées.':''):'';
  if(stage!==2||phase==='links')colorRelationWords(get('question'));
  colorRelationWords(get('play-step'));
  get('action').hidden=phase==='done'&&((mode==='test'&&!results.length)||(finishedPath&&!flashChallenge&&pathLevel.level===maxLevel));
@@ -1010,7 +1060,21 @@ function render() {
  }
  if(phase==='review'){
   const {found,expected,falseCount,attack,defence}=reviewAnswer;
-  addResult(stage===2?'Score':'Trouvés',found+'/'+expected,found===expected);
+  if(task.blocked?.some(l=>reviewAnswer.linkCheck.false.includes(linkKey(l)))){
+   const board=piecesFromFen(current.fen);
+   const pinned=task.blocked.some(l=>{
+    if(!reviewAnswer.linkCheck.false.includes(linkKey(l)))return false;
+    const before=Object.entries(board),side=board[l.from]===board[l.from].toUpperCase();
+    const king=before.find(([,p])=>p===(side?'K':'k'))?.[0];
+    if(!king||king===l.from)return false;
+    const cleared={...board};delete cleared[l.from];
+    return before.some(([s,p])=>(p===p.toUpperCase())!==side&&!controls(board,s,king)&&controls(cleared,s,king));
+   });
+   addResult(pinned?'Clouage manqué':'Roi exposé','prise impossible',false);
+  }
+  if(task.links.some(l=>l.battery&&reviewAnswer.linkCheck.missed.some(k=>k.startsWith(linkKey(l)))))addResult('Batterie manquée','soutien en ligne',false);
+  addResult(stage===2?'Score':'Trouvés',expected?found+'/'+expected:(reviewAnswer.ok?'1/1':'0/1'),reviewAnswer.ok||expected>0&&found===expected);
+  if(!expected)addResult('Aucune réponse',reviewAnswer.ok?'1/1':'0/1',reviewAnswer.ok);
   if(stage===2){
    const foundPieces=reviewAnswer.correct.length;
    const expectedPieces=foundPieces+reviewAnswer.missed.length;
@@ -1083,17 +1147,9 @@ function finishAnswer(skip=false) {
  }
  if(phase==='answer'&&!skip&&stage===3)markedTargets=[...picked];
  if(phase==='answer'&&!skip&&stage===1)markedLinks=picked.map(from=>from+task.focus);
- if(!skip&&stage===4&&picked.length>=2){
-  const [from,...targets]=picked;
-  markedLinks=targets.map(to=>from+to);
-  const attacker=piecesFromFen(current.fen)[from];
-  if(attacker?.toLowerCase()===' pnbrqk'[current.attacker]&&!isFriendlyPiece(attacker)){
-   const attacks=task.allLinks.filter(link=>!link.defence&&link.from===from);
-   if(attacks.length)task.links=attacks;
-  }
- }
  const targetCheck=evaluateSet(stage===1||stage===4?[]:task.targets,markedTargets);
  const answerKey=link=>linkKey(link)+(stage===2?(link.defence?'d':'a'):'');
+ if(stage===2)task.links=task.links.filter(l=>targetCheck.correct.includes(l.to));
  const linkCheck=evaluateSet(task.links.map(answerKey),markedLinks);
  const expected=targetCheck.correct.length+targetCheck.missed.length+task.links.length;
  const found=targetCheck.correct.length+linkCheck.correct.length;
@@ -1106,9 +1162,11 @@ function finishAnswer(skip=false) {
  reviewAnswer={...targetCheck,ok,found,expected,falseCount,linkCheck,attack:stat(false),defence:stat(true)};
  reviewFocus=stage===1||stage===4?task.focus:(targetCheck.missed[0]??targetCheck.false[0]??task.targets[0]??null);
  const axes=[];
- const measured=stage===3?task.allLinks.filter(link=>!link.defence&&task.targets.includes(link.to)):
-  stage===2?task.allLinks.filter(link=>task.targets.includes(link.to)&&(!link.defence||targetCheck.correct.includes(link.to))):task.links;
- const verifiedLinks=new Set(task.links.map(answerKey));
+ const measured=stage===2?task.links.filter(l=>targetCheck.correct.includes(l.to)):stage===3?[]:task.links;
+ if(stage===2||stage===3){
+  const board=piecesFromFen(current.fen);
+  for(const sq of task.targets)axes.push({values:{target:names[' pnbrqk'.indexOf(board[sq].toLowerCase())]},ok:targetCheck.correct.includes(sq)});
+ }
  for(const link of measured){
   const values=exerciseAxes(current,[link.from,link.to]);
   {
@@ -1117,14 +1175,13 @@ function finishAnswer(skip=false) {
    values.direction=dx===dy?'Diagonales':!dx||!dy?'Lignes droites':'Sauts de cavalier';
    values.priority=[values.piece,values.direction,values.distance].join('~');
   }
-  const ok=stage===3||(stage===2&&!verifiedLinks.has(answerKey(link)))?
-   targetCheck.correct.includes(link.to):linkCheck.correct.includes(answerKey(link));
+  const ok=linkCheck.correct.includes(answerKey(link));
   axes.push({values,ok});
  }
- if(!axes.length)axes.push({values:{color:current.white?'Blancs':'Noirs'},ok});
- const emptyResponse=!skip&&!markedTargets.length&&!markedLinks.length;
- results.push({ok,emptyResponse,found,expected,falseCount,axes,ms:Math.max(0,performance.now()-started-seriesExposure)});
- if(mode==='train')saved.seen[current.fen]=(saved.seen[current.fen]??0)+1;
+ 
+ const emptyResponse=!expected||(!skip&&!markedTargets.length&&!markedLinks.length);
+ results.push({probe:!!current.probe,ok,emptyResponse,found:found+Number(!expected&&ok),expected:Math.max(1,expected),falseCount,axes,ms:Math.max(0,performance.now()-started-seriesExposure)});
+ if(mode==='train'||mode==='vision')saved.seen[current.fen]=(saved.seen[current.fen]??0)+1;
  if(results.length===queue.length){
   const accurate=results.filter(item=>item.ok).map(item=>item.ms).sort((a,b)=>a-b);
   const n=accurate.length;
@@ -1138,7 +1195,7 @@ function finishAnswer(skip=false) {
 
   const flashObjectives=flashChallenge?stageObjectives(n,results.length,found,expected,falseCount):null;
   if(flashObjectives)pathResult={objectives:flashObjectives,passed:flashObjectives.every(row=>row.met)};
-  saved.visits.push({flashPassed:flashObjectives?pathResult.passed:undefined,mode,stage,level:mode==='train'?pathState(saved).level:undefined,exposure:seriesExposure,axes,found,expected,falseCount,emptyResponses:emptyResponses(results),correct:n,total:results.length,date:new Date().toISOString(),
+  saved.visits.push({device:inputDevices.size===1?[...inputDevices][0]:inputDevices.size?'mixed':'unknown',probe:results.find(r=>r.probe)?.ok,scoreVersion:2,flashPassed:flashObjectives?pathResult.passed:undefined,mode,stage,level:mode==='train'?pathState(saved).level:undefined,exposure:seriesExposure,axes,found,expected,falseCount,emptyResponses:emptyResponses(results),correct:n,total:results.length,date:new Date().toISOString(),
    ms:n?(accurate[Math.floor((n-1)/2)]+accurate[Math.floor(n/2)])/2:null});
   if(mode==='train'&&!flashChallenge){
    const total=results.length;
@@ -1161,22 +1218,24 @@ function drawVolumes(visits) {
  if(!visits.length)return;
  const counts={};
  for(const visit of visits)for(const [key,value] of Object.entries(visit.axes??{})){
+  if(visit.scoreVersion!==2&&['piece','priority','distance','direction','type','complexity','color','target'].includes(key.split('|')[0]))continue;
   const row=counts[key]??={total:0,correct:0};
   row.total+=value.total;row.correct+=value.correct;
  }
  const categories={
   piece:['dame','roi','tour','pion','cavalier','fou'],
+  target:['dame','roi','tour','pion','cavalier','fou'],color:['Blancs','Noirs'],
   type:['Attaques','Protections','Diagonales','Lignes droites','Sauts de cavalier'],
   distance:['1 case','2–3 cases','4 cases ou plus'],
   complexity:['0–19 relations','20–39 relations','40+ relations']
  };
  const title=document.createElement('h2');title.textContent='Volume et erreurs';
  const note=document.createElement('p');note.className='muted';
- note.textContent='Bleu : liens trouvés. Rouge : liens manqués. Un même lien peut apparaître dans plusieurs catégories.';
+ note.textContent='Bleu : trouvé. Rouge : manqué. Les barres utilisent les séances jouées avec le nouveau décompte.';
  const grid=document.createElement('div');grid.className='volume-grid';
  for(const [axis,values] of Object.entries(categories)){
   const group=document.createElement('section');group.className='volume-group';
-  const heading=document.createElement('h3');heading.textContent=axis==='type'?'Type de lien':axis==='complexity'?'Densité':axisLabels[axis];group.append(heading);
+  const heading=document.createElement('h3');heading.textContent=axis==='target'?'Cibles à repérer':axis==='color'?'Camp joué':axis==='piece'?'Pièces qui créent le lien':axis==='type'?'Type de lien':axis==='complexity'?'Densité':axisLabels[axis];group.append(heading);
   const volumeKey=value=>(axis==='type'&&!['Attaques','Protections'].includes(value)?'direction':axis)+'|'+value;
   const max=Math.max(1,...values.map(value=>counts[volumeKey(value)]?.total??0));
   for(const value of values){
@@ -1233,14 +1292,27 @@ function drawStats() {
  const overview=document.createElement('div');overview.className='assessment-cards';
  for(const [label,value,style] of [
   ['Positions exactes',totals.correct+'/'+totals.total,''],
+  ['Séances',String(shownReports.length),''],
   ['Fausses alertes',String(totals.falseCount),totals.falseCount?'feedback-false':''],
-  ['À travailler',assessmentPriority(shownReports),'']
+  ['À travailler',assessmentPriority(shownReports.filter(v=>v.scoreVersion===2)),'']
  ]){
   const card=document.createElement('div'), amount=document.createElement('strong');
   amount.textContent=value;amount.className=style;
   card.append(label,amount);overview.append(card);
  }
  cards.append(overview);
+ const probes=shownReports.filter(r=>typeof r.probe==='boolean');
+ if(probes.length){
+  const p=document.createElement('p');p.textContent='Premières réponses sur positions réservées · '+probes.filter(r=>r.probe).length+'/'+probes.length+' exactes';cards.append(p);
+ }
+ const recent=shownReports.at(-1);
+ if(recent){
+  const comparable=reports.filter(r=>r!==recent&&r.date<recent.date&&r.mode===recent.mode&&r.stage===recent.stage&&r.exposure===recent.exposure&&r.level===recent.level&&r.scoreVersion===recent.scoreVersion&&typeof r.flashPassed===typeof recent.flashPassed);
+  if(comparable.length){
+   const average=comparable.reduce((sum,r)=>sum+r.correct/r.total,0)/comparable.length;
+   const p=document.createElement('p');p.textContent='Dernière séance comparable : '+Math.round(100*recent.correct/recent.total)+' % · Moyenne des '+comparable.length+' précédentes : '+Math.round(100*average)+' %';cards.append(p);
+  }
+ }
  const heading=document.createElement('h2');heading.textContent='Sessions terminées';root.append(heading);
  const list=document.createElement('ul');list.className='assessment-history';
  for(const report of reports.slice(-12).reverse()){
@@ -1277,8 +1349,12 @@ for(const button of get('stats-modes').querySelectorAll('button')){
  });
 }
 
+get('board').addEventListener('pointerdown',event=>{
+ if((phase==='answer'||phase==='links')&&event.pointerType)inputDevices.add(event.pointerType);
+});
 get('action').addEventListener('click',()=>{
  if(phase==='ready'){
+  if(current.probe){(saved.probes??=[]).push(current.fen);persist();}
   started=performance.now();
   phase=seriesExposure?'flash':'answer';
   render();
@@ -1329,26 +1405,79 @@ get('pgn').addEventListener('change',async event=>{
  } catch(error) { get('profile-status').textContent='Import PGN impossible. Vérifie la connexion et le fichier. '+error.message; }
  finally { event.target.value=''; get('pgn').disabled=false; }
 });
+function medalRank(v){
+ if(v.mode!=='vision'||v.total!==limit)return 0;
+ if(v.correct===v.total&&!v.falseCount)return 3;
+ if(v.correct/v.total>=.85)return 2;
+ return v.correct/v.total>=.65?1:0;
+}
+function launchReward(run){
+ get('rewards').close();run();get('action').focus();
+}
+function rewardButton(title,caption,enabled,run,rank){
+ const button=document.createElement('button');button.type='button';button.disabled=!enabled;
+ button.className='reward-cell '+(rank?'rank-'+rank:'');
+ const badge=document.createElement('span');badge.className='shield';badge.textContent=rank===3?'★':rank===2?'Ⅱ':rank===1?'Ⅰ':'◇';
+ badge.setAttribute('aria-hidden','true');
+ const label=document.createElement('strong');label.textContent=title;
+ const detail=document.createElement('small');detail.textContent=caption;
+ button.append(badge,label,detail);
+ if(enabled)button.addEventListener('click',()=>launchReward(run));
+ return button;
+}
 get('open-rewards').addEventListener('click',()=>{
- const path=pathState(saved), list=document.createElement('ol');
- list.className='rewards-levels';
- const visits=[...(saved.archives??[]).flatMap(cycle=>cycle.visits??[]),...saved.visits];
+ const path=pathState(saved),root=get('reward-levels');
+ const visits=[...(saved.archives??[]).flatMap(c=>c.visits??[]),...saved.visits];
+ const unlocked=Math.min(maxLevel,Math.max(path.level,...Object.keys(saved.levelSlots??{}).map(Number),...visits.filter(v=>v.mode==='train').map(v=>Number(v.completedLevel)?Number(v.completedLevel)+1:Number(v.level)||1)));
+ root.replaceChildren();
+ const section=label=>{const h=document.createElement('h3');h.textContent=label;root.append(h);};
+ section('Parcours');
+ const levels=document.createElement('div');levels.className='badge-levels';
  for(let level=1;level<=maxLevel;level++){
-  const item=document.createElement('li');
-  const done=level<path.level||(level===path.level&&path.complete)||visits.some(visit=>visit.completedLevel===level||visit.level>level);
-  const flashes=new Set(visits.filter(v=>v.level===level&&v.flashPassed).map(v=>v.stage));
-  item.textContent='Niveau '+level+' · '+(done?'Validé':level===path.level?'En cours':'À débloquer')+
-   (flashes.size?' · Flash : '+[...flashes].map(stage=>exerciseNames[stage]).join(', '):'');
-  if(done)item.className='feedback-good';
-  list.append(item);
+  const done=(path.complete&&path.level===level)||visits.some(v=>v.completedLevel===level||v.level>level)||level<path.level;
+  const flashes=new Set(visits.filter(v=>v.level===level&&v.flashPassed).map(v=>v.stage)).size;
+  const active=path.level===level&&!path.complete;
+  const caption=(active?'Reprendre':done?'Rejouer':level<=unlocked?'Commencer':'Verrouillé')+(flashes?' · '+flashes+' galon'+(flashes>1?'s':''):'');
+  const badge=rewardButton('Niveau '+level,caption,level<=unlocked,()=>{
+   if(!active){
+    const slots=saved.levelSlots??={};slots[path.level]=path;
+    const previous=slots[level];saved.path=previous&&!previous.complete?previous:{...pathState({}),level};persist();
+   }
+   start('train');if(phase==='ready')get('action').click();
+  },done?Math.min(3,1+flashes):0);
+  if(flashes){const stripes=document.createElement('span');stripes.className='galons';stripes.textContent='❮'.repeat(flashes);stripes.setAttribute('aria-hidden','true');badge.append(stripes);}
+  levels.append(badge);
  }
- get('reward-levels').replaceChildren(list);
+ root.append(levels);section('Jeu libre');
+ const help=document.createElement('p');help.className='muted';help.textContent='Série complète · bronze 65 %, argent 85 %, or 100 % de positions exactes. Choisis une case pour jouer.';root.append(help);
+ const table=document.createElement('table');table.className='reward-grid';
+ const head=table.createTHead().insertRow();head.append(document.createElement('th'));
+ for(const st of pathOrder){const th=document.createElement('th');th.textContent=exerciseNames[st];head.append(th);}
+ const body=table.createTBody();
+ for(const option of get('duration').options){
+  const ms=Number(option.value),row=body.insertRow(),timing=document.createElement('th');timing.textContent=ms?durationName(ms):'Visible';row.append(timing);
+  for(const st of pathOrder){
+   const candidates=visits.filter(v=>v.stage===st&&v.exposure===ms&&v.mode==='vision');
+   const rank=Math.max(0,...candidates.map(medalRank));
+   const records=[];
+   for(const [device,label] of [['touch','Tactile'],['mouse','Souris'],['pen','Stylet']]){
+    const times=candidates.filter(v=>v.device===device&&medalRank(v)===3&&Number.isFinite(v.ms)).map(v=>v.ms);
+    if(times.length)records.push(label+' '+(Math.min(...times)/1000).toLocaleString('fr',{maximumFractionDigits:1})+' s');
+   }
+   const caption=records.join(' · ')||'Jouer';
+   const button=rewardButton(['À gagner','Bronze','Argent','Or'][rank],caption,true,()=>{
+    get('exercise').value=String(st);get('duration').value=String(ms);start('vision');get('action').click();
+   },rank);button.setAttribute('aria-label',exerciseNames[st]+' · '+timing.textContent+' · '+button.textContent);row.insertCell().append(button);
+  }
+ }
+ const scroll=document.createElement('div');scroll.className='reward-scroll';scroll.append(table);root.append(scroll);
  get('rewards').showModal();
 });
 get('open-account').addEventListener('click',()=>get('account').showModal());
 get('cycle').addEventListener('change',()=>{selectedReport=null;drawStats();});
 get('restart-stage').addEventListener('click',()=>{start('train');get('action').focus();});
 get('restart-path').addEventListener('click',()=>{
+ saved.levelSlots={};
  saved.path=pathState({});
  persist();
  start('train');
@@ -1359,6 +1488,7 @@ get('archive-cycle').addEventListener('click',()=>{
  (saved.archives??=[]).push({date:new Date().toISOString(),visits:saved.visits});
  saved.visits=[];
  saved.seen={};
+ saved.levelSlots={};
  saved.path=pathState({});
  selectedReport=null;
  get('cycle').value='';
