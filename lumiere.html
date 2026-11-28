@@ -1878,18 +1878,31 @@ function exchangePressure(game,map){
    let score;
    if(legal){
     const reply=piece.type==='k'?0:cost(target,enemy,false);
-    score=initial?Math.max(0,reply-(promotes?8:0)):Math.max(0,exchangeValue[victim.type]+(promotes?8:0)-reply);
+    const bonus=promotes?8:0;
+    if(initial==='entry')score=Math.max(0,reply-bonus);
+    else{
+     const gain=exchangeValue[victim.type]+bonus-reply;
+     score=initial==='capture'?gain:Math.max(0,gain);
+    }
    }
    board[from]=piece;board[target]=victim;
    if(legal)return score;
   }
-  return initial?Infinity:0;
+  return initial==='capture'?-Infinity:initial==='entry'?Infinity:0;
  }
  const result={};
  for(const [sq,c] of Object.entries(map)){
   const t=files.indexOf(sq[0])+16*(Number(sq[1])-1);
   if(!c.w.length||!c.b.length||board[t]?.type==='k')continue;
-  const w=c.w.length/(1+cost(t,'w',true)),b=c.b.length/(1+cost(t,'b',true));
+  if(board[t]){
+   // Assess the actual capture independently of whose turn it is.
+   const attacker=other(board[t].color);
+   const net=cost(t,attacker,'capture');
+   const share=net===-Infinity?0:.5+net/(2*(1+Math.abs(net)));
+   result[sq]=attacker==='w'?share:1-share;
+   continue;
+  }
+  const w=c.w.length/(1+cost(t,'w','entry')),b=c.b.length/(1+cost(t,'b','entry'));
   if(w+b)result[sq]=w/(w+b);
  }
  return result;
