@@ -1991,11 +1991,15 @@ function draw(){
   for(const [offset,type] of [['0%','k'],['100%','r']])
    gradient.append(make('stop',{offset,'stop-color':'hsl('+hue(turn,type)+' 95% 66%)'}));
   svg.append(gradient);
+  const gloss=make('linearGradient',{id:id+'-gloss',gradientUnits:'userSpaceOnUse',x1,x2,y1:y,y2:y});
+  for(const [offset,opacity] of [[0,.12],[.22,.45],[.40,1],[.51,.7],[.67,.18],[.83,.55],[1,.12]])
+   gloss.append(make('stop',{offset,'stop-color':'#fff','stop-opacity':opacity}));
+  svg.append(gloss);
   const beam={x1,x2,y1:y,y2:y,'stroke-linecap':'round'};
   svg.append(
    make('line',{...beam,stroke:'url(#'+id+')','stroke-width':.22,opacity:.35,style:'filter:blur(4px)'}),
    make('line',{...beam,stroke:'url(#'+id+')','stroke-width':.12}),
-   make('line',{...beam,stroke:'#fff','stroke-width':.026,opacity:.7})
+   make('line',{...beam,stroke:'url(#'+id+'-gloss)','stroke-width':.052})
   );
  }
 }
