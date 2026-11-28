@@ -1988,8 +1988,8 @@ function draw(){
    return node;
   };
   const gradient=make('linearGradient',{id,gradientUnits:'userSpaceOnUse',x1,x2,y1:y,y2:y});
-  for(const [offset,type] of [['0%','k'],['100%','r']])
-   gradient.append(make('stop',{offset,'stop-color':'hsl('+hue(turn,type)+' 95% 66%)'}));
+  for(const [offset,color] of [['0%','#ffc45c'],['48%','#d6baf2'],['100%','#57a7ff']])
+   gradient.append(make('stop',{offset,'stop-color':color}));
   svg.append(gradient);
   const gloss=make('linearGradient',{id:id+'-gloss',gradientUnits:'userSpaceOnUse',x1,x2,y1:y,y2:y});
   for(const [offset,opacity] of [[0,.12],[.22,.45],[.40,1],[.51,.7],[.67,.18],[.83,.55],[1,.12]])
