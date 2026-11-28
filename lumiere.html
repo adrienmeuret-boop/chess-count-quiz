@@ -1916,7 +1916,7 @@ function draw(){
  for(let y=7;y>=0;y--)for(let x=0;x<8;x++){
   const s=square(x,y),p=game.get(s),c=map[s],b=document.createElement('button');
   b.type='button';b.className='sq'+(s===selected?' chosen':'')+(legal.has(s)?' legal':'');
-  b.style.setProperty('--base',(x+y)%2?'#364355':'#212c3c');
+  b.style.setProperty('--base',(x+y)%2?'#E8DDCB':'#9A8874');
   const own=el('side').value,opponent=own==='w'?'b':'w';
   const field=document.createElement('span');field.className='field';
   field.style.background=fieldPaint(visible(own)?c[own].length:0,visible(opponent)?c[opponent].length:0);
