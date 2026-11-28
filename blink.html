@@ -123,6 +123,8 @@ nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:5p
 #open-rewards{display:grid;place-items:center;color:#fff}
 #open-rewards svg{width:21px;height:21px}
 @media(max-width:760px){nav[aria-label="Navigation du jeu"]{grid-template-columns:repeat(3,max-content) 30px;gap:3px}nav[aria-label="Navigation du jeu"] button{padding:4px;min-height:32px;font-size:clamp(.68rem,3.1vw,.85rem)}#open-rewards svg{width:18px;height:18px}}
+#path-map{grid-template-columns:max-content minmax(0,1fr)}
+#path-map li:first-child,.reward-grid thead th:nth-child(2),.status-exercise{white-space:nowrap}
 #path-map[hidden]{display:none}
 #path-map li{min-width:0;overflow-wrap:anywhere;padding:5px 7px;border:1px solid #51483f;border-radius:5px;font-size:.8rem;color:#c8bfb5}
 #path-map li[aria-current=step]{border-color:#83acda;background:#293a4a;color:#f1f6fa}
@@ -200,7 +202,7 @@ nav[aria-label="Navigation du jeu"] button{min-width:0;max-width:100%;padding:5p
  <ol id="path-map" aria-label="Étapes du parcours"></ol>
  <section id="play-panel" aria-label="Commandes de jeu">
   <div class="play-setup" id="options">
-   <label id="exercise-label" for="exercise">Exercice</label><select id="exercise"><option value="1">Attaques/Protections</option><option value="4">Relier</option><option value="2">Balayer l’échiquier</option><option value="3">Pièces exposées</option></select>
+   <label id="exercise-label" for="exercise">Exercice</label><select id="exercise"><option value="1">Attaques/Défenses</option><option value="4">Relier</option><option value="2">Balayer l’échiquier</option><option value="3">Pièces exposées</option></select>
    <label for="duration">Temps d’exposition</label>
    <select id="duration"><option value="0" selected>Pièces toujours visibles</option><option value="1000">1 s</option><option value="1500">1,5 s</option><option value="2000">2 s</option><option value="2500">2,5 s</option><option value="3000">3 s</option><option value="3500">3,5 s</option><option value="4000">4 s</option><option value="4500">4,5 s</option><option value="5000">5 s</option></select>
   </div>
@@ -537,7 +539,7 @@ function weakAxes(player, currentMode) {
 const exposureSteps=[0,5000,1500,1000];
 const pathOrder=[1,4,2,3];
 const maxLevel=10;
-const exerciseNames={1:'Attaques/Protections',4:'Relier',2:'Balayer l’échiquier',3:'Pièces exposées'};
+const exerciseNames={1:'Attaques/Défenses',4:'Relier',2:'Balayer l’échiquier',3:'Pièces exposées'};
 function pathState(player) {
  const p=player.path;
  const level=Number.isInteger(p?.level)?Math.min(maxLevel,Math.max(1,p.level)):1;
