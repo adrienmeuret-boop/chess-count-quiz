@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Blink · Lumière</title>
+<title>Light</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#101620;color:#f2f5fb;font:16px/1.45 system-ui,sans-serif}main{max-width:990px;margin:auto;padding:clamp(12px,4vw,42px)}header{display:flex;align-items:baseline;gap:14px;margin-bottom:14px}h1{font-size:clamp(27px,5vw,46px);letter-spacing:-.055em;margin:0}header small{color:#a9bed3}article{display:grid;grid-template-columns:minmax(0,630px) minmax(190px,1fr);gap:22px;align-items:start}
 #plate{container-type:inline-size;position:relative;isolation:isolate;aspect-ratio:1;background:#292929;border-radius:8px;overflow:hidden}
@@ -13,12 +13,12 @@ svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:no
 .light-lost{animation:light-out .42s both;stroke-dasharray:.10 .08}.light-gained{animation:light-in .85s both}@keyframes light-out{from{opacity:.8}to{opacity:0}}@keyframes light-in{0%{opacity:0}45%{opacity:.85}100%{opacity:0}}@media(prefers-reduced-motion:reduce){.light-lost,.light-gained{display:none}}
 #grid{touch-action:none;user-select:none}.sq[data-movable=true]{cursor:grab}.sq.drag-source .man{visibility:hidden}.drag-piece{position:fixed;pointer-events:none;z-index:20;transform:translate(-50%,-50%);display:grid;place-items:center}.drag-piece img{width:95%;height:95%}
 .soft-ray{filter:drop-shadow(0 0 1.5px var(--ray-light))}.light-ring{filter:drop-shadow(0 0 1px var(--ray-light));transform-box:fill-box;transform-origin:center}.light-ring.light-gained{animation:ring-in .85s both}@keyframes ring-in{0%{opacity:0;transform:scale(.55)}45%{opacity:.85}100%{opacity:0;transform:scale(1.18)}}
-</style><main><header><h1>Blink <span style="color:#82d9fb">Lumière</span></h1><small>Échiquier libre</small></header>
+#detail:empty{display:none}</style><main><header><h1>Light</h1><small>Échiquier libre</small></header>
 <article><div id="plate"><div id="grid" role="group" aria-label="Échiquier"></div><svg id="rays" viewBox="0 0 8 8" aria-hidden="true"></svg></div>
-<aside><h2 id="turn" aria-live="polite"></h2><p id="detail" aria-live="polite">Joue e2–e4 pour ouvrir les diagonales du fou et de la dame.</p>
-<div class="legend"><span><i class="key warm"></i>Mon camp</span> &nbsp; <span><i class="key cool"></i>Camp adverse</span><p>Les cases mélangent l’orange de ton camp et le bleu adverse selon leurs contrôles. À égalité, la lumière devient violette. Plus le total des contrôles est élevé, plus la lumière est dense. Les pièces blanches protégées brillent en doré, les noires en bleu. Le halo gagne en intensité avec les protections. Les axes du roi brillent davantage à mesure que les cases devant lui se dégagent. Un filet discret continue derrière les pièces.</p></div>
+<aside><h2 id="turn" aria-live="polite"></h2><p id="detail" aria-live="polite"></p>
+<div class="legend"><span><i class="key warm"></i>Mon camp</span> &nbsp; <span><i class="key cool"></i>Camp adverse</span></div>
 <label for="side">Mon camp</label><select id="side"><option value="w">Blancs</option><option value="b">Noirs</option></select><label><input id="axes" type="checkbox" checked> Lumière longue des rois</label><label for="filter">Afficher le contrôle</label><select id="filter"><option value="both">Des deux camps</option><option value="w">Des Blancs</option><option value="b">Des Noirs</option></select>
-<div class="actions"><button class="action" id="demo">Jouer 1.e4</button><button class="action" id="undo">Annuler le coup</button></div><label for="scene">Échiquier</label><select id="scene"><option value="free">Partie libre</option><option value="castle">Exemple · roques</option><option value="pin">Exemple · clouage</option><option value="battery">Exemple · batterie</option></select></aside></article>
+<div class="actions"><button class="action" id="undo">Annuler le coup</button></div><label for="scene">Échiquier</label><select id="scene"><option value="free">Partie libre</option><option value="castle">Exemple · roques</option><option value="pin">Exemple · clouage</option><option value="battery">Exemple · batterie</option></select></aside></article>
 <dialog id="promotion"><h2>Promouvoir le pion</h2><div class="actions" id="choices"></div></dialog></main>
 <script>/*
  * Copyright (c) 2020, Jeff Hlywa (jhlywa@gmail.com)
@@ -1905,9 +1905,14 @@ function alignments(game,map){
  }
  return pins;
 }
-function castleLights(game){
- const rank=game.turn()==='w'?'1':'8';
- return game.moves({verbose:true}).flatMap(move=>{
+function castleLights(game,side){
+ let position=game;
+ if(side!==game.turn()){
+  const fields=game.fen().split(' ');fields[1]=side;fields[3]='-';
+  position=new Chess(fields.join(' '));
+ }
+ const rank=side==='w'?'1':'8';
+ return position.moves({verbose:true}).flatMap(move=>{
   if(move.flags.includes('k'))return [{king:move.from,rook:'h'+rank}];
   if(move.flags.includes('q'))return [{king:move.from,rook:'a'+rank}];
   return [];
@@ -1916,7 +1921,7 @@ function castleLights(game){
 function draw(){
  const turn=game.turn(),mode=el('filter').value;
  el('turn').textContent=game.in_checkmate()?'Échec et mat':game.in_draw()?'Partie nulle':(turn==='w'?'Trait aux blancs':'Trait aux noirs')+(game.in_check()?' · Échec':'');
- el('detail').textContent=caption;el('undo').disabled=!game.history().length;el('demo').hidden=game!==freeGame||!!game.history().length;
+ el('detail').textContent=caption;el('undo').disabled=!game.history().length;
  const legal=new Set(selected?game.moves({square:selected,verbose:true}).map(m=>m.to):[]);
  const visible=c=>mode==='both'||mode===c;
  const pins=alignments(game,map), xray=batteryInfluence(game,map);
@@ -1962,7 +1967,7 @@ function draw(){
  }
  el('grid').replaceChildren(...squares);const svg=el('rays');svg.replaceChildren();
  const openAxes=axes.filter(r=>r.clear>0).map(r=>({...r,to:r.path[Math.min(r.clear,r.path.length-1)],open:true}));
- const castles=visible(turn)?castleLights(game):[];
+ const castles=['w','b'].filter(visible).flatMap(side=>castleLights(game,side));
  const royalAxes=[...axes,...openAxes].filter(ray=>!castles.some(castle=>
   ray.from===castle.king&&ray.to[1]===castle.king[1]&&
   Math.sign(files.indexOf(ray.to[0])-files.indexOf(ray.from[0]))===Math.sign(files.indexOf(castle.rook[0])-files.indexOf(castle.king[0]))));
@@ -2023,7 +2028,7 @@ for(const t of ['q','r','b','n']){
 }
 const scenes={castle:['4kr2/8/8/8/8/8/8/R3K2R w KQ - 0 1','Le grand roque est possible. La tour noire contrôle f1, donc le petit roque ne s’allume pas.'],pin:['4r1k1/8/8/8/8/8/4N3/4K3 w - - 0 1','La tour e8 cloue le cavalier e2 au roi e1. Le cavalier reçoit la lumière du roi et celle de la tour adverse.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Les cases au-delà de la dame reçoivent aussi la lumière du fou.']};
  el('scene').onchange=()=>{clearLightChanges();const scene=scenes[el('scene').value];game=scene?new Chess(scene[0]):freeGame;caption=scene?scene[1]:'Partie libre · sélectionne une pièce.';map=influence(game);selected=null;lines=[];draw()};
- el('axes').onchange=draw;el('side').onchange=draw;el('filter').onchange=draw;el('demo').onclick=()=>play('e2','e4');
+ el('axes').onchange=draw;el('side').onchange=draw;el('filter').onchange=draw;
 const grid=el('grid');
 let drag=null,suppressClick=false;
 grid.addEventListener('pointerdown',event=>{
