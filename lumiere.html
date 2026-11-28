@@ -9,11 +9,12 @@
 svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}aside{background:#1b2431;border:1px solid #344150;border-radius:8px;padding:18px}h2{font-size:18px;margin:0 0 8px}p{margin:8px 0 15px}button,select{font:inherit}.action,select{color:#edf4fb;background:#2a3848;border:1px solid #4b5b6e;border-radius:6px;padding:8px 12px;cursor:pointer}.action:disabled{opacity:.45}.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}.key{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px}.w{background:#56cfff}.b{background:#ff974b}.legend{font-size:14px;color:#cfdae7}.legend span{white-space:nowrap}.rule{border-top:1px solid #344150;padding-top:12px}select{width:100%;margin-top:4px}#detail{min-height:2.9em}dialog{background:#202e40;color:white;border:1px solid #657488;border-radius:10px}dialog::backdrop{background:#080c12bc}
 @media(max-width:680px){article{grid-template-columns:1fr;gap:10px}aside{padding:12px}header{margin-bottom:8px}#detail{min-height:0}}
 .warm{background:#ffad59}.cool{background:#78caff}.battery{box-shadow:inset 0 0 0 2px var(--beam),inset 0 0 16px var(--beam)}.man img{filter:drop-shadow(0 1px 1px #b7bcca) drop-shadow(0 0 3px var(--halo))}.man:after{content:'';position:absolute;inset:2.5%;background:var(--tint);opacity:var(--amount);mask:var(--sprite) center/contain no-repeat;pointer-events:none}.glyph:after{display:none}.glyph{color:var(--glyph,#f4f6fa)}.man.on-axis{background:radial-gradient(ellipse at 50% 80%,var(--king-light),transparent 64%),radial-gradient(circle,var(--halo),transparent 71%)}.man.on-axis img{filter:drop-shadow(0 0 2px var(--king-light)) drop-shadow(0 0 3px var(--halo))}.man.pinned{outline:2px dashed var(--pin);outline-offset:-1px}aside label{display:block;margin-top:10px} .sq:before{pointer-events:none}
+.sq:before{display:none}.field{position:absolute;inset:0;pointer-events:none}.field.white{clip-path:polygon(0 0,100% 0,0 100%);mask-image:linear-gradient(135deg,#000 20%,#0009 52%)}.field.black{clip-path:polygon(100% 0,100% 100%,0 100%);mask-image:linear-gradient(315deg,#000 20%,#0009 52%)}details{font-size:14px;color:#cfdae7;margin:.8em 0}summary{cursor:pointer}#palette{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:9px 0}.swatch{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:2px}#plate .sq{overflow:hidden}
 </style><main><header><h1>Blink <span style="color:#82d9fb">Lumière</span></h1><small>Échiquier libre</small></header>
 <article><div id="plate"><div id="grid" role="group" aria-label="Échiquier"></div><svg id="rays" viewBox="0 0 8 8" aria-hidden="true"></svg></div>
 <aside><h2 id="turn" aria-live="polite"></h2><p id="detail" aria-live="polite">Joue e2–e4 pour ouvrir les diagonales du fou et de la dame.</p>
 <div class="legend"><span><i class="key warm"></i>Mon camp</span> &nbsp; <span><i class="key cool"></i>Camp adverse</span><p>Chaque pièce éclaire les cases qu’elle contrôle. Chaque protection renforce la teinte de la pièce défendue. Les faisceaux fins des rois traversent les pièces jusqu’au bord.</p></div>
-<label for="side">Mon camp</label><select id="side"><option value="w">Blancs</option><option value="b">Noirs</option></select><label><input id="axes" type="checkbox" checked> Lumière longue des rois</label><label for="filter">Afficher le contrôle</label><select id="filter"><option value="both">Des deux camps</option><option value="w">Des Blancs</option><option value="b">Des Noirs</option></select>
+<label for="side">Mon camp</label><select id="side"><option value="w">Blancs</option><option value="b">Noirs</option></select><details><summary>Teintes des pièces</summary><div id="palette"></div><small>Sur une case, chaque bande représente un type de pièce. Sa largeur indique sa part des contrôles de son camp.</small></details><label><input id="axes" type="checkbox" checked> Lumière longue des rois</label><label for="filter">Afficher le contrôle</label><select id="filter"><option value="both">Des deux camps</option><option value="w">Des Blancs</option><option value="b">Des Noirs</option></select>
 <div class="actions"><button class="action" id="demo">Jouer 1.e4</button><button class="action" id="undo">Annuler le coup</button></div><label for="scene">Échiquier</label><select id="scene"><option value="free">Partie libre</option><option value="pin">Exemple · clouage</option><option value="battery">Exemple · batterie</option></select></aside></article>
 <dialog id="promotion"><h2>Promouvoir le pion</h2><div class="actions" id="choices"></div></dialog></main>
 <script>/*
@@ -1813,16 +1814,35 @@ function pick(s){
   return;
  }
  const p=game.get(s);selected=p&&p.color===game.turn()&&selected!==s?s:null;
- const fmt=c=>map[s][c].length+' ('+(map[s][c].join(', ')||'—')+')';
+ const fmt=c=>map[s][c].length+' ('+(map[s][c].map(from=>names[game.get(from).type].toLowerCase()+' '+from).join(', ')||'—')+')';
  caption=s+' · Blancs '+fmt('w')+' · Noirs '+fmt('b');draw();
 }
-const hues={w:{p:48,n:16,b:35,r:8,q:25,k:55},b:{p:185,n:232,b:200,r:220,q:249,k:173}};
+const hues={w:{p:46,n:349,b:24,r:5,q:327,k:59},b:{p:183,n:250,b:201,r:222,q:274,k:164}};
 function hue(side,type){return hues[side===el('side').value?'w':'b'][type]}
 function strength(n){return 1-Math.exp(-.49*n)}
-function light(side,sources){
- if(!sources.length)return 'transparent';
- const avg=sources.reduce((sum,from)=>sum+hue(side,game.get(from).type),0)/sources.length;
- return 'hsla('+avg+',94%,65%,'+strength(sources.length)+')';
+const typeOrder=['p','n','b','r','q','k'];
+function fieldPaint(side,sources){
+ const counts={};
+ for(const from of sources){const type=game.get(from).type;counts[type]=(counts[type]||0)+1}
+ const bands=[];let used=0;
+ for(const type of typeOrder){
+  if(!counts[type])continue;
+  const start=100*used/sources.length;used+=counts[type];
+  bands.push('hsla('+hue(side,type)+',94%,64%,'+strength(sources.length)+') '+start+'% '+(100*used/sources.length)+'%');
+ }
+ if(!bands.length)return 'transparent';
+ if(bands.length===1)return bands[0].split(')')[0]+')';
+ return 'linear-gradient(45deg,'+bands.join(',')+')';
+}
+function showPalette(){
+ const entries=typeOrder.map(type=>{
+  const entry=document.createElement('span');
+  for(const side of [el('side').value,el('side').value==='w'?'b':'w']){
+   const dot=document.createElement('i');dot.className='swatch';dot.style.background='hsl('+hue(side,type)+' 94% 64%)';entry.append(dot);
+  }
+  entry.append(' '+names[type]);return entry;
+ });
+ el('palette').replaceChildren(...entries);
 }
 function kingRays(game){
  const rays=[];
@@ -1874,8 +1894,11 @@ function draw(){
   const s=square(x,y),p=game.get(s),c=map[s],b=document.createElement('button');
   b.type='button';b.className='sq'+(s===selected?' chosen':'')+(legal.has(s)?' legal':'');
   b.style.setProperty('--base',(x+y)%2?'#364355':'#212c3c');
-  b.style.setProperty('--white-light',visible('w')?light('w',c.w):'transparent');
-  b.style.setProperty('--black-light',visible('b')?light('b',c.b):'transparent');
+  for(const side of ['w','b']){
+   if(!visible(side)||!c[side].length)continue;
+   const field=document.createElement('span');field.className='field '+(side==='w'?'white':'black');
+   field.style.background=fieldPaint(side,c[side]);b.append(field);
+  }
   const battery=batteries.find(r=>(r.from===s||r.to===s)&&visible(r.side));
   const pin=pins.find(r=>r.to===s&&visible(r.side));
   if(battery){b.classList.add('battery');b.style.setProperty('--beam','hsl('+hue(p.color,p.type)+' 94% 67% / .82)')}
@@ -1884,7 +1907,7 @@ function draw(){
    const man=document.createElement('span'),img=new Image();man.className='man';
    const n=mode==='both'||mode===p.color?c[p.color].length:0;
    const pigment='hsl('+hue(p.color,p.type)+' 94% 64%)';
-   man.style.setProperty('--halo',light(p.color,n?c[p.color]:[]));
+   man.style.setProperty('--halo','hsla('+hue(p.color,p.type)+',94%,65%,'+strength(n)+')');
    man.style.setProperty('--tint',pigment);man.style.setProperty('--amount',strength(n)*.82);
    if(n)man.style.setProperty('--glyph','color-mix(in srgb,'+pigment+' '+Math.round(strength(n)*80)+'%, '+(p.color==='w'?'white':'#252933')+')');
    if(axes.some(r=>r.side===p.color&&r.path.includes(s))){
@@ -1915,6 +1938,6 @@ for(const t of ['q','r','b','n']){
 }
 const scenes={pin:['4r1k1/8/8/8/8/8/4N3/4K3 w - - 0 1','La tour e8 cloue le cavalier e2 au roi e1. Le pointillé prolonge la ligne derrière le cavalier.'],battery:['6k1/8/8/8/8/3Q4/2B5/6K1 w - - 0 1','Le fou c2 et la dame d3 forment une batterie. Leurs deux cases brillent davantage.']};
  el('scene').onchange=()=>{const scene=scenes[el('scene').value];game=scene?new Chess(scene[0]):freeGame;caption=scene?scene[1]:'Partie libre · sélectionne une pièce.';map=influence(game);selected=null;lines=[];draw()};
- el('axes').onchange=draw;el('side').onchange=draw;el('filter').onchange=draw;el('demo').onclick=()=>play('e2','e4');
+ el('axes').onchange=draw;el('side').onchange=()=>{showPalette();draw()};showPalette();el('filter').onchange=draw;el('demo').onclick=()=>play('e2','e4');
 el('undo').onclick=()=>{game.undo();map=influence(game);lines=[];selected=null;caption='Coup annulé.';draw()};draw();
 </script></html>
