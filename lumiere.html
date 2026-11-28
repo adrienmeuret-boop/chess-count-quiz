@@ -1827,13 +1827,7 @@ function play(from,to,promotion){
  clearLightChanges();changes=lightChanges(prev,map,oldPieces,game);lightTimer=setTimeout(clearLightChanges,850);
  caption=from+' → '+to+(lines.length?' · Lignes ouvertes : '+lines.map(r=>names[game.get(r.from).type]+' '+r.from+'–'+r.to).join(', '):'');draw();
 }
-function pick(s){
- const options=selected?game.moves({square:selected,verbose:true}).filter(m=>m.to===s):[];
- if(options.length){
-  if(options.some(m=>m.promotion)){pending=[selected,s];el('promotion').showModal()}else play(selected,s);
-  return;
- }
- const p=game.get(s);selected=p&&p.color===game.turn()&&selected!==s?s:null;
+function inspectSquare(s){
  const fmt=c=>map[s][c].length+' ('+(map[s][c].map(from=>names[game.get(from).type].toLowerCase()+' '+from).join(', ')||'—')+')';
  caption=s+' · Blancs '+fmt('w')+' · Noirs '+fmt('b');
  const xr=batteryInfluence(game,map)[s];
@@ -1959,8 +1953,7 @@ function draw(){
    img.alt='';img.draggable=false;img.onerror=()=>{man.classList.add('glyph');man.textContent=symbols[p.color]['pnbrqk'.indexOf(p.type)]};
    img.src='https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/piece/cburnett/'+p.color+p.type.toUpperCase()+'.svg';man.style.setProperty('--sprite','url("'+img.src+'")');man.append(img);b.append(man);
   }
-  const label=document.createElement('small');label.className='coord';label.textContent=s;b.append(label);
-  b.dataset.square=s;b.dataset.movable=String(p?.color===turn);b.onclick=event=>{if(!suppressClick||event.detail===0)pick(s)};squares.push(b);
+  b.dataset.square=s;b.dataset.movable=String(p?.color===turn);b.onclick=event=>{if(!suppressClick||event.detail===0)inspectSquare(s)};squares.push(b);
  }
  el('grid').replaceChildren(...squares);const svg=el('rays');svg.replaceChildren();
  const openAxes=axes.filter(r=>r.clear>0).map(r=>({...r,to:r.path[r.clear-1],open:true}));
@@ -2040,8 +2033,11 @@ function endDrag(event){
  const target=document.elementFromPoint(event.clientX,event.clientY)?.closest('.sq[data-square]');
  if(!target||!grid.contains(target)||target===tile)return;
  const from=tile.dataset.square,to=target.dataset.square;
- if(!game.moves({square:from,verbose:true}).some(move=>move.to===to))return;
- selected=from;pick(to);
+ const moves=game.moves({square:from,verbose:true}).filter(move=>move.to===to);
+ if(!moves.length)return;
+ if(moves.some(move=>move.promotion)){
+  pending=[from,to];el('promotion').showModal();
+ }else play(from,to);
 }
 window.addEventListener('pointerup',endDrag);
 window.addEventListener('pointercancel',endDrag);
