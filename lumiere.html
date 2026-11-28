@@ -1837,7 +1837,7 @@ function inspectSquare(s){
 function hue(side){return side===el('side').value?27:205}
 function strength(n){return 1-Math.exp(-.49*n)}
 const typeOrder=['p','n','b','r','q','k'];
-function fieldPaint(own,opponent,batterySupport){
+function fieldPaint(own,opponent,batterySupport,ownSide){
  const total=own+opponent;
  if(!total)return 'transparent';
  const alpha=strength(total+batterySupport);
@@ -1846,10 +1846,11 @@ function fieldPaint(own,opponent,batterySupport){
  const violet='rgba(149,72,226,'+alpha+')';
  if(!opponent)return warm;
  if(!own)return cool;
- if(own===opponent)return 'linear-gradient(90deg,'+warm+' -24%,'+violet+' 14%,'+violet+' 86%,'+cool+' 124%)';
+ const gradient=ownSide==='w'?'linear-gradient(to top,':'linear-gradient(to bottom,';
+ if(own===opponent)return gradient+warm+' -18%,'+violet+' 32%,'+violet+' 68%,'+cool+' 118%)';
  const boundary=100*own/total;
- const fade=Math.min(10,boundary/2,(100-boundary)/2);
- return 'linear-gradient(90deg,'+warm+' '+(boundary-fade)+'%,'+violet+' '+boundary+'%,'+cool+' '+(boundary+fade)+'%)';
+ const fade=Math.min(23,.8*boundary,.8*(100-boundary));
+ return gradient+warm+' '+(boundary-fade)+'%,'+violet+' '+boundary+'%,'+cool+' '+(boundary+fade)+'%)';
 }
 function kingRays(game){
  const rays=[];
@@ -1944,7 +1945,7 @@ function draw(){
   const own=el('side').value,opponent=own==='w'?'b':'w';
   const field=document.createElement('span');field.className='field';
   field.style.background=fieldPaint(visible(own)?c[own].length:0,visible(opponent)?c[opponent].length:0,
-   (visible(own)?xray[s][own].length:0)+(visible(opponent)?xray[s][opponent].length:0));
+   (visible(own)?xray[s][own].length:0)+(visible(opponent)?xray[s][opponent].length:0),own);
   b.append(field);
   const visiblePins=pins.filter(r=>r.to===s&&visible(r.side));
   const pin=visiblePins[0];
