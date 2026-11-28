@@ -2020,20 +2020,15 @@ function draw(){
    for(const [key,value] of Object.entries(attrs))node.setAttribute(key,value);
    return node;
   };
-  const gradient=make('linearGradient',{id,gradientUnits:'userSpaceOnUse',x1,x2,y1:y,y2:y});
-  for(const [offset,color] of [['0%','#ffc45c'],['48%','#d6baf2'],['100%','#57a7ff']])
-   gradient.append(make('stop',{offset,'stop-color':color}));
-  svg.append(gradient);
-  const gloss=make('linearGradient',{id:id+'-gloss',gradientUnits:'userSpaceOnUse',x1,x2,y1:y,y2:y});
-  for(const [offset,opacity] of [[0,.12],[.22,.45],[.40,1],[.51,.7],[.67,.18],[.83,.55],[1,.12]])
-   gloss.append(make('stop',{offset,'stop-color':'#fff','stop-opacity':opacity}));
-  svg.append(gloss);
-  const beam={x1,x2,y1:y,y2:y,'stroke-linecap':'round'};
-  svg.append(
-   make('line',{...beam,stroke:'url(#'+id+')','stroke-width':.22,opacity:.35,'stroke-opacity':.65}),
-   make('line',{...beam,stroke:'url(#'+id+')','stroke-width':.12}),
-   make('line',{...beam,stroke:'url(#'+id+'-gloss)','stroke-width':.052})
-  );
+  const tones=castle.side==='w'
+   ? ['#a95713','#eda037','#ffbf62','#df8428','#a95713']
+   : ['#164783','#367fc4','#70b4ef','#337abc','#164783'];
+  const radius=.09;
+  const gradient=make('linearGradient',{id,gradientUnits:'userSpaceOnUse',x1:0,x2:0,y1:y-radius,y2:y+radius});
+  const offsets=[0,.20,.38,.72,1];
+  const opacity=[.28,.88,.96,.84,.28];
+  tones.forEach((color,i)=>gradient.append(make('stop',{offset:offsets[i],'stop-color':color,'stop-opacity':opacity[i]})));
+  svg.append(gradient,make('rect',{x:Math.min(x1,x2)-radius,y:y-radius,width:Math.abs(x2-x1)+2*radius,height:2*radius,rx:radius,fill:'url(#'+id+')'}));
  }
 }
 for(const t of ['q','r','b','n']){
